@@ -1,41 +1,6 @@
 """
 Uygulama genelinde kullanılan sabitler.
 Yalnızca bu dosya değiştirilerek davranış özelleştirilebilir.
-
-
-import os
-
-# Veritabanı dosyası kullanıcının home dizinine kaydedilir
-DB_PATH = os.path.join(os.path.expanduser("~"), "focustracker.db")
-
-# Odak bozulma kategorileri (kullanıcı bu listeden seçer)
-DISTRACTION_CATEGORIES = [
-    "Telefon",
-    "Sosyal Medya",
-    "Düşünce / Hayal",
-    "Gürültü",
-    "Açlık / Susuzluk",
-    "Yorgunluk",
-    "Diğer",
-]
-
-# Varsayılan ders konuları (kullanıcı kendi yazabilir)
-DEFAULT_SUBJECTS = [
-    "Matematik",
-    "Fizik",
-    "Kimya",
-    "Biyoloji",
-    "Türkçe / Edebiyat",
-    "Tarih",
-    "İngilizce",
-    "Programlama",
-    "Diğer",
-]
-
-"""
-"""
-Uygulama genelinde kullanılan sabitler.
-Test ortamı ve loglama ayarları eklendi.
 """
 
 import os

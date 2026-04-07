@@ -131,7 +131,17 @@ Item {
                                         ctx.fillText(String(j), x + barW / 2, height - 4)
                                     }
                                 }
+                                }
                             }
+                        }
+
+                        // Saatlik boş veri uyarısı
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Henüz veri yok ✨"
+                            color: "#475569"
+                            font.pixelSize: 14
+                            visible: root.hourlyData.length === 0 || root.hourlyData.every(function(item) { return item.count === 0 })
                         }
                     }
                 }
@@ -212,6 +222,15 @@ Item {
                                     font.weight: Font.Bold
                                 }
                             }
+                        }
+
+                        // Kategori boş veri uyarısı
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Henüz veri yok ✨"
+                            color: "#475569"
+                            font.pixelSize: 14
+                            visible: root.categoryData.length === 0 || root.categoryData.every(function(item) { return item.count === 0 })
                         }
                     }
                 }

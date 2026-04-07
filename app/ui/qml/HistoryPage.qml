@@ -7,12 +7,19 @@ Item {
     id: root
 
     function reload() {
-        sessions = analyticsBridge.getSessionHistory()
+        var data = analyticsBridge.getSessionHistory()
+        sessionModel.clear()
+        for (var i = 0; i < data.length; i++) {
+            sessionModel.append(data[i])
+        }
+        sessionsRaw = data
         selectedIndex = -1
         detailDistractions = []
     }
 
-    property var sessions:           []
+    // ListModel section.property ile güvenilir çalışır (Sorun 8 düzeltmesi)
+    ListModel { id: sessionModel }
+    property var sessionsRaw:        []
     property int selectedIndex:      -1
     property var detailDistractions: []
 
@@ -24,7 +31,7 @@ Item {
     }
 
     RowLayout {
-        anchors { fill: parent; margins: 24 }
+        anchors.fill: parent; anchors.margins: 24
         spacing: 16
 
         // Sol: seans listesi
@@ -34,22 +41,23 @@ Item {
             spacing: 12
 
             Text { text: "Geçmiş Seanslar"; color: "#e2e8f0"; font.pixelSize: 22; font.weight: Font.Bold }
-            Text { text: root.sessions.length + " seans"; color: "#475569"; font.pixelSize: 13 }
+            Text { text: sessionModel.count + " seans"; color: "#475569"; font.pixelSize: 13 }
 
             ListView {
                 id: sessionList
                 Layout.fillWidth: true; Layout.fillHeight: true; spacing: 6; clip: true
-                model: root.sessions
-                
-                // GÜNLERE GÖRE GRUPLAMA (Bugün, Dün, vs.)
+                model: sessionModel
+
+                // GÜNLERE GÖRE GRUPLAMA (Bugün, Dün, vs.) — ListModel ile güvenilir çalışır
                 section.property: "dateGroup"
                 section.criteria: ViewSection.FullString
                 section.delegate: Item {
+                    required property string section
                     width: sessionList.width
                     height: 28
                     Text {
-                        anchors { left: parent.left; bottom: parent.bottom; bottomMargin: 4 }
-                        text: section
+                        anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.bottomMargin: 4
+                        text: parent.section
                         color: "#94a3b8"
                         font.pixelSize: 12
                         font.weight: Font.Bold
@@ -57,27 +65,42 @@ Item {
                 }
 
                 delegate: Rectangle {
-                    width: sessionList.width; height: 68; radius: 10
-                    color: root.selectedIndex === index ? "#1e0f5e" : (hovered ? "#161630" : "#131326")
-                    border.color: root.selectedIndex === index ? "#3d2490" : "transparent"; border.width: 1
-                    property bool hovered: false
+                    id: sessionDelegate
+                    required property int index
+                    required property string subject
+                    required property string startedAt
+                    required property int durationSec
+                    required property int distractions
+                    required property string notes
+                    required property int id
 
-                    Rectangle { anchors { left: parent.left; top: parent.top; bottom: parent.bottom }; width: 3; radius: 2; color: "#7c3aed"; opacity: root.selectedIndex === index ? 1 : 0 }
+                    width: sessionList.width; height: 68; radius: 10
+                    color: root.selectedIndex === index ? "#1e0f5e" : (delegateMouse.containsMouse ? "#161630" : "#131326")
+                    border.color: root.selectedIndex === index ? "#3d2490" : "transparent"; border.width: 1
+
+                    Rectangle { anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 3; radius: 2; color: "#7c3aed"; opacity: root.selectedIndex === sessionDelegate.index ? 1 : 0 }
 
                     Column {
-                        anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 14; right: parent.right; rightMargin: 10 }; spacing: 4
-                        Text { text: modelData.subject; color: root.selectedIndex === index ? "#a78bfa" : "#cbd5e1"; font.pixelSize: 13; font.weight: Font.Medium; elide: Text.ElideRight; width: parent.width }
+                        anchors.verticalCenter: parent.verticalCenter; anchors.left: parent.left; anchors.leftMargin: 14; anchors.right: parent.right; anchors.rightMargin: 10; spacing: 4
+                        Text { text: sessionDelegate.subject; color: root.selectedIndex === sessionDelegate.index ? "#a78bfa" : "#cbd5e1"; font.pixelSize: 13; font.weight: Font.Medium; elide: Text.ElideRight; width: parent.width }
                         RowLayout {
                             spacing: 10
-                            Text { text: modelData.startedAt; color: "#475569"; font.pixelSize: 11 }
+                            Text { text: sessionDelegate.startedAt; color: "#475569"; font.pixelSize: 11 }
                             Rectangle { width: 3; height: 3; radius: 2; color: "#374151" }
-                            Text { text: root._fmtDur(modelData.durationSec); color: "#60a5fa"; font.pixelSize: 11 }
+                            Text { text: root._fmtDur(sessionDelegate.durationSec); color: "#60a5fa"; font.pixelSize: 11 }
                             Rectangle { width: 3; height: 3; radius: 2; color: "#374151" }
-                            Text { text: modelData.distractions + " boz."; color: "#f87171"; font.pixelSize: 11 }
+                            Text { text: sessionDelegate.distractions + " boz."; color: "#f87171"; font.pixelSize: 11 }
                         }
                     }
 
-                    MouseArea { anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onEntered: parent.hovered = true; onExited: parent.hovered = false; onClicked: { root.selectedIndex = index; root.detailDistractions = analyticsBridge.getSessionDistractions(modelData.id) } }
+                    MouseArea {
+                        id: delegateMouse
+                        anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.selectedIndex = sessionDelegate.index
+                            root.detailDistractions = analyticsBridge.getSessionDistractions(sessionDelegate.id)
+                        }
+                    }
                 }
             }
         }
@@ -88,28 +111,28 @@ Item {
 
             Item {
                 anchors.fill: parent; visible: root.selectedIndex < 0
-                Column { anchors.centerIn: parent; spacing: 12; Text { anchors.horizontalCenter: parent.horizontalCenter; text: "📋"; font.pixelSize: 40; opacity: 0.2 }; Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Bir seans seçin"; color: "#1e293b"; font.pixelSize: 14 } }
+                Column { anchors.centerIn: parent; spacing: 12; Text { anchors.horizontalCenter: parent.horizontalCenter; text: "📋"; font.pixelSize: 40; opacity: 0.2 } Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Bir seans seçin"; color: "#1e293b"; font.pixelSize: 14 } }
             }
 
             ScrollView {
-                anchors { fill: parent; margins: 24 }; contentWidth: availableWidth; visible: root.selectedIndex >= 0; clip: true
+                anchors.fill: parent; anchors.margins: 24; contentWidth: availableWidth; visible: root.selectedIndex >= 0; clip: true
 
                 ColumnLayout {
                     width: parent.width; spacing: 16
 
-                    // Başlık ve DÜZENLE BUTONU (Artık büyük ve tıklanabilir bir FTButton)
+                    // Başlık ve DÜZENLE BUTONU
                     RowLayout {
                         Layout.fillWidth: true; spacing: 12
 
-                        Text { text: root.selectedIndex >= 0 ? root.sessions[root.selectedIndex].subject : ""; color: "#a78bfa"; font.pixelSize: 20; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
-                        Text { text: root.selectedIndex >= 0 ? root.sessions[root.selectedIndex].startedAt : ""; color: "#475569"; font.pixelSize: 12; Layout.alignment: Qt.AlignVCenter }
+                        Text { text: root.selectedIndex >= 0 ? root.sessionsRaw[root.selectedIndex].subject : ""; color: "#a78bfa"; font.pixelSize: 20; font.weight: Font.Bold; Layout.fillWidth: true; elide: Text.ElideRight }
+                        Text { text: root.selectedIndex >= 0 ? root.sessionsRaw[root.selectedIndex].startedAt : ""; color: "#475569"; font.pixelSize: 12; Layout.alignment: Qt.AlignVCenter }
 
                         FTButton {
                             Layout.preferredWidth: 100; height: 34; label: "✎ Düzenle"; variant: "ghost"
                             visible: root.selectedIndex >= 0
                             onClicked: {
-                                editSubjectField.text = root.sessions[root.selectedIndex].subject
-                                editNoteField.text = root.sessions[root.selectedIndex].notes || ""
+                                editSubjectField.text = root.sessionsRaw[root.selectedIndex].subject
+                                editNoteField.text = root.sessionsRaw[root.selectedIndex].notes || ""
                                 editPopup.open()
                             }
                         }
@@ -118,15 +141,15 @@ Item {
                     RowLayout {
                         Layout.fillWidth: true; spacing: 10
                         Repeater {
-                            model: root.selectedIndex >= 0 ? [ { v: root._fmtDur(root.sessions[root.selectedIndex].durationSec), l: "SÜRE", c: "#60a5fa" }, { v: String(root.sessions[root.selectedIndex].distractions), l: "BOZULMA", c: "#f87171" } ] : []
-                            delegate: Rectangle { Layout.fillWidth: true; height: 64; radius: 10; color: "#161630"; border.color: "#252545"; border.width: 1; Column { anchors.centerIn: parent; spacing: 4; Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.v; color: modelData.c; font.pixelSize: 20; font.weight: Font.Bold }; Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 1 } } }
+                            model: root.selectedIndex >= 0 ? [ { v: root._fmtDur(root.sessionsRaw[root.selectedIndex].durationSec), label: "SÜRE", color: "#60a5fa" }, { v: String(root.sessionsRaw[root.selectedIndex].distractions), label: "BOZULMA", color: "#f87171" } ] : []
+                            delegate: Rectangle { Layout.fillWidth: true; height: 64; radius: 10; color: "#161630"; border.color: "#252545"; border.width: 1; Column { anchors.centerIn: parent; spacing: 4; Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.v; color: modelData.color; font.pixelSize: 20; font.weight: Font.Bold } Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 1 } } }
                         }
                     }
 
                     Column {
-                        Layout.fillWidth: true; spacing: 6; visible: root.selectedIndex >= 0 && root.sessions[root.selectedIndex].notes !== ""
+                        Layout.fillWidth: true; spacing: 6; visible: root.selectedIndex >= 0 && root.sessionsRaw[root.selectedIndex].notes !== ""
                         Text { text: "Not"; color: "#475569"; font.pixelSize: 12 }
-                        Rectangle { width: parent.width; radius: 8; color: "#141428"; height: noteText.height + 20; Text { id: noteText; anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10; topMargin: 10 }; text: root.selectedIndex >= 0 ? root.sessions[root.selectedIndex].notes : ""; color: "#94a3b8"; font.pixelSize: 13; wrapMode: Text.WordWrap } }
+                        Rectangle { width: parent.width; radius: 8; color: "#141428"; height: noteText.height + 20; Text { id: noteText; anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 10; anchors.topMargin: 10; text: root.selectedIndex >= 0 ? root.sessionsRaw[root.selectedIndex].notes : ""; color: "#94a3b8"; font.pixelSize: 13; wrapMode: Text.WordWrap } }
                     }
 
                     Column {
@@ -134,7 +157,7 @@ Item {
                         Text { text: "Bozulmalar (" + root.detailDistractions.length + ")"; color: "#475569"; font.pixelSize: 12; topPadding: 10 }
                         Repeater {
                             model: root.detailDistractions
-                            delegate: Rectangle { width: parent.width; height: 38; radius: 8; color: index % 2 === 0 ? "#131326" : "transparent"; RowLayout { anchors { fill: parent; leftMargin: 12; rightMargin: 12 }; spacing: 10; Text { text: "#" + (index + 1); color: "#7c3aed"; font.pixelSize: 12; font.weight: Font.Bold }; Text { text: modelData.time; color: "#475569"; font.pixelSize: 11; font.family: "Consolas" }; Text { text: modelData.category; color: "#f87171"; font.pixelSize: 13 }; Text { text: modelData.note; color: "#64748b"; font.pixelSize: 12; visible: modelData.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight } } }
+                            delegate: Rectangle { width: parent.width; height: 38; radius: 8; color: index % 2 === 0 ? "#131326" : "transparent"; RowLayout { anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; spacing: 10; Text { text: "#" + (index + 1); color: "#7c3aed"; font.pixelSize: 12; font.weight: Font.Bold } Text { text: modelData.time; color: "#475569"; font.pixelSize: 11; font.family: "Consolas" } Text { text: modelData.category; color: "#f87171"; font.pixelSize: 13 } Text { text: modelData.note; color: "#64748b"; font.pixelSize: 12; visible: modelData.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight } } }
                         }
                     }
                     Item { height: 20; Layout.fillWidth: true }
@@ -161,13 +184,13 @@ Item {
             Column {
                 spacing: 6; width: parent.width
                 Text { text: "Konu"; color: "#64748b"; font.pixelSize: 12 }
-                Rectangle { width: parent.width; height: 40; radius: 8; color: "#161630"; border.color: editSubjectField.activeFocus ? "#7c3aed" : "#2a2a50"; border.width: 1; TextInput { id: editSubjectField; anchors { fill: parent; leftMargin: 12; rightMargin: 12 }; verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13 } }
+                Rectangle { width: parent.width; height: 40; radius: 8; color: "#161630"; border.color: editSubjectField.activeFocus ? "#7c3aed" : "#2a2a50"; border.width: 1; TextInput { id: editSubjectField; anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12; verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13 } }
             }
 
             Column {
                 spacing: 6; width: parent.width
                 Text { text: "Notlar"; color: "#64748b"; font.pixelSize: 12 }
-                Rectangle { width: parent.width; height: 80; radius: 8; color: "#161630"; border.color: editNoteField.activeFocus ? "#7c3aed" : "#2a2a50"; border.width: 1; TextEdit { id: editNoteField; anchors { fill: parent; margins: 12 }; color: "#e2e8f0"; font.pixelSize: 13; wrapMode: TextEdit.Wrap } }
+                Rectangle { width: parent.width; height: 80; radius: 8; color: "#161630"; border.color: editNoteField.activeFocus ? "#7c3aed" : "#2a2a50"; border.width: 1; TextEdit { id: editNoteField; anchors.fill: parent; anchors.margins: 12; color: "#e2e8f0"; font.pixelSize: 13; wrapMode: TextEdit.Wrap } }
             }
 
             RowLayout {
@@ -176,13 +199,11 @@ Item {
                 FTButton {
                     Layout.fillWidth: true; height: 42; label: "Kaydet"; variant: "primary"
                     onClicked: {
-                        var sessionId = root.sessions[root.selectedIndex].id
-                        try {
-                            analyticsBridge.updateSessionInfo(sessionId, editSubjectField.text, editNoteField.text)
-                            editPopup.close()
-                            root.reload() // Listeyi anında güncelle
-                        } catch(e) {
-                            console.log("Bağlantı hatası: ", e)
+                        var sessionId = root.sessionsRaw[root.selectedIndex].id
+                        var success = analyticsBridge.updateSessionInfo(sessionId, editSubjectField.text, editNoteField.text)
+                        editPopup.close()
+                        if (success) {
+                            root.reload()
                         }
                     }
                 }

@@ -17,7 +17,7 @@ class Database:
         return cls._instance
 
     def connect(self) -> None:
-        self._connection = sqlite3.connect(DB_PATH)
+        self._connection = sqlite3.connect(DB_PATH, check_same_thread=False)
         self._connection.row_factory = sqlite3.Row  # sütun adıyla erişim için
         self._connection.execute("PRAGMA foreign_keys = ON")
         self._create_tables()
@@ -54,17 +54,36 @@ class Database:
                 id   INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT    UNIQUE NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS subjects (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT    UNIQUE NOT NULL
+            );
         """)
         
-        # Eğer kategori tablosu boşsa varsayılanları ekle (Azaltılmış liste)
+        # Eğer kategori tablosu boşsa varsayılanları ekle
         cur = self._connection.execute("SELECT COUNT(*) FROM categories")
         if cur.fetchone()[0] == 0:
             default_cats = ["Telefon", "Sosyal Medya", "Düşünce / Hayal", "Diğer"]
             for cat in default_cats:
                 self._connection.execute("INSERT INTO categories (name) VALUES (?)", (cat,))
+
+        # Eğer konu tablosu boşsa varsayılanları ekle
+        cur = self._connection.execute("SELECT COUNT(*) FROM subjects")
+        if cur.fetchone()[0] == 0:
+            default_subjects = [
+                "Matematik", "Fizik", "Kimya", "Biyoloji",
+                "Türkçe / Edebiyat", "Tarih", "İngilizce",
+                "Programlama", "Diğer"
+            ]
+            for sub in default_subjects:
+                self._connection.execute("INSERT INTO subjects (name) VALUES (?)", (sub,))
                 
         self._connection.commit()
 
 
+import atexit
+
 # Modül düzeyinde tek örnek — her yerden `from app.core.database import db` ile erişilir
 db = Database()
+atexit.register(db.close)

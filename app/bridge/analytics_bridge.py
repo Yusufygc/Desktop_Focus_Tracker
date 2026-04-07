@@ -12,6 +12,8 @@ from app.services.analytics_service import AnalyticsService
 from app.core.repositories import session_repo
 from app.core.logger import logger
 
+from datetime import date, timedelta
+
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
 
@@ -19,6 +21,7 @@ QML_IMPORT_MAJOR_VERSION = 1
 class AnalyticsBridge(QObject):
 
     dataReady = Signal()
+    errorOccurred = Signal(str)
 
     def __init__(self, session_svc: SessionService, distraction_svc: DistractionService, parent=None):
         super().__init__(parent)
@@ -55,8 +58,18 @@ class AnalyticsBridge(QObject):
     @Slot(result="QVariantList")
     def getSessionHistory(self) -> list:
         sessions = self._session_svc.get_all_sessions()
+        today = date.today()
+        yesterday = today - timedelta(days=1)
         result = []
         for s in sessions:
+            s_date = s.started_at.date()
+            if s_date == today:
+                group = "Bugün"
+            elif s_date == yesterday:
+                group = "Dün"
+            else:
+                group = s.started_at.strftime("%d.%m.%Y")
+
             result.append({
                 "id":          s.id,
                 "subject":     s.subject,
@@ -64,6 +77,7 @@ class AnalyticsBridge(QObject):
                 "durationSec": s.duration_seconds,
                 "distractions": s.total_distractions,
                 "notes":       s.notes or "",
+                "dateGroup":   group,
             })
         return result
 
@@ -79,12 +93,14 @@ class AnalyticsBridge(QObject):
             for d in distractions
         ]
 
-    # EKLENDİ: Düzenleme ekranı için backend bağlantısı
-    @Slot(int, str, str)
-    def updateSessionInfo(self, session_id: int, subject: str, notes: str):
+    @Slot(int, str, str, result=bool)
+    def updateSessionInfo(self, session_id: int, subject: str, notes: str) -> bool:
         logger.info(f"QML'den güncelleme isteği geldi: Seans ID {session_id}")
         try:
             session_repo.update_info(session_id, subject, notes)
             logger.info("Seans başarıyla güncellendi.")
+            return True
         except Exception as e:
             logger.error(f"Seans güncellenirken hata oluştu: {e}")
+            self.errorOccurred.emit("Seans güncellenemedi.")
+            return False

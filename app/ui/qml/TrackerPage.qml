@@ -66,21 +66,42 @@ Item {
                     id: statusDot; property bool active: false
                     width: 8; height: 8; radius: 4; color: active ? "#22c55e" : "#374151"; opacity: active ? 1.0 : 0.3
                     Behavior on color { ColorAnimation { duration: 300 } }
-                    SequentialAnimation on opacity { running: statusDot.active; loops: Animation.Infinite; NumberAnimation { to: 0.4; duration: 800 }; NumberAnimation { to: 1.0; duration: 800 } }
+                    SequentialAnimation on opacity {
+    running: statusDot.active; loops: Animation.Infinite
+    NumberAnimation { to: 0.4; duration: 800 }
+    NumberAnimation { to: 1.0; duration: 800 }
+}
                 }
             }
 
             GlassCard {
                 Layout.fillWidth: true; height: 56; radius: 12
                 RowLayout {
-                    anchors { fill: parent; leftMargin: 16; rightMargin: 12 }; spacing: 10
+                    anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 12; spacing: 10
                     Text { text: "📚"; font.pixelSize: 16 }
                     ComboBox {
                         id: subjectCombo; Layout.fillWidth: true; editable: true
-                        model: ["Matematik", "Fizik", "Kimya", "Biyoloji", "Türkçe / Edebiyat", "Tarih", "İngilizce", "Programlama", "Diğer"]
+                        model: sessionBridge.getSubjects()  // Backend'den çekiliyor
                         background: Rectangle { color: "transparent" }
-                        contentItem: TextInput { leftPadding: 4; text: subjectCombo.editText; color: "#e2e8f0"; font.pixelSize: 14; verticalAlignment: TextInput.AlignVCenter }
-                        delegate: ItemDelegate { width: subjectCombo.width; contentItem: Text { text: modelData; color: "#e2e8f0"; font.pixelSize: 13 }; background: Rectangle { color: hovered ? "#2d1a6e" : "#0f0f28" } }
+                        contentItem: TextInput { 
+                            leftPadding: 4; text: subjectCombo.editText; color: "#e2e8f0"; font.pixelSize: 14; verticalAlignment: TextInput.AlignVCenter 
+                            onAccepted: {  // Enter'a basıldığında yeni konu ekle
+                                var txt = text.trim()
+                                if (txt.length > 0 && subjectCombo.find(txt) === -1) {
+                                    sessionBridge.addSubject(txt)
+                                    subjectCombo.model = sessionBridge.getSubjects()
+                                    subjectCombo.editText = txt
+                                }
+                            }
+                        }
+                        delegate: ItemDelegate { width: subjectCombo.width; contentItem: Text { text: modelData; color: "#e2e8f0"; font.pixelSize: 13 } background: Rectangle { color: hovered ? "#2d1a6e" : "#0f0f28" } }
+                        popup: Popup {
+                            y: subjectCombo.height - 1
+                            width: subjectCombo.width
+                            implicitHeight: contentItem.implicitHeight
+                            padding: 1
+                            background: Rectangle { color: "#0f0f28"; border.color: "#3d2490"; border.width: 1; radius: 8 }
+                        }
                     }
                 }
             }
@@ -104,7 +125,7 @@ Item {
                         Text { text: "B O Z U L M A"; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 3 }
                         Text {
                             id: countLabel; text: "0"; color: "#f87171"; font.pixelSize: 36; font.weight: Font.Bold
-                            SequentialAnimation { id: countShake; running: false; NumberAnimation { target: countLabel; property: "x"; to: 6; duration: 50 }; NumberAnimation { target: countLabel; property: "x"; to: -6; duration: 50 }; NumberAnimation { target: countLabel; property: "x"; to: 0; duration: 30 } }
+                            SequentialAnimation { id: countShake; running: false; NumberAnimation { target: countLabel; property: "x"; to: 6; duration: 50 } NumberAnimation { target: countLabel; property: "x"; to: -6; duration: 50 } NumberAnimation { target: countLabel; property: "x"; to: 0; duration: 30 } }
                         }
                     }
                     Item { Layout.fillWidth: true }
@@ -136,11 +157,11 @@ Item {
                 id: distractionBtn
                 Layout.fillWidth: true; height: 110; radius: 16; property bool isBtnActive: false
                 opacity: isBtnActive ? 1.0 : 0.35
-                gradient: Gradient { GradientStop { position: 0.0; color: "#3d1010" }; GradientStop { position: 0.5; color: "#4a1515" }; GradientStop { position: 1.0; color: "#3d1010" } }
+                gradient: Gradient { GradientStop { position: 0.0; color: "#3d1010" } GradientStop { position: 0.5; color: "#4a1515" } GradientStop { position: 1.0; color: "#3d1010" } }
                 border.color: "#7a2525"; border.width: 1
 
                 Rectangle { anchors.fill: parent; radius: parent.radius; color: "#f87171"; opacity: btnMouse.containsMouse && distractionBtn.isBtnActive ? 0.08 : 0.0; Behavior on opacity { NumberAnimation { duration: 150 } } }
-                Column { anchors.centerIn: parent; spacing: 6; Text { anchors.horizontalCenter: parent.horizontalCenter; text: "⚡"; font.pixelSize: 28 }; Text { anchors.horizontalCenter: parent.horizontalCenter; text: "ODAK BOZULDU"; color: "#fecaca"; font.pixelSize: 15; font.weight: Font.Bold; font.letterSpacing: 2 } }
+                Column { anchors.centerIn: parent; spacing: 6; Text { anchors.horizontalCenter: parent.horizontalCenter; text: "⚡"; font.pixelSize: 28 } Text { anchors.horizontalCenter: parent.horizontalCenter; text: "ODAK BOZULDU"; color: "#fecaca"; font.pixelSize: 15; font.weight: Font.Bold; font.letterSpacing: 2 } }
 
                 MouseArea {
                     id: btnMouse; anchors.fill: parent; hoverEnabled: true; enabled: distractionBtn.isBtnActive; cursorShape: Qt.PointingHandCursor
@@ -224,12 +245,12 @@ Item {
 
         onOpened: { loadCategories(); noteField.forceActiveFocus() }
 
-        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 }; NumberAnimation { property: "scale"; from: 0.9; to: 1.0; duration: 220; easing.type: Easing.OutBack } }
+        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } NumberAnimation { property: "scale"; from: 0.9; to: 1.0; duration: 220; easing.type: Easing.OutBack } }
         exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
 
         background: Rectangle {
             color: "#0f0f28"; border.color: "#6b2020"; border.width: 1; radius: 16
-            Rectangle { anchors { top: parent.top; left: parent.left; right: parent.right }; height: 3; radius: parent.radius; gradient: Gradient { GradientStop { position: 0.0; color: "#dc2626" }; GradientStop { position: 1.0; color: "#7c3aed" } } }
+            Rectangle { anchors { top: parent.top; left: parent.left; right: parent.right } height: 3; radius: parent.radius; gradient: Gradient { GradientStop { position: 0.0; color: "#dc2626" } GradientStop { position: 1.0; color: "#7c3aed" } } }
         }
 
         contentItem: Column {
@@ -245,7 +266,7 @@ Item {
                     Layout.fillWidth: true; height: 36; radius: 8; color: "#161630"; border.color: "#2a2a50"; border.width: 1
                     TextInput {
                         id: newCatInput
-                        anchors { fill: parent; leftMargin: 12; rightMargin: 12 }; verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13
+                        anchors { fill: parent; leftMargin: 12; rightMargin: 12 } verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13
                         Text { anchors.verticalCenter: parent.verticalCenter; text: "Yeni kategori yazıp '+' bas..."; color: "#475569"; font.pixelSize: 13; visible: newCatInput.text === "" }
                         Keys.onReturnPressed: addCatBtn.clicked()
                         Keys.onEnterPressed: addCatBtn.clicked()
@@ -307,7 +328,7 @@ Item {
                 width: 332; height: 40; radius: 8; color: "#161630"
                 border.color: noteField.activeFocus ? "#3d2490" : "#2a2a50"; border.width: 1
                 TextInput {
-                    id: noteField; anchors { fill: parent; leftMargin: 12; rightMargin: 12 }; verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13
+                    id: noteField; anchors { fill: parent; leftMargin: 12; rightMargin: 12 } verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13
                     Keys.onReturnPressed: saveBtn.clicked()
                     Keys.onEnterPressed: saveBtn.clicked()
                     Text { anchors.verticalCenter: parent.verticalCenter; text: "Ne oldu? (Enter ile kaydet)"; color: "#334155"; font.pixelSize: 13; visible: noteField.text === "" }
@@ -341,12 +362,12 @@ Item {
 
         Overlay.modal: Rectangle { color: "#e0000010" }
 
-        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250 }; NumberAnimation { property: "scale"; from: 0.9; to: 1; duration: 250; easing.type: Easing.OutBack } }
+        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250 } NumberAnimation { property: "scale"; from: 0.9; to: 1; duration: 250; easing.type: Easing.OutBack } }
         exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
 
         background: Rectangle {
             color: "#0f0f28"; border.color: "#1a4a2a"; border.width: 1; radius: 16
-            Rectangle { anchors { top: parent.top; left: parent.left; right: parent.right }; height: 3; radius: parent.radius; gradient: Gradient { GradientStop { position: 0.0; color: "#22c55e" }; GradientStop { position: 1.0; color: "#2563eb" } } }
+            Rectangle { anchors { top: parent.top; left: parent.left; right: parent.right } height: 3; radius: parent.radius; gradient: Gradient { GradientStop { position: 0.0; color: "#22c55e" } GradientStop { position: 1.0; color: "#2563eb" } } }
         }
 
         contentItem: Column {
@@ -359,7 +380,7 @@ Item {
                     model: [ { label: "SÜRE", value: root.fmtDur(summaryDialog.pendingStats.durationSec || 0), color: "#a78bfa" }, { label: "BOZULMA", value: String(summaryDialog.pendingStats.totalDistractions || 0), color: "#f87171" }, { label: "BOZULMA/SA", value: String(summaryDialog.pendingStats.distractionsPerHour || 0), color: "#fbbf24" }, { label: "KONU", value: summaryDialog.pendingStats.subject || "-", color: "#60a5fa" } ]
                     delegate: Rectangle {
                         width: (364 - 10) / 2; height: 64; radius: 10; color: "#161630"; border.color: "#252545"; border.width: 1
-                        Column { anchors.centerIn: parent; spacing: 4; Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.value; color: modelData.color; font.pixelSize: 20; font.weight: Font.Bold }; Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 1 } }
+                        Column { anchors.centerIn: parent; spacing: 4; Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.value; color: modelData.color; font.pixelSize: 20; font.weight: Font.Bold } Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 1 } }
                     }
                 }
             }
@@ -368,7 +389,7 @@ Item {
 
             Rectangle {
                 width: 364; height: 72; radius: 8; color: "#161630"; border.color: summaryNote.activeFocus ? "#1a5c36" : "#2a2a50"; border.width: 1
-                TextEdit { id: summaryNote; anchors { fill: parent; margins: 12 }; color: "#e2e8f0"; font.pixelSize: 13; wrapMode: TextEdit.Wrap; Text { anchors.fill: parent; text: "Bu seans nasıl geçti?"; color: "#334155"; font.pixelSize: 13; visible: summaryNote.text === "" } }
+                TextEdit { id: summaryNote; anchors { fill: parent; margins: 12 } color: "#e2e8f0"; font.pixelSize: 13; wrapMode: TextEdit.Wrap; Text { anchors.fill: parent; text: "Bu seans nasıl geçti?"; color: "#334155"; font.pixelSize: 13; visible: summaryNote.text === "" } }
             }
 
             Item { height: 16; width: 1 }

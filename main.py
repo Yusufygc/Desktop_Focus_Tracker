@@ -4,16 +4,8 @@ Uygulama giriş noktası — QML motorunu başlatır ve bridge'leri inject eder.
 
 import sys
 import os
-import logging
 
-# --- LOGLAMA YAPILANDIRMASI ---
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-logger = logging.getLogger(__name__)
-# ------------------------------
+from app.core.logger import logger
 
 # QML kontrollerinin özelleştirilebilmesi için Basic style zorunlu.
 # Native style (Windows default) ComboBox/TextField background vs. override'ına izin vermez.

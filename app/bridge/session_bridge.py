@@ -3,12 +3,14 @@ SessionBridge — SessionService'i QML'e açan köprü sınıf.
 QML sadece bu sınıfın property/signal/slot'larını görür.
 """
 
-from PySide6.QtCore import QObject, Property, Signal, Slot
+from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer
 from PySide6.QtQml import QmlElement
 
 from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
-from app.core.database import db
+from app.services.category_service import CategoryService
+from app.services.subject_service import SubjectService
+from app.services.analytics_service import AnalyticsService
 from app.core.logger import logger
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
@@ -21,14 +23,17 @@ class SessionBridge(QObject):
     sessionFinished  = Signal()
     timerTick        = Signal(str)
     distractionAdded = Signal(int, str, str)
+    errorOccurred    = Signal(str)  # Sorun 9: QML'e hata bildirimi
 
     def __init__(self, session_svc: SessionService, distraction_svc: DistractionService, parent=None):
         super().__init__(parent)
         self._session_svc     = session_svc
         self._distraction_svc = distraction_svc
+        self._category_svc    = CategoryService()    # Sorun 6: Service katmanı
+        self._subject_svc     = SubjectService()     # Sorun 11: Konular
+        self._analytics       = AnalyticsService()   # Sorun 7: Tek instance
         self._elapsed         = 0
 
-        from PySide6.QtCore import QTimer
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
         logger.debug("SessionBridge başlatıldı.")
@@ -49,35 +54,46 @@ class SessionBridge(QObject):
             return self._session_svc.active_session.subject
         return ""
 
-    # --- KATEGORİ İŞLEMLERİ ---
+    # --- KATEGORİ İŞLEMLERİ (Sorun 6: Service katmanı üzerinden) ---
     @Slot(result="QVariantList")
     def getCategories(self) -> list:
         try:
-            rows = db.conn.execute("SELECT id, name FROM categories ORDER BY id").fetchall()
-            return [{"id": r["id"], "name": r["name"]} for r in rows]
+            return self._category_svc.get_all()
         except Exception as e:
-            logger.error(f"Kategoriler DB'den çekilemedi: {e}")
+            logger.error(f"Kategoriler çekilemedi: {e}")
+            self.errorOccurred.emit("Kategoriler yüklenemedi.")
             return []
 
-    @Slot(str)
-    def addCategory(self, name: str):
-        name = name.strip()
-        if not name: return
-        logger.info(f"Yeni bozulma kategorisi ekleniyor: {name}")
-        try:
-            db.conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
-            db.conn.commit()
-        except Exception as e:
-            logger.error(f"Kategori eklenirken hata (Aynı isim olabilir mi?): {e}")
+    @Slot(str, result=bool)
+    def addCategory(self, name: str) -> bool:
+        success = self._category_svc.add(name)
+        if not success:
+            self.errorOccurred.emit("Kategori eklenemedi (aynı isim olabilir).")
+        return success
 
-    @Slot(int)
-    def deleteCategory(self, cat_id: int):
-        logger.info(f"Kategori siliniyor, ID: {cat_id}")
+    @Slot(int, result=bool)
+    def deleteCategory(self, cat_id: int) -> bool:
+        success = self._category_svc.delete(cat_id)
+        if not success:
+            self.errorOccurred.emit("Kategori silinemedi.")
+        return success
+
+    # --- KONU (SUBJECT) İŞLEMLERİ (Sorun 11) ---
+    @Slot(result="QVariantList")
+    def getSubjects(self) -> list:
         try:
-            db.conn.execute("DELETE FROM categories WHERE id=?", (cat_id,))
-            db.conn.commit()
+            return self._subject_svc.get_all()
         except Exception as e:
-            logger.error(f"Kategori silinirken hata: {e}")
+            logger.error(f"Konular çekilemedi: {e}")
+            self.errorOccurred.emit("Ders konuları yüklenemedi.")
+            return []
+
+    @Slot(str, result=bool)
+    def addSubject(self, name: str) -> bool:
+        success = self._subject_svc.add(name)
+        if not success:
+            self.errorOccurred.emit("Konu eklenemedi (aynı isim olabilir).")
+        return success
 
     # --- SEANS İŞLEMLERİ ---
     @Slot(str)
@@ -111,8 +127,7 @@ class SessionBridge(QObject):
             return {}
         session = self._session_svc.active_session
         distractions = self._distraction_svc.get_for_session(session.id)
-        from app.services.analytics_service import AnalyticsService
-        stats = AnalyticsService().session_stats(session, distractions)
+        stats = self._analytics.session_stats(session, distractions)
         return {
             "subject":             stats["subject"],
             "durationSec":         stats["duration_sec"],
@@ -129,8 +144,7 @@ class SessionBridge(QObject):
         session = self._session_svc.active_session
         distractions = self._distraction_svc.get_for_session(session.id)
 
-        from app.services.analytics_service import AnalyticsService
-        stats = AnalyticsService().session_stats(session, distractions)
+        stats = self._analytics.session_stats(session, distractions)
 
         self._session_svc.finish(notes=notes)
         self.sessionFinished.emit()
