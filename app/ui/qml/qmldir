@@ -1,0 +1,14 @@
+module FocusTracker.UI
+
+# Ana sayfalar
+TrackerPage 1.0 TrackerPage.qml
+AnalyticsPage 1.0 AnalyticsPage.qml
+HistoryPage 1.0 HistoryPage.qml
+
+# Paylaşılan bileşenler
+Sidebar 1.0 components/Sidebar.qml
+NavButton 1.0 components/NavButton.qml
+GlassCard 1.0 components/GlassCard.qml
+FTButton 1.0 components/FTButton.qml
+FTDialog 1.0 components/FTDialog.qml
+StatCard 1.0 components/StatCard.qml

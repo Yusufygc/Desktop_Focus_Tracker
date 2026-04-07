@@ -1,0 +1,71 @@
+# ========================
+# FocusTracker .gitignore
+# ========================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# --- Sanal Ortam ---
+myenv/
+venv/
+.venv/
+env/
+ENV/
+
+# --- IDE / Editör ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# --- İşletim Sistemi ---
+Thumbs.db
+Desktop.ini
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# --- Veritabanı (Kullanıcıya Özgü) ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Log Dosyaları ---
+*.log
+logs/
+
+# --- Dağıtım / PyInstaller ---
+*.spec
+dist/
+build/
+
+# --- Ortam Değişkenleri ---
+.env
+.env.local
+.env.production
+
+# --- PySide6 / Qt Üretilen Dosyalar ---
+*.qmlc
+*.jsc
+.qmlls.ini
+
+# --- Diğer ---
+*.bak
+*.tmp
+*.temp
+.antigravityignore
