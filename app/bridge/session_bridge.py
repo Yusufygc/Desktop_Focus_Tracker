@@ -95,6 +95,13 @@ class SessionBridge(QObject):
             self.errorOccurred.emit("Konu eklenemedi (aynı isim olabilir).")
         return success
 
+    @Slot(str, result=bool)
+    def deleteSubject(self, name: str) -> bool:
+        success = self._subject_svc.delete(name)
+        if not success:
+            self.errorOccurred.emit("Konu silinemedi.")
+        return success
+
     # --- SEANS İŞLEMLERİ ---
     @Slot(str)
     def startSession(self, subject: str):

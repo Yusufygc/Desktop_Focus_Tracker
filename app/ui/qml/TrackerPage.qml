@@ -49,6 +49,11 @@ Item {
         return m + "dk " + s + "sn"
     }
 
+    // Konuları yeniden yükle
+    function _reloadSubjects() {
+        subjectCombo.model = sessionBridge.getSubjects()
+    }
+
     RowLayout {
         anchors { fill: parent; margins: 24 }
         spacing: 20
@@ -67,40 +72,118 @@ Item {
                     width: 8; height: 8; radius: 4; color: active ? "#22c55e" : "#374151"; opacity: active ? 1.0 : 0.3
                     Behavior on color { ColorAnimation { duration: 300 } }
                     SequentialAnimation on opacity {
-    running: statusDot.active; loops: Animation.Infinite
-    NumberAnimation { to: 0.4; duration: 800 }
-    NumberAnimation { to: 1.0; duration: 800 }
-}
+                        running: statusDot.active; loops: Animation.Infinite
+                        NumberAnimation { to: 0.4; duration: 800 }
+                        NumberAnimation { to: 1.0; duration: 800 }
+                    }
                 }
             }
 
+            // Konu Seçimi — Tam CRUD Desteği
             GlassCard {
                 Layout.fillWidth: true; height: 56; radius: 12
                 RowLayout {
-                    anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 12; spacing: 10
+                    anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 12; spacing: 8
                     Text { text: "📚"; font.pixelSize: 16 }
+
                     ComboBox {
                         id: subjectCombo; Layout.fillWidth: true; editable: true
-                        model: sessionBridge.getSubjects()  // Backend'den çekiliyor
+                        model: sessionBridge.getSubjects()
+
                         background: Rectangle { color: "transparent" }
-                        contentItem: TextInput { 
-                            leftPadding: 4; text: subjectCombo.editText; color: "#e2e8f0"; font.pixelSize: 14; verticalAlignment: TextInput.AlignVCenter 
-                            onAccepted: {  // Enter'a basıldığında yeni konu ekle
+
+                        contentItem: TextInput {
+                            leftPadding: 4
+                            text: subjectCombo.editText
+                            color: "#e2e8f0"
+                            font.pixelSize: 14
+                            verticalAlignment: TextInput.AlignVCenter
+                            onAccepted: {
                                 var txt = text.trim()
                                 if (txt.length > 0 && subjectCombo.find(txt) === -1) {
                                     sessionBridge.addSubject(txt)
-                                    subjectCombo.model = sessionBridge.getSubjects()
+                                    root._reloadSubjects()
                                     subjectCombo.editText = txt
                                 }
                             }
                         }
-                        delegate: ItemDelegate { width: subjectCombo.width; contentItem: Text { text: modelData; color: "#e2e8f0"; font.pixelSize: 13 } background: Rectangle { color: hovered ? "#2d1a6e" : "#0f0f28" } }
-                        popup: Popup {
-                            y: subjectCombo.height - 1
+
+                        indicator: Text {
+                            x: subjectCombo.width - width - 12
+                            y: (subjectCombo.height - height) / 2
+                            text: "▾"
+                            color: "#64748b"
+                            font.pixelSize: 14
+                        }
+
+                        delegate: ItemDelegate {
                             width: subjectCombo.width
-                            implicitHeight: contentItem.implicitHeight
+                            height: 36
+                            contentItem: RowLayout {
+                                spacing: 8
+                                Text {
+                                    text: modelData
+                                    color: "#e2e8f0"
+                                    font.pixelSize: 13
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                }
+                                // Silme butonu (hover'da görünür)
+                                Text {
+                                    text: "×"
+                                    color: "#f87171"
+                                    font.pixelSize: 16
+                                    visible: parent.parent ? parent.parent.hovered : false
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            sessionBridge.deleteSubject(modelData)
+                                            root._reloadSubjects()
+                                        }
+                                    }
+                                }
+                            }
+                            background: Rectangle {
+                                color: parent.hovered ? "#2d1a6e" : "#0f0f28"
+                            }
+                        }
+
+                        popup: Popup {
+                            y: subjectCombo.height
+                            width: subjectCombo.width
+                            implicitHeight: contentItem.implicitHeight + 2
                             padding: 1
-                            background: Rectangle { color: "#0f0f28"; border.color: "#3d2490"; border.width: 1; radius: 8 }
+
+                            background: Rectangle {
+                                color: "#0f0f28"
+                                border.color: "#3d2490"
+                                border.width: 1
+                                radius: 8
+                            }
+
+                            contentItem: ListView {
+                                clip: true
+                                implicitHeight: contentHeight
+                                model: subjectCombo.popup.visible ? subjectCombo.delegateModel : null
+                                currentIndex: subjectCombo.highlightedIndex
+                                ScrollIndicator.vertical: ScrollIndicator {}
+                            }
+                        }
+                    }
+
+                    // Konu yönetim butonu
+                    Text {
+                        text: "⚙"
+                        font.pixelSize: 14
+                        color: "#64748b"
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: subjectManagerPopup.open()
                         }
                     }
                 }
@@ -186,18 +269,17 @@ Item {
                     model: distractionModel
 
                     delegate: Rectangle {
-                        id: delRect // Animasyonun hedefi için ID atandı!
+                        id: delRect
                         width: distractionList.width; height: 40; radius: 8
                         color: index % 2 === 0 ? "#131326" : "transparent"
                         opacity: 0; x: -20
-                        
+
                         Component.onCompleted: slideIn.running = true
-                        
-                        ParallelAnimation { 
+
+                        ParallelAnimation {
                             id: slideIn
-                            // opacity görünmezlik hatası burada çözüldü (target: delRect)
                             NumberAnimation { target: delRect; property: "opacity"; to: 1; duration: 300; easing.type: Easing.OutCubic }
-                            NumberAnimation { target: delRect; property: "x"; to: 0; duration: 300; easing.type: Easing.OutCubic } 
+                            NumberAnimation { target: delRect; property: "x"; to: 0; duration: 300; easing.type: Easing.OutCubic }
                         }
 
                         RowLayout {
@@ -377,10 +459,41 @@ Item {
             Grid {
                 columns: 2; spacing: 10; width: 364
                 Repeater {
-                    model: [ { label: "SÜRE", value: root.fmtDur(summaryDialog.pendingStats.durationSec || 0), color: "#a78bfa" }, { label: "BOZULMA", value: String(summaryDialog.pendingStats.totalDistractions || 0), color: "#f87171" }, { label: "BOZULMA/SA", value: String(summaryDialog.pendingStats.distractionsPerHour || 0), color: "#fbbf24" }, { label: "KONU", value: summaryDialog.pendingStats.subject || "-", color: "#60a5fa" } ]
+                    model: [
+                        { label: "SÜRE",       value: root.fmtDur(summaryDialog.pendingStats.durationSec || 0), color: "#a78bfa" },
+                        { label: "BOZULMA",    value: String(summaryDialog.pendingStats.totalDistractions || 0), color: "#f87171" },
+                        { label: "BOZULMA/SA", value: String(summaryDialog.pendingStats.distractionsPerHour || 0), color: "#fbbf24" },
+                        { label: "KONU",       value: summaryDialog.pendingStats.subject || "-", color: "#60a5fa" }
+                    ]
                     delegate: Rectangle {
-                        width: (364 - 10) / 2; height: 64; radius: 10; color: "#161630"; border.color: "#252545"; border.width: 1
-                        Column { anchors.centerIn: parent; spacing: 4; Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.value; color: modelData.color; font.pixelSize: 20; font.weight: Font.Bold } Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 1 } }
+                        width: (364 - 10) / 2
+                        implicitHeight: summaryCardCol.implicitHeight + 24
+                        radius: 10; color: "#161630"; border.color: "#252545"; border.width: 1
+
+                        Column {
+                            id: summaryCardCol
+                            anchors.centerIn: parent
+                            width: parent.width - 16
+                            spacing: 4
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: modelData.value
+                                color: modelData.color
+                                font.pixelSize: 20
+                                font.weight: Font.Bold
+                                width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
+                                wrapMode: Text.WordWrap
+                            }
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: modelData.label
+                                color: "#475569"
+                                font.pixelSize: 10
+                                font.letterSpacing: 1
+                            }
+                        }
                     }
                 }
             }
@@ -397,6 +510,127 @@ Item {
             FTButton {
                 width: 364; height: 44; label: "Kaydet & Kapat"; variant: "primary"
                 onClicked: { sessionBridge.finishSession(summaryNote.text); summaryNote.text = ""; summaryDialog.close(); root._setIdleState() }
+            }
+        }
+    }
+
+    // ── KONU YÖNETİM POPUP ──────────────────────────────────────────
+    Popup {
+        id: subjectManagerPopup
+        anchors.centerIn: Overlay.overlay; width: 380; modal: true
+        Overlay.modal: Rectangle { color: "#d0000010" }
+
+        property var subjectsData: []
+
+        function loadSubjects() {
+            subjectsData = sessionBridge.getSubjects()
+        }
+
+        onOpened: loadSubjects()
+
+        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
+        exit: Transition  { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
+
+        background: Rectangle { color: "#0f0f28"; border.color: "#3d2490"; border.width: 1; radius: 16 }
+
+        contentItem: Column {
+            spacing: 16; padding: 24
+
+            Text { text: "📚  Konu Yönetimi"; color: "#a78bfa"; font.pixelSize: 18; font.weight: Font.Bold }
+            Text { text: "Sık kullandığınız ders konularını buradan yönetin."; color: "#64748b"; font.pixelSize: 12 }
+
+            // Yeni konu ekleme
+            RowLayout {
+                width: 332; spacing: 8
+                Rectangle {
+                    Layout.fillWidth: true; height: 40; radius: 8; color: "#161630"; border.color: newSubjectInput.activeFocus ? "#7c3aed" : "#2a2a50"; border.width: 1
+                    TextInput {
+                        id: newSubjectInput
+                        anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: "#e2e8f0"; font.pixelSize: 13
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Yeni konu adı..."; color: "#475569"; font.pixelSize: 13; visible: newSubjectInput.text === "" }
+                        Keys.onReturnPressed: addSubjectBtn.clicked()
+                        Keys.onEnterPressed: addSubjectBtn.clicked()
+                    }
+                }
+                FTButton {
+                    id: addSubjectBtn; Layout.preferredWidth: 60; height: 40; label: "+ Ekle"; variant: "primary"
+                    onClicked: {
+                        var txt = newSubjectInput.text.trim()
+                        if (txt !== "") {
+                            sessionBridge.addSubject(txt)
+                            newSubjectInput.text = ""
+                            subjectManagerPopup.loadSubjects()
+                            root._reloadSubjects()
+                        }
+                    }
+                }
+            }
+
+            // Mevcut konular listesi
+            Rectangle {
+                width: 332; height: Math.min(subjectListView.contentHeight + 16, 240); radius: 10; color: "#131326"; border.color: "#252545"; border.width: 1
+
+                ListView {
+                    id: subjectListView
+                    anchors { fill: parent; margins: 8 }
+                    clip: true
+                    spacing: 4
+                    model: subjectManagerPopup.subjectsData
+
+                    delegate: Rectangle {
+                        width: subjectListView.width; height: 38; radius: 8
+                        color: subjectItemMouse.containsMouse ? "#1e1e40" : "transparent"
+
+                        RowLayout {
+                            anchors { fill: parent; leftMargin: 12; rightMargin: 8 }
+                            spacing: 8
+                            Text {
+                                text: modelData
+                                color: "#e2e8f0"
+                                font.pixelSize: 13
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                text: "🗑"
+                                font.pixelSize: 14
+                                visible: subjectItemMouse.containsMouse
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -6
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        sessionBridge.deleteSubject(modelData)
+                                        subjectManagerPopup.loadSubjects()
+                                        root._reloadSubjects()
+                                    }
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: subjectItemMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            acceptedButtons: Qt.NoButton
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Henüz konu eklenmemiş"
+                        color: "#475569"
+                        font.pixelSize: 13
+                        visible: subjectListView.count === 0
+                    }
+                }
+            }
+
+            FTButton {
+                width: 332; height: 40; label: "Kapat"; variant: "ghost"
+                onClicked: subjectManagerPopup.close()
             }
         }
     }

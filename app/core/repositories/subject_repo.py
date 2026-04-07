@@ -23,3 +23,12 @@ def insert(name: str) -> int:
     )
     db.conn.commit()
     return cur.lastrowid
+
+
+def delete_by_name(name: str) -> None:
+    """İsme göre konu siler."""
+    db.conn.execute(
+        "DELETE FROM subjects WHERE name=?", (name,)
+    )
+    db.conn.commit()
+

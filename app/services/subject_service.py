@@ -26,3 +26,16 @@ class SubjectService:
         except Exception as e:
             logger.error(f"Konu eklenirken hata (muhtemelen duplicate): {e}")
             return False
+
+    def delete(self, name: str) -> bool:
+        """Konuyu siler. Başarılıysa True döner."""
+        name = name.strip()
+        if not name:
+            return False
+        try:
+            subject_repo.delete_by_name(name)
+            logger.info(f"Konu silindi: {name}")
+            return True
+        except Exception as e:
+            logger.error(f"Konu silinirken hata: {e}")
+            return False
