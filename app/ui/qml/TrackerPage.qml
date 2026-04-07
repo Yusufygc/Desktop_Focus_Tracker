@@ -102,7 +102,7 @@ Item {
                                 var txt = text.trim()
                                 if (txt.length > 0 && subjectCombo.find(txt) === -1) {
                                     sessionBridge.addSubject(txt)
-                                    root._reloadSubjects()
+                                    subjectCombo.model = sessionBridge.getSubjects()
                                     subjectCombo.editText = txt
                                 }
                             }
@@ -111,7 +111,7 @@ Item {
                         indicator: Text {
                             x: subjectCombo.width - width - 12
                             y: (subjectCombo.height - height) / 2
-                            text: "▾"
+                            text: "\u25BE"
                             color: "#64748b"
                             font.pixelSize: 14
                         }
@@ -119,31 +119,12 @@ Item {
                         delegate: ItemDelegate {
                             width: subjectCombo.width
                             height: 36
-                            contentItem: RowLayout {
-                                spacing: 8
-                                Text {
-                                    text: modelData
-                                    color: "#e2e8f0"
-                                    font.pixelSize: 13
-                                    Layout.fillWidth: true
-                                    elide: Text.ElideRight
-                                }
-                                // Silme butonu (hover'da görünür)
-                                Text {
-                                    text: "×"
-                                    color: "#f87171"
-                                    font.pixelSize: 16
-                                    visible: parent.parent ? parent.parent.hovered : false
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        anchors.margins: -4
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            sessionBridge.deleteSubject(modelData)
-                                            root._reloadSubjects()
-                                        }
-                                    }
-                                }
+                            contentItem: Text {
+                                text: modelData
+                                color: "#e2e8f0"
+                                font.pixelSize: 13
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
                             background: Rectangle {
                                 color: parent.hovered ? "#2d1a6e" : "#0f0f28"
@@ -604,7 +585,7 @@ Item {
                                     onClicked: {
                                         sessionBridge.deleteSubject(modelData)
                                         subjectManagerPopup.loadSubjects()
-                                        root._reloadSubjects()
+                                        subjectCombo.model = sessionBridge.getSubjects()
                                     }
                                 }
                             }
