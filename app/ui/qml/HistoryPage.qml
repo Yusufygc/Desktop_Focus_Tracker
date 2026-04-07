@@ -136,6 +136,14 @@ Item {
                                 editPopup.open()
                             }
                         }
+
+                        FTButton {
+                            Layout.preferredWidth: 80; height: 34; label: "🗑 Sil"; variant: "ghost"
+                            visible: root.selectedIndex >= 0
+                            onClicked: {
+                                deleteConfirmPopup.open()
+                            }
+                        }
                     }
 
                     RowLayout {
@@ -202,6 +210,40 @@ Item {
                         var sessionId = root.sessionsRaw[root.selectedIndex].id
                         var success = analyticsBridge.updateSessionInfo(sessionId, editSubjectField.text, editNoteField.text)
                         editPopup.close()
+                        if (success) {
+                            root.reload()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- SİLME ONAY POPUP ---
+    Popup {
+        id: deleteConfirmPopup
+        anchors.centerIn: Overlay.overlay; width: 320; modal: true
+        Overlay.modal: Rectangle { color: "#d0000010" }
+
+        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
+        exit: Transition  { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
+
+        background: Rectangle { color: "#0f0f28"; border.color: "#ef4444"; border.width: 1; radius: 16 }
+
+        contentItem: Column {
+            spacing: 16; padding: 24
+            Text { text: "⚠️ Seansı Sil"; color: "#ef4444"; font.pixelSize: 18; font.weight: Font.Bold }
+            Text { text: "Bu seansı ve içindeki bozulmaları kalıcı olarak silmek istediğinize emin misiniz?"; color: "#e2e8f0"; font.pixelSize: 13; width: parent.width; wrapMode: Text.WordWrap }
+
+            RowLayout {
+                width: parent.width; spacing: 12
+                FTButton { Layout.fillWidth: true; height: 42; label: "İptal"; variant: "ghost"; onClicked: deleteConfirmPopup.close() }
+                FTButton {
+                    Layout.fillWidth: true; height: 42; label: "Evet, Sil"; variant: "primary"
+                    onClicked: {
+                        var sessionId = root.sessionsRaw[root.selectedIndex].id
+                        var success = analyticsBridge.deleteSession(sessionId)
+                        deleteConfirmPopup.close()
                         if (success) {
                             root.reload()
                         }

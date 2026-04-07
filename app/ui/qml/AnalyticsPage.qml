@@ -137,7 +137,7 @@ Item {
 
                         // Saatlik boş veri uyarısı
                         Text {
-                            anchors.centerIn: parent
+                            Layout.alignment: Qt.AlignCenter
                             text: "Henüz veri yok ✨"
                             color: "#475569"
                             font.pixelSize: 14
@@ -226,7 +226,7 @@ Item {
 
                         // Kategori boş veri uyarısı
                         Text {
-                            anchors.centerIn: parent
+                            Layout.alignment: Qt.AlignCenter
                             text: "Henüz veri yok ✨"
                             color: "#475569"
                             font.pixelSize: 14

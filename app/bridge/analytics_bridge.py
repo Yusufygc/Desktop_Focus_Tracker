@@ -102,5 +102,17 @@ class AnalyticsBridge(QObject):
             return True
         except Exception as e:
             logger.error(f"Seans güncellenirken hata oluştu: {e}")
-            self.errorOccurred.emit("Seans güncellenemedi.")
+            self.errorOccurred.emit(f"Güncelleme Hatası: {str(e)}")
+            return False
+
+    @Slot(int, result=bool)
+    def deleteSession(self, session_id: int) -> bool:
+        logger.info(f"QML'den silme isteği geldi: Seans ID {session_id}")
+        try:
+            session_repo.delete(session_id)
+            logger.info("Seans başarıyla silindi.")
+            return True
+        except Exception as e:
+            logger.error(f"Seans silinirken hata oluştu: {e}")
+            self.errorOccurred.emit(f"Silme Hatası: {str(e)}")
             return False

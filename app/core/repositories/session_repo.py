@@ -56,3 +56,11 @@ def get_by_id(session_id: int) -> Optional[Session]:
         "SELECT * FROM sessions WHERE id=?", (session_id,)
     ).fetchone()
     return _row_to_session(row) if row else None
+
+def delete(session_id: int) -> None:
+    logger.debug(f"DB Silme: Session ID {session_id}")
+    db.conn.execute("DELETE FROM sessions WHERE id=?", (session_id,))
+    # On cascade is not explicitly enforced by default in SQLite unless pragma foreign_keys=ON is enabled. 
+    # Let's delete distractions as well securely:
+    db.conn.execute("DELETE FROM distractions WHERE session_id=?", (session_id,))
+    db.conn.commit()
