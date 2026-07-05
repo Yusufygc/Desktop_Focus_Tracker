@@ -10,10 +10,10 @@ ApplicationWindow {
     minimumWidth: 860
     minimumHeight: 580
     visible: true
-    title: "FocusTracker"
+    title: Strings.appName
 
     background: Rectangle {
-        color: "#0a0a18"
+        color: Theme.surface0
     }
 
     onClosing: function(close) {
@@ -54,10 +54,10 @@ ApplicationWindow {
 
     FTDialog {
         id: closeDialog
-        title: "Aktif Seans"
-        message: "Aktif seans var. Kaydedilsin mi?"
-        confirmText: "Kaydet & Çık"
-        cancelText: "İptal"
+        title: Strings.activeSessionTitle
+        message: Strings.activeSessionMessage
+        confirmText: Strings.saveAndExit
+        cancelText: Strings.commonCancel
         onConfirmed: { sessionBridge.finishSessionSilent(); Qt.quit() }
     }
 

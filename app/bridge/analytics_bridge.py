@@ -13,6 +13,7 @@ from app.services.distraction_service import DistractionService
 from app.services.analytics_service import AnalyticsService
 from app.core.repositories import session_repo
 from app.core.logger import logger
+from app.core.strings import Errors
 
 from datetime import date, timedelta
 
@@ -101,7 +102,7 @@ class AnalyticsBridge(QObject):
             return True
         except sqlite3.Error as e:
             logger.error(f"Seans güncellenirken DB hatası: {e}", exc_info=True)
-            self.errorOccurred.emit(f"Güncelleme Hatası: {str(e)}")
+            self.errorOccurred.emit(Errors.UPDATE_ERROR_TEMPLATE.format(error=str(e)))
             return False
 
     @Slot(int, result=bool)
@@ -113,5 +114,5 @@ class AnalyticsBridge(QObject):
             return True
         except sqlite3.Error as e:
             logger.error(f"Seans silinirken DB hatası: {e}", exc_info=True)
-            self.errorOccurred.emit(f"Silme Hatası: {str(e)}")
+            self.errorOccurred.emit(Errors.DELETE_ERROR_TEMPLATE.format(error=str(e)))
             return False

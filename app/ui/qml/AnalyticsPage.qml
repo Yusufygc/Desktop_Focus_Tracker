@@ -25,15 +25,15 @@ Item {
             width: parent.width
             spacing: 20
 
-            Text { text: "Analiz"; color: "#e2e8f0"; font.pixelSize: 22; font.weight: Font.Bold }
+            Text { text: Strings.analyticsTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
 
             // ── Özet istatistik kartları ─────────────────────────────
             RowLayout {
                 Layout.fillWidth: true; spacing: 12
-                StatCard { Layout.fillWidth: true; value: String(root.summaryStats.total     || 0); label: "TOPLAM BOZULMA";  accentColor: "#f87171" }
-                StatCard { Layout.fillWidth: true; value: String(root.summaryStats.dailyAvg  || 0); label: "GÜNLÜK ORT.";     accentColor: "#fbbf24" }
-                StatCard { Layout.fillWidth: true; value: root.summaryStats.peakHour         || "-"; label: "EN YOĞUN SAAT";  accentColor: "#60a5fa" }
-                StatCard { Layout.fillWidth: true; value: root.summaryStats.topCategory      || "-"; label: "EN SIK KATEGORİ"; accentColor: "#a78bfa" }
+                StatCard { Layout.fillWidth: true; value: String(root.summaryStats.total     || 0); label: Strings.analyticsTotalLabel;      accentColor: Theme.dangerMuted }
+                StatCard { Layout.fillWidth: true; value: String(root.summaryStats.dailyAvg  || 0); label: Strings.analyticsDailyAvgLabel;    accentColor: Theme.warning }
+                StatCard { Layout.fillWidth: true; value: root.summaryStats.peakHour         || "-"; label: Strings.analyticsPeakHourLabel;   accentColor: Theme.info }
+                StatCard { Layout.fillWidth: true; value: root.summaryStats.topCategory      || "-"; label: Strings.analyticsTopCategoryLabel; accentColor: Theme.accent }
             }
 
             // ── Saatlik bozulma grafiği ──────────────────────────────
@@ -44,7 +44,7 @@ Item {
                     anchors { fill: parent; margins: 20 }
                     spacing: 12
 
-                    Text { text: "⏰  Saate Göre Bozulma (0–23)"; color: "#94a3b8"; font.pixelSize: 13; font.weight: Font.Medium }
+                    Text { text: "⏰  " + Strings.analyticsHourlyChartTitle; color: Theme.textSecondary; font.pixelSize: 13; font.weight: Font.Medium }
 
                     HourlyBarChart {
                         Layout.fillWidth: true; Layout.fillHeight: true
@@ -55,13 +55,15 @@ Item {
 
             // ── Kategori grafiği ─────────────────────────────────────
             GlassCard {
-                Layout.fillWidth: true; height: 200
+                Layout.fillWidth: true
+                Layout.preferredHeight: categoryChart.implicitHeight + 40
 
                 ColumnLayout {
                     anchors { fill: parent; margins: 20 }
                     spacing: 0
 
                     CategoryChart {
+                        id: categoryChart
                         Layout.fillWidth: true; Layout.fillHeight: true
                         chartData: root.categoryData
                     }

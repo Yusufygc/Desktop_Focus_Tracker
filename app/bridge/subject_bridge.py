@@ -9,6 +9,7 @@ from PySide6.QtQml import QmlElement
 
 from app.services.subject_service import SubjectService
 from app.core.logger import logger
+from app.core.strings import Errors
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -31,7 +32,7 @@ class SubjectBridge(QObject):
             return self._subject_svc.get_all()
         except sqlite3.Error as e:
             logger.error(f"Konular çekilemedi: {e}", exc_info=True)
-            self.errorOccurred.emit("Ders konuları yüklenemedi.")
+            self.errorOccurred.emit(Errors.SUBJECTS_LOAD_FAILED)
             return []
 
     @Slot(str, result=bool)
@@ -40,7 +41,7 @@ class SubjectBridge(QObject):
         if success:
             self.subjectAdded.emit()
         else:
-            self.errorOccurred.emit("Konu eklenemedi (aynı isim olabilir).")
+            self.errorOccurred.emit(Errors.SUBJECT_ADD_FAILED)
         return success
 
     @Slot(str, result=bool)
@@ -49,5 +50,5 @@ class SubjectBridge(QObject):
         if success:
             self.subjectDeleted.emit()
         else:
-            self.errorOccurred.emit("Konu silinemedi.")
+            self.errorOccurred.emit(Errors.SUBJECT_DELETE_FAILED)
         return success

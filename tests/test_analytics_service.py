@@ -90,6 +90,12 @@ class TestSummaryStats(unittest.TestCase):
         result = self.svc.summary_stats(items)
         self.assertEqual(result["dailyAvg"], 1.5)
 
+    def test_daily_avg_non_contiguous_days(self):
+        items = [_d("A", day=1), _d("B", day=3)]  # day 1 and day 3 -> range of 3 days
+        result = self.svc.summary_stats(items)
+        # total=2, days=3 -> dailyAvg = 2 / 3 = 0.7
+        self.assertEqual(result["dailyAvg"], 0.7)
+
     def test_peak_hour_correct(self):
         items = [_d("A", hour=14), _d("B", hour=14), _d("C", hour=9)]
         result = self.svc.summary_stats(items)
@@ -134,6 +140,12 @@ class TestSessionStats(unittest.TestCase):
         session = self._make_session("Kimya", 3600, 3)
         result = self.svc.session_stats(session, [])
         self.assertEqual(result["distractions_per_hour"], 3.0)
+
+    def test_short_duration_distractions_per_hour(self):
+        # 15 seconds session, 1 distraction -> distractions_per_hour should be 0.0 (extremum check)
+        session = self._make_session("Fizik", 15, 1)
+        result = self.svc.session_stats(session, [])
+        self.assertEqual(result["distractions_per_hour"], 0.0)
 
 
 if __name__ == "__main__":

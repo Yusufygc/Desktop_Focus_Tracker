@@ -28,8 +28,8 @@ ColumnLayout {
 
     spacing: 12
 
-    Text { text: "Geçmiş Seanslar"; color: "#e2e8f0"; font.pixelSize: 22; font.weight: Font.Bold }
-    Text { text: sessionModel.count + " seans"; color: "#475569"; font.pixelSize: 13 }
+    Text { text: Strings.historyListTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
+    Text { text: Strings.historySessionCountTemplate.replace("{count}", sessionModel.count); color: Theme.textDimmed; font.pixelSize: 13 }
 
     ListModel { id: sessionModel }
 
@@ -44,7 +44,7 @@ ColumnLayout {
             width: parent.width; height: 28
             Text {
                 anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.bottomMargin: 4
-                text: parent.section; color: "#94a3b8"; font.pixelSize: 12; font.weight: Font.Bold
+                text: parent.section; color: Theme.textSecondary; font.pixelSize: 12; font.weight: Font.Bold
             }
         }
 
@@ -59,12 +59,12 @@ ColumnLayout {
             required property int    id
 
             width: ListView.view ? ListView.view.width : 0; height: 68; radius: 10
-            color: root.selectedIndex === index ? "#1e0f5e" : (delegateMouse.containsMouse ? "#161630" : "#131326")
-            border.color: root.selectedIndex === index ? "#3d2490" : "transparent"; border.width: 1
+            color: root.selectedIndex === index ? Theme.primaryDark : (delegateMouse.containsMouse ? Theme.surface3 : Theme.surface2)
+            border.color: root.selectedIndex === index ? Theme.borderActive : "transparent"; border.width: 1
 
             Rectangle {
                 anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-                width: 3; radius: 2; color: "#7c3aed"
+                width: 3; radius: 2; color: Theme.primary
                 opacity: root.selectedIndex === sessionDelegate.index ? 1 : 0
             }
 
@@ -75,17 +75,17 @@ ColumnLayout {
 
                 Text {
                     text: sessionDelegate.subject
-                    color: root.selectedIndex === sessionDelegate.index ? "#a78bfa" : "#cbd5e1"
+                    color: root.selectedIndex === sessionDelegate.index ? Theme.accent : Theme.textSubtle
                     font.pixelSize: 13; font.weight: Font.Medium
                     elide: Text.ElideRight; width: parent.width
                 }
                 RowLayout {
                     spacing: 10
-                    Text { text: sessionDelegate.startedAt; color: "#475569"; font.pixelSize: 11 }
-                    Rectangle { width: 3; height: 3; radius: 2; color: "#374151" }
-                    Text { text: root._fmtDur(sessionDelegate.durationSec); color: "#60a5fa"; font.pixelSize: 11 }
-                    Rectangle { width: 3; height: 3; radius: 2; color: "#374151" }
-                    Text { text: sessionDelegate.distractions + " boz."; color: "#f87171"; font.pixelSize: 11 }
+                    Text { text: sessionDelegate.startedAt; color: Theme.textDimmed; font.pixelSize: 11 }
+                    Rectangle { width: 3; height: 3; radius: 2; color: Theme.borderDim }
+                    Text { text: root._fmtDur(sessionDelegate.durationSec); color: Theme.info; font.pixelSize: 11 }
+                    Rectangle { width: 3; height: 3; radius: 2; color: Theme.borderDim }
+                    Text { text: sessionDelegate.distractions + " boz."; color: Theme.dangerMuted; font.pixelSize: 11 }
                 }
             }
 

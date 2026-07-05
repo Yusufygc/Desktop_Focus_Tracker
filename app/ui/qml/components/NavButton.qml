@@ -17,7 +17,7 @@ Item {
         width: 3
         height: active ? 28 : 0
         radius: 2
-        color: "#a78bfa"
+        color: Theme.accent
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     }
 
@@ -25,16 +25,17 @@ Item {
     Rectangle {
         anchors.centerIn: parent
         width: 44; height: 44; radius: 12
-        color: active ? "#2d1a6e" : (hovered ? "#1e1e3a" : "transparent")
-        border.color: active ? "#5b21b6" : "transparent"
+        color: active ? Theme.primaryDark : (hovered ? Theme.surface4 : "transparent")
+        border.color: active ? Theme.borderActive : "transparent"
         border.width: 1
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 
-    Text {
+    AppIcon {
         anchors.centerIn: parent
-        text: root.icon
-        font.pixelSize: 22
+        name: root.icon
+        size: 22
+        color: active ? Theme.accent : Theme.textSecondary
         opacity: active ? 1.0 : 0.55
         Behavior on opacity { NumberAnimation { duration: 150 } }
     }
@@ -43,8 +44,8 @@ Item {
         visible: hovered
         text: root.label
         delay: 500
-        contentItem: Text { text: root.label; color: "#e2e8f0"; font.pixelSize: 12 }
-        background: Rectangle { color: "#1e1e40"; border.color: "#5b21b6"; border.width: 1; radius: 6 }
+        contentItem: Text { text: root.label; color: Theme.textPrimary; font.pixelSize: 12 }
+        background: Rectangle { color: Theme.surface4; border.color: Theme.borderActive; border.width: 1; radius: 6 }
     }
 
     property bool hovered: false

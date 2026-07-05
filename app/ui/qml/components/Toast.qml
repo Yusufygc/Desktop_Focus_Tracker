@@ -27,28 +27,28 @@ Item {
         anchors.bottomMargin: 28
         width: 400; height: 52
         radius: 10; opacity: 0
-        color: "#150808"
-        border.color: "#ef4444"; border.width: 1
+        color: Theme.dangerBg
+        border.color: Theme.danger; border.width: 1
 
         Rectangle {
             anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-            width: 4; radius: 2; color: "#ef4444"
+            width: 4; radius: 2; color: Theme.danger
         }
 
         RowLayout {
             anchors { fill: parent; leftMargin: 18; rightMargin: 12 }
             spacing: 10
 
-            Text { text: "⚠"; font.pixelSize: 15 }
+            AppIcon { name: "warning"; size: 16; color: Theme.dangerMuted }
 
             Text {
                 text: root.toastMessage
-                color: "#fca5a5"; font.pixelSize: 13
+                color: Theme.dangerMuted; font.pixelSize: 13
                 Layout.fillWidth: true; elide: Text.ElideRight
             }
 
-            Text {
-                text: "✕"; color: "#64748b"; font.pixelSize: 14
+            AppIcon {
+                name: "close"; size: 14; color: Theme.textMuted
                 MouseArea {
                     anchors.fill: parent; anchors.margins: -8
                     cursorShape: Qt.PointingHandCursor

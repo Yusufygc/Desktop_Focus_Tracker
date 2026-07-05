@@ -9,6 +9,7 @@ from PySide6.QtQml import QmlElement
 
 from app.services.timer_preset_service import TimerPresetService
 from app.core.logger import logger
+from app.core.strings import Errors
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -31,7 +32,7 @@ class TimerBridge(QObject):
             return self._timer_svc.get_all()
         except sqlite3.Error as e:
             logger.error(f"Timer presets alınamadı: {e}", exc_info=True)
-            self.errorOccurred.emit("Timer presets yüklenemedi.")
+            self.errorOccurred.emit(Errors.PRESETS_LOAD_FAILED)
             return []
 
     @Slot(int, result=bool)
@@ -40,7 +41,7 @@ class TimerBridge(QObject):
         if success:
             self.presetAdded.emit()
         else:
-            self.errorOccurred.emit("Timer preset eklenemedi (1-180 dakika aralığı).")
+            self.errorOccurred.emit(Errors.PRESET_ADD_FAILED)
         return success
 
     @Slot(int, result=bool)
@@ -49,5 +50,5 @@ class TimerBridge(QObject):
         if success:
             self.presetDeleted.emit()
         else:
-            self.errorOccurred.emit("Timer preset silinemedi.")
+            self.errorOccurred.emit(Errors.PRESET_DELETE_FAILED)
         return success

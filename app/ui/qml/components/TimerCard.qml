@@ -30,6 +30,11 @@ GlassCard {
 
     Component.onCompleted: loadPresets()
 
+    Connections {
+        target: Theme
+        function onThemeChanged() { arc.requestPaint() }
+    }
+
     ColumnLayout {
         anchors { fill: parent; margins: 16 }
         spacing: 8
@@ -55,7 +60,7 @@ GlassCard {
 
                         ctx.beginPath()
                         ctx.arc(70, 70, 52, 0, Math.PI * 2)
-                        ctx.strokeStyle = "#1a1a35"
+                        ctx.strokeStyle = Theme.surface3
                         ctx.lineWidth = 12
                         ctx.stroke()
 
@@ -63,8 +68,8 @@ GlassCard {
                             ctx.beginPath()
                             ctx.arc(70, 70, 52, startA, startA + 2 * Math.PI * progress)
                             var grad = ctx.createLinearGradient(0, 0, width, height)
-                            grad.addColorStop(0, "#7c3aed")
-                            grad.addColorStop(1, "#2563eb")
+                            grad.addColorStop(0, Theme.primary)
+                            grad.addColorStop(1, Theme.infoAlt)
                             ctx.strokeStyle = grad
                             ctx.lineWidth   = 12
                             ctx.lineCap     = "round"
@@ -73,7 +78,7 @@ GlassCard {
                     } else {
                         ctx.beginPath()
                         ctx.arc(70, 70, 52, 0, Math.PI * 2)
-                        ctx.strokeStyle  = "#7c3aed"
+                        ctx.strokeStyle  = Theme.primary
                         ctx.lineWidth    = 40
                         ctx.globalAlpha  = 0.1
                         ctx.stroke()
@@ -87,27 +92,37 @@ GlassCard {
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter
-                    text: "S Ü R E"; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 3
+                    text: Strings.timerLabel; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 3
                 }
                 Text {
                     id: timerLabel
                     Layout.alignment: Qt.AlignHCenter
                     text: "00:00:00"
                     color: (timerCard.plannedMinutes > 0 && timerCard.elapsed >= timerCard.plannedMinutes * 60)
-                           ? "#f87171" : "#a78bfa"
+                           ? Theme.dangerMuted : Theme.accent
                     font.pixelSize: 38; font.weight: Font.Bold; font.family: "Consolas"
                 }
-                Text {
+                RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     visible: timerCard.plannedMinutes > 0
-                    text: {
-                        var rem = timerCard.plannedMinutes * 60 - timerCard.elapsed
-                        if (rem <= 0) return "✓ Süre Doldu!"
-                        var m = Math.floor(rem / 60)
-                        var s = rem % 60
-                        return m + "dk " + (s < 10 ? "0" + s : s) + "sn kaldı"
+                    spacing: 4
+
+                    readonly property int rem: timerCard.plannedMinutes * 60 - timerCard.elapsed
+
+                    AppIcon { name: "check"; size: 11; color: Theme.textMuted; visible: parent.rem <= 0 }
+
+                    Text {
+                        color: Theme.textMuted; font.pixelSize: 11
+                        text: {
+                            var rem = timerCard.plannedMinutes * 60 - timerCard.elapsed
+                            if (rem <= 0) return Strings.timerTimeUp
+                            var m = Math.floor(rem / 60)
+                            var s = rem % 60
+                            return Strings.timerRemainingTemplate
+                                .replace("{minutes}", m)
+                                .replace("{seconds}", s < 10 ? "0" + s : s)
+                        }
                     }
-                    color: "#64748b"; font.pixelSize: 11
                 }
             }
         }
@@ -124,8 +139,8 @@ GlassCard {
                     height: 28
                     width: chipRow.implicitWidth + 20
                     radius: 8
-                    color: timerCard.plannedMinutes === modelData.minutes ? "#2d1a6e" : "#161630"
-                    border.color: timerCard.plannedMinutes === modelData.minutes ? "#7c3aed" : "#2a2a50"
+                    color: timerCard.plannedMinutes === modelData.minutes ? Theme.primaryDark : Theme.surface3
+                    border.color: timerCard.plannedMinutes === modelData.minutes ? Theme.primary : Theme.border
                     border.width: 1
                     property bool hov: chipMouse.containsMouse
 
@@ -136,11 +151,11 @@ GlassCard {
 
                         Text {
                             text: modelData.minutes + "dk"
-                            color: timerCard.plannedMinutes === modelData.minutes ? "#a78bfa" : "#94a3b8"
+                            color: timerCard.plannedMinutes === modelData.minutes ? Theme.accent : Theme.textSecondary
                             font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter
                         }
-                        Text {
-                            text: "×"; color: "#f87171"; font.pixelSize: 13
+                        AppIcon {
+                            name: "close"; size: 13; color: Theme.dangerMuted
                             anchors.verticalCenter: parent.verticalCenter
                             visible: chip.hov
                             MouseArea {
@@ -171,14 +186,15 @@ GlassCard {
 
             // + ekle butonu
             Rectangle {
+                id: addBtn
                 height: 28; width: 28; radius: 8
-                color: addBtnMouse.containsMouse ? "#1e1e40" : "#131326"
-                border.color: timerCard.addPresetMode ? "#7c3aed" : "#2a2a50"; border.width: 1
-                Text {
+                color: addBtnMouse.containsMouse ? Theme.surface4 : Theme.surface2
+                border.color: timerCard.addPresetMode ? Theme.primary : Theme.border; border.width: 1
+                AppIcon {
                     anchors.centerIn: parent
-                    text: timerCard.addPresetMode ? "−" : "+"
-                    color: timerCard.addPresetMode ? "#a78bfa" : "#64748b"
-                    font.pixelSize: 16
+                    name: timerCard.addPresetMode ? "minus" : "plus"
+                    size: 16
+                    color: timerCard.addPresetMode ? Theme.accent : Theme.textMuted
                 }
                 MouseArea {
                     id: addBtnMouse
@@ -186,6 +202,23 @@ GlassCard {
                     onClicked: {
                         timerCard.addPresetMode = !timerCard.addPresetMode
                         if (timerCard.addPresetMode) presetInput.forceActiveFocus()
+                    }
+                }
+                ToolTip {
+                    id: addPresetToolTip
+                    visible: addBtnMouse.containsMouse
+                    text: "Özel Odak Süresi Ekle"
+                    delay: 500
+                    contentItem: Text {
+                        text: addPresetToolTip.text
+                        color: Theme.textPrimary
+                        font.pixelSize: 11
+                    }
+                    background: Rectangle {
+                        color: Theme.surface1
+                        border.color: Theme.border
+                        border.width: 1
+                        radius: 4
                     }
                 }
             }
@@ -199,17 +232,17 @@ GlassCard {
 
             Rectangle {
                 Layout.fillWidth: true; height: 28; radius: 8
-                color: "#161630"
-                border.color: presetInput.activeFocus ? "#7c3aed" : "#2a2a50"; border.width: 1
+                color: Theme.surface3
+                border.color: presetInput.activeFocus ? Theme.primary : Theme.border; border.width: 1
                 TextInput {
                     id: presetInput
                     anchors { fill: parent; leftMargin: 10; rightMargin: 10 }
                     verticalAlignment: TextInput.AlignVCenter
-                    color: "#e2e8f0"; font.pixelSize: 12
+                    color: Theme.textPrimary; font.pixelSize: 12
                     inputMethodHints: Qt.ImhDigitsOnly
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: "Dakika (ör: 25)"; color: "#475569"; font.pixelSize: 11
+                        text: Strings.timerPresetPlaceholder; color: Theme.textDimmed; font.pixelSize: 11
                         visible: presetInput.text === ""
                     }
                     Keys.onReturnPressed: timerCard._savePreset()
@@ -217,7 +250,7 @@ GlassCard {
                 }
             }
             FTButton {
-                Layout.preferredWidth: 52; height: 28; label: "Ekle"; variant: "primary"
+                Layout.preferredWidth: 52; height: 28; label: Strings.timerAddButton; variant: "primary"
                 onClicked: timerCard._savePreset()
             }
         }

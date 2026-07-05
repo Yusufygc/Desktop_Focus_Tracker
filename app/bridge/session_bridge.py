@@ -10,6 +10,7 @@ from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 from app.services.analytics_service import AnalyticsService
 from app.core.logger import logger
+from app.core.strings import Errors
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -54,7 +55,7 @@ class SessionBridge(QObject):
     def startSession(self, subject: str):
         if self._session_svc.has_active:
             logger.warning("Seans başlatma reddedildi: zaten aktif bir seans var.")
-            self.errorOccurred.emit("Zaten aktif bir seans var.")
+            self.errorOccurred.emit(Errors.ACTIVE_SESSION_EXISTS)
             return
         sub = subject or "Genel"
         logger.info(f"Yeni Seans Başlatıldı: {sub}")

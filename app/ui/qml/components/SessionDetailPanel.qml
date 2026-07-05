@@ -26,11 +26,11 @@ GlassCard {
         visible: !root.hasSelection
         Column {
             anchors.centerIn: parent; spacing: 12
-            Text { anchors.horizontalCenter: parent.horizontalCenter; text: "📋"; font.pixelSize: 48; opacity: 0.15 }
+            AppIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "clipboard"; size: 48; color: Theme.textDimmed; opacity: 0.15 }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Detaylarını görmek için\nbir seans seçin"
-                color: "#475569"; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; lineHeight: 1.4
+                text: Strings.historyEmptySelection
+                color: Theme.textDimmed; font.pixelSize: 14; horizontalAlignment: Text.AlignHCenter; lineHeight: 1.4
             }
         }
     }
@@ -49,20 +49,20 @@ GlassCard {
 
                 Text {
                     text: root.sessionData.subject || ""
-                    color: "#a78bfa"; font.pixelSize: 20; font.weight: Font.Bold
+                    color: Theme.accent; font.pixelSize: 20; font.weight: Font.Bold
                     Layout.fillWidth: true; elide: Text.ElideRight
                 }
                 Text {
                     text: root.sessionData.startedAt || ""
-                    color: "#475569"; font.pixelSize: 12
+                    color: Theme.textDimmed; font.pixelSize: 12
                     Layout.alignment: Qt.AlignVCenter
                 }
                 FTButton {
-                    Layout.preferredWidth: 100; height: 34; label: "✎ Düzenle"; variant: "ghost"
+                    Layout.preferredWidth: 100; height: 34; label: Strings.historyEditButton; icon: "edit"; variant: "ghost"
                     onClicked: root.editRequested(root.sessionData.subject || "", root.sessionData.notes || "")
                 }
                 FTButton {
-                    Layout.preferredWidth: 80; height: 34; label: "🗑 Sil"; variant: "ghost"
+                    Layout.preferredWidth: 80; height: 34; label: Strings.historyDeleteButton; icon: "trash"; iconColor: Theme.dangerMuted; variant: "ghost"
                     onClicked: root.deleteRequested(root.sessionData.id || -1)
                 }
             }
@@ -72,17 +72,17 @@ GlassCard {
                 Layout.fillWidth: true; spacing: 10
                 Repeater {
                     model: [
-                        { v: root._fmtDur(root.sessionData.durationSec || 0),     label: "SÜRE",    color: "#60a5fa" },
-                        { v: String(root.sessionData.distractions || 0),           label: "BOZULMA", color: "#f87171" }
+                        { v: root._fmtDur(root.sessionData.durationSec || 0), label: Strings.historyDurationLabel,     color: Theme.info },
+                        { v: String(root.sessionData.distractions || 0),      label: Strings.historyDistractionsLabel, color: Theme.dangerMuted }
                     ]
                     delegate: Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: statCol.implicitHeight + 24
-                        radius: 10; color: "#161630"; border.color: "#252545"; border.width: 1
+                        radius: 10; color: Theme.surface3; border.color: Theme.borderDim; border.width: 1
                         Column {
                             id: statCol; anchors.centerIn: parent; spacing: 4
                             Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.v; color: modelData.color; font.pixelSize: 20; font.weight: Font.Bold }
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 1 }
+                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 1 }
                         }
                     }
                 }
@@ -93,15 +93,15 @@ GlassCard {
                 Layout.fillWidth: true; spacing: 6
                 visible: (root.sessionData.notes || "") !== ""
 
-                Text { text: "Not"; color: "#475569"; font.pixelSize: 12 }
+                Text { text: Strings.historyNoteLabel; color: Theme.textDimmed; font.pixelSize: 12 }
                 Rectangle {
-                    width: parent.width; radius: 8; color: "#141428"
+                    width: parent.width; radius: 8; color: Theme.surface2
                     height: noteText.implicitHeight + 20
                     Text {
                         id: noteText
                         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10; topMargin: 10 }
                         text: root.sessionData.notes || ""
-                        color: "#94a3b8"; font.pixelSize: 13; wrapMode: Text.WordWrap
+                        color: Theme.textSecondary; font.pixelSize: 13; wrapMode: Text.WordWrap
                     }
                 }
             }
@@ -111,30 +111,35 @@ GlassCard {
                 Layout.fillWidth: true; spacing: 8
                 visible: root.distractions.length > 0
 
-                Text { text: "Bozulmalar (" + root.distractions.length + ")"; color: "#475569"; font.pixelSize: 12; topPadding: 10 }
+                Text { text: Strings.historyDistractionsCountTemplate.replace("{count}", root.distractions.length); color: Theme.textDimmed; font.pixelSize: 12; topPadding: 10 }
 
                 Repeater {
                     model: root.distractions
                     delegate: Rectangle {
                         width: parent.width; height: 38; radius: 8
-                        color: index % 2 === 0 ? "#131326" : "transparent"
+                        color: index % 2 === 0 ? Theme.surface2 : "transparent"
                         RowLayout {
                             anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
                             spacing: 10
-                            Text { text: "#" + (index + 1); color: "#7c3aed"; font.pixelSize: 12; font.weight: Font.Bold }
-                            Text { text: modelData.time;     color: "#475569";  font.pixelSize: 11; font.family: "Consolas" }
-                            Text { text: modelData.category; color: "#f87171";  font.pixelSize: 13 }
-                            Text { text: modelData.note;     color: "#64748b";  font.pixelSize: 12; visible: modelData.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight }
+                            Text { text: "#" + (index + 1); color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold }
+                            Text { text: modelData.time;     color: Theme.textDimmed;  font.pixelSize: 11; font.family: "Consolas" }
+                            Text { text: modelData.category; color: Theme.dangerMuted;  font.pixelSize: 13 }
+                            Text { text: modelData.note;     color: Theme.textMuted;  font.pixelSize: 12; visible: modelData.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight }
                         }
                     }
                 }
             }
 
-            Text {
+            Row {
                 Layout.fillWidth: true
                 visible: root.hasSelection && root.distractions.length === 0
-                text: "Bu seansta hiç bozulma kaydedilmemiş ✨"
-                color: "#334155"; font.pixelSize: 13; topPadding: 12
+                spacing: 6; topPadding: 12
+                AppIcon { name: "sparkles"; size: 13; color: Theme.textSubtle; anchors.verticalCenter: parent.verticalCenter }
+                Text {
+                    text: Strings.historyNoDistractions
+                    color: Theme.textSubtle; font.pixelSize: 13
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
 
             Item { height: 20; Layout.fillWidth: true }

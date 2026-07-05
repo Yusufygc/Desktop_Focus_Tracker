@@ -12,3 +12,4 @@ GlassCard 1.0 components/GlassCard.qml
 FTButton 1.0 components/FTButton.qml
 FTDialog 1.0 components/FTDialog.qml
 StatCard 1.0 components/StatCard.qml
+AppIcon 1.0 components/AppIcon.qml

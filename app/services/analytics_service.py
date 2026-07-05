@@ -34,7 +34,10 @@ class AnalyticsService:
     def session_stats(self, session: Session, distractions: List[Distraction]) -> Dict:
         """Tek bir seans için özet istatistik döner."""
         dur = session.duration_seconds
-        per_hour = (session.total_distractions / dur * 3600) if dur > 0 else 0
+        if dur >= 60:
+            per_hour = (session.total_distractions / dur * 3600)
+        else:
+            per_hour = 0.0
         return {
             "subject": session.subject,
             "duration_sec": dur,
@@ -53,7 +56,12 @@ class AnalyticsService:
                 "peakHour": "-",
                 "topCategory": "-",
             }
-        days = len({d.occurred_at.date() for d in distractions}) or 1
+        dates = [d.occurred_at.date() for d in distractions]
+        min_date = min(dates)
+        max_date = max(dates)
+        days = (max_date - min_date).days + 1
+        if days < 1:
+            days = 1
         hourly = self.distractions_per_hour(distractions)
         cats = self.distractions_per_category(distractions)
         return {

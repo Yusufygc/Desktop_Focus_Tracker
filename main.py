@@ -29,6 +29,7 @@ from app.bridge.timer_bridge import TimerBridge
 from app.core.database import db
 from app.core.session_store import SessionStore
 from app.ui.theme import AppTheme
+from app.ui.strings import AppStrings
 from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 
@@ -53,6 +54,7 @@ def main():
     timer_bridge     = TimerBridge()
     session_store    = SessionStore()
     theme            = AppTheme()
+    strings          = AppStrings()
 
     engine = QQmlApplicationEngine()
     engine.addImportPath(QML_DIR)
@@ -64,6 +66,7 @@ def main():
     engine.rootContext().setContextProperty("timerBridge",     timer_bridge)
     engine.rootContext().setContextProperty("sessionStore",    session_store)
     engine.rootContext().setContextProperty("Theme",           theme)
+    engine.rootContext().setContextProperty("Strings",         strings)
     engine.load(QUrl.fromLocalFile(os.path.join(QML_DIR, "Main.qml")))
 
     if not engine.rootObjects():
@@ -71,9 +74,17 @@ def main():
         db.close()
         sys.exit(1)
 
+    # Uygulama kapanırken QML nesnelerini Context Property'ler (Theme, Strings)
+    # henüz hayattayken imha etmek için aboutToQuit sinyalini yakala.
+    def cleanup():
+        nonlocal engine
+        engine = None
+    app.aboutToQuit.connect(cleanup)
+
     logger.info("UI yüklendi, uygulama çalışıyor.")
     exit_code = app.exec()
     logger.info(f"Uygulama {exit_code} kodu ile kapatılıyor...")
+    
     db.close()
     sys.exit(exit_code)
 

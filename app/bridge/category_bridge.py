@@ -9,6 +9,7 @@ from PySide6.QtQml import QmlElement
 
 from app.services.category_service import CategoryService
 from app.core.logger import logger
+from app.core.strings import Errors
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -31,7 +32,7 @@ class CategoryBridge(QObject):
             return self._category_svc.get_all()
         except sqlite3.Error as e:
             logger.error(f"Kategoriler çekilemedi: {e}", exc_info=True)
-            self.errorOccurred.emit("Kategoriler yüklenemedi.")
+            self.errorOccurred.emit(Errors.CATEGORIES_LOAD_FAILED)
             return []
 
     @Slot(str, result=bool)
@@ -40,7 +41,7 @@ class CategoryBridge(QObject):
         if success:
             self.categoryAdded.emit()
         else:
-            self.errorOccurred.emit("Kategori eklenemedi (aynı isim olabilir).")
+            self.errorOccurred.emit(Errors.CATEGORY_ADD_FAILED)
         return success
 
     @Slot(int, result=bool)
@@ -49,5 +50,5 @@ class CategoryBridge(QObject):
         if success:
             self.categoryDeleted.emit()
         else:
-            self.errorOccurred.emit("Kategori silinemedi.")
+            self.errorOccurred.emit(Errors.CATEGORY_DELETE_FAILED)
         return success

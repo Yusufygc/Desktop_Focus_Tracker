@@ -7,6 +7,11 @@ Item {
 
     onChartDataChanged: canvas.requestPaint()
 
+    Connections {
+        target: Theme
+        function onThemeChanged() { canvas.requestPaint() }
+    }
+
     Canvas {
         id: canvas
         anchors.fill: parent
@@ -31,9 +36,9 @@ Item {
                 var y    = height - padBot - barH
 
                 var grad = ctx.createLinearGradient(x, y, x, height - padBot)
-                grad.addColorStop(0, "#7c3aed")
-                grad.addColorStop(1, "#2563eb40")
-                ctx.fillStyle = val > 0 ? grad : "#161630"
+                grad.addColorStop(0, Theme.primary)
+                grad.addColorStop(1, Theme.infoAlt + "40")
+                ctx.fillStyle = val > 0 ? grad : Theme.surface3
                 ctx.beginPath()
                 if (ctx.roundRect) {
                     ctx.roundRect(x, y, barW, Math.max(barH, 2), 3)
@@ -43,7 +48,7 @@ Item {
                 ctx.fill()
 
                 if (j % 3 === 0) {
-                    ctx.fillStyle = "#475569"
+                    ctx.fillStyle = Theme.textDimmed
                     ctx.font = "10px sans-serif"
                     ctx.textAlign = "center"
                     ctx.fillText(String(j), x + barW / 2, height - 4)
@@ -52,10 +57,11 @@ Item {
         }
     }
 
-    Text {
+    Row {
         anchors.centerIn: parent
-        text: "Henüz veri yok ✨"
-        color: "#475569"; font.pixelSize: 14
+        spacing: 6
         visible: root.chartData.length === 0 || root.chartData.every(function(d) { return d.count === 0 })
+        AppIcon { name: "sparkles"; size: 14; color: Theme.textDimmed; anchors.verticalCenter: parent.verticalCenter }
+        Text { text: Strings.commonEmptyChart; color: Theme.textDimmed; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
     }
 }

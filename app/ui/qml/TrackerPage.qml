@@ -48,11 +48,11 @@ Item {
             // Başlık + durum noktası
             RowLayout {
                 spacing: 10
-                Text { text: "Odak Seansı"; color: "#e2e8f0"; font.pixelSize: 22; font.weight: Font.Bold }
+                Text { text: Strings.trackerTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
                 Rectangle {
                     id: statusDot; property bool active: false
                     width: 8; height: 8; radius: 4
-                    color: active ? "#22c55e" : "#374151"
+                    color: active ? Theme.success : Theme.borderDim
                     opacity: active ? 1.0 : 0.3
                     Behavior on color { ColorAnimation { duration: 300 } }
                     SequentialAnimation on opacity {
@@ -69,7 +69,7 @@ Item {
                 RowLayout {
                     anchors { fill: parent; leftMargin: 16; rightMargin: 12; topMargin: 8; bottomMargin: 8 }
                     spacing: 8
-                    Text { text: "📚"; font.pixelSize: 18 }
+                    AppIcon { name: "book"; size: 18; color: Theme.textPrimary }
                     ComboBox {
                         id: subjectCombo
                         Layout.fillWidth: true; editable: true
@@ -77,7 +77,7 @@ Item {
                         background: Rectangle { color: "transparent" }
                         contentItem: TextInput {
                             leftPadding: 4; text: subjectCombo.editText
-                            color: "#e2e8f0"; font.pixelSize: 14
+                            color: Theme.textPrimary; font.pixelSize: 14
                             verticalAlignment: TextInput.AlignVCenter
                             onAccepted: {
                                 var txt = text.trim()
@@ -88,19 +88,19 @@ Item {
                                 }
                             }
                         }
-                        indicator: Text {
+                        indicator: AppIcon {
                             x: subjectCombo.width - width - 12; y: (subjectCombo.height - height) / 2
-                            text: "▾"; color: "#94a3b8"; font.pixelSize: 18
+                            name: "chevron-down"; size: 14; color: Theme.textSecondary
                         }
                         delegate: ItemDelegate {
                             width: subjectCombo.width; height: 38
-                            contentItem: Text { text: modelData; color: "#e2e8f0"; font.pixelSize: 13; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
-                            background: Rectangle { color: parent.hovered ? "#2d1a6e" : "#0f0f28" }
+                            contentItem: Text { text: modelData; color: Theme.textPrimary; font.pixelSize: 13; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
+                            background: Rectangle { color: parent.hovered ? Theme.primaryDark : Theme.surface1 }
                         }
                         popup: Popup {
                             y: subjectCombo.height; width: subjectCombo.width
                             implicitHeight: contentItem.implicitHeight + 2; padding: 1
-                            background: Rectangle { color: "#0f0f28"; border.color: "#3d2490"; border.width: 1; radius: 8 }
+                            background: Rectangle { color: Theme.surface1; border.color: Theme.borderActive; border.width: 1; radius: 8 }
                             contentItem: ListView {
                                 clip: true; implicitHeight: contentHeight
                                 model: subjectCombo.popup.visible ? subjectCombo.delegateModel : null
@@ -109,8 +109,8 @@ Item {
                             }
                         }
                     }
-                    Text {
-                        text: "⚙"; font.pixelSize: 16; color: "#64748b"
+                    AppIcon {
+                        name: "settings-gear"; size: 16; color: Theme.textMuted
                         MouseArea {
                             anchors.fill: parent; anchors.margins: -10
                             cursorShape: Qt.PointingHandCursor; hoverEnabled: true
@@ -133,21 +133,21 @@ Item {
                 property bool isBtnActive: false
                 opacity: isBtnActive ? 1.0 : 0.35
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: "#3d1010" }
-                    GradientStop { position: 0.5; color: "#4a1515" }
-                    GradientStop { position: 1.0; color: "#3d1010" }
+                    GradientStop { position: 0.0; color: Theme.dangerBg }
+                    GradientStop { position: 0.5; color: Theme.dangerBgMid }
+                    GradientStop { position: 1.0; color: Theme.dangerBg }
                 }
-                border.color: "#7a2525"; border.width: 1
+                border.color: Theme.dangerBorder; border.width: 1
 
                 Rectangle {
-                    anchors.fill: parent; radius: parent.radius; color: "#f87171"
+                    anchors.fill: parent; radius: parent.radius; color: Theme.dangerMuted
                     opacity: btnMouse.containsMouse && distractionBtn.isBtnActive ? 0.08 : 0.0
                     Behavior on opacity { NumberAnimation { duration: 150 } }
                 }
                 Column {
                     anchors.centerIn: parent; spacing: 4
-                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: "⚡"; font.pixelSize: 24 }
-                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: "ODAK BOZULDU"; color: "#fecaca"; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 2 }
+                    AppIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "lightning"; size: 24; color: Theme.dangerMuted }
+                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: Strings.trackerDistractionButton; color: Theme.dangerMuted; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 2 }
                 }
                 MouseArea {
                     id: btnMouse; anchors.fill: parent; hoverEnabled: true
@@ -159,8 +159,8 @@ Item {
             // ── BAŞLAT / BİTİR ───────────────────────────────────────
             RowLayout {
                 Layout.fillWidth: true; spacing: 10
-                FTButton { id: startBtn; Layout.fillWidth: true; height: 44; label: "▶  Başlat"; variant: "primary"; onClicked: sessionBridge.startSession(subjectCombo.editText.trim() || "Genel") }
-                FTButton { id: finishBtn; Layout.fillWidth: true; height: 44; label: "⏹  Bitir"; variant: "ghost"; enabled: false; onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() } }
+                FTButton { id: startBtn; Layout.fillWidth: true; height: 44; label: Strings.trackerStartButton; icon: "play"; variant: "primary"; onClicked: sessionBridge.startSession(subjectCombo.editText.trim() || "Genel") }
+                FTButton { id: finishBtn; Layout.fillWidth: true; height: 44; label: Strings.trackerFinishButton; icon: "stop"; variant: "ghost"; enabled: false; onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() } }
             }
 
             Item { Layout.fillHeight: true }
@@ -182,7 +182,7 @@ Item {
 
     SessionSummaryDialog {
         id: summaryDialog
-        onConfirmed: (notes) => {
+        onSummaryConfirmed: (notes) => {
             sessionBridge.finishSession(notes)
             root._setIdleState()
         }

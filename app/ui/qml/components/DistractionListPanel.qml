@@ -54,15 +54,15 @@ ColumnLayout {
     // ── Başlık + sayaç ────────────────────────────────────────────
     RowLayout {
         Layout.fillWidth: true; spacing: 8
-        Text { text: "Bu Seansın Bozulmaları"; color: "#64748b"; font.pixelSize: 12; font.letterSpacing: 1 }
+        Text { text: Strings.distractionPanelTitle; color: Theme.textMuted; font.pixelSize: 12; font.letterSpacing: 1 }
         Item { Layout.fillWidth: true }
         Rectangle {
             width: 38; height: 22; radius: 11
-            color: "#3d1010"; border.color: "#7a2525"; border.width: 1
+            color: Theme.dangerBg; border.color: Theme.dangerBorder; border.width: 1
             Text {
                 id: countLabel
                 anchors.centerIn: parent
-                text: "0"; color: "#f87171"; font.pixelSize: 12; font.weight: Font.Bold
+                text: "0"; color: Theme.dangerMuted; font.pixelSize: 12; font.weight: Font.Bold
             }
         }
     }
@@ -84,7 +84,7 @@ ColumnLayout {
             delegate: Rectangle {
                 id: delRect
                 width: distractionList.width; height: 40; radius: 8
-                color: index % 2 === 0 ? "#131326" : "transparent"
+                color: index % 2 === 0 ? Theme.surface2 : "transparent"
                 opacity: 0; x: -20
                 Component.onCompleted: slideIn.running = true
                 ParallelAnimation {
@@ -95,20 +95,35 @@ ColumnLayout {
                 RowLayout {
                     anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
                     spacing: 12
-                    Text { text: "#" + model.n;   color: "#7c3aed"; font.pixelSize: 12; font.weight: Font.Bold }
-                    Text { text: model.cat;        color: "#f87171"; font.pixelSize: 13 }
+                    Text { text: "#" + model.n;   color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold }
+                    Text { text: model.cat;        color: Theme.dangerMuted; font.pixelSize: 13 }
                     Text {
-                        text: model.note || ""; color: "#64748b"; font.pixelSize: 12
+                        text: model.note || ""; color: Theme.textMuted; font.pixelSize: 12
                         visible: model.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight
                     }
                 }
             }
 
-            Text {
+            Column {
                 anchors.centerIn: parent
-                text: "Henüz kayıt yok ✨"
-                color: "#1e293b"; font.pixelSize: 14
+                spacing: 8
                 visible: distractionModel.count === 0
+
+                AppIcon {
+                    name: "target"
+                    size: 36
+                    color: Theme.textMuted
+                    opacity: 0.3
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: "Bu seansa ait bir odak bozulması bulunmuyor."
+                    color: Theme.textMuted
+                    font.pixelSize: 13
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
             }
         }
     }
@@ -125,32 +140,45 @@ ColumnLayout {
 
             RowLayout {
                 spacing: 6
-                Text { text: "🔍"; font.pixelSize: 13 }
-                Text { text: "ODAK ARALIK ANALİZİ"; color: "#475569"; font.pixelSize: 10; font.letterSpacing: 2 }
+                AppIcon { name: "search"; size: 13; color: Theme.textDimmed }
+                Text { text: Strings.distractionIntervalAnalysisTitle; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 2 }
             }
 
             Text {
                 text: {
                     var s = root.computeIntervalStats()
-                    return s ? "~" + s.avg + " dk'de bir odağınız bozuluyor" : ""
+                    return s ? Strings.distractionIntervalAvgTemplate.replace("{avg}", s.avg) : ""
                 }
-                color: "#a78bfa"; font.pixelSize: 13; font.weight: Font.Bold
+                color: Theme.accent; font.pixelSize: 13; font.weight: Font.Bold
             }
 
-            Text {
+            RowLayout {
                 visible: root.distractionTimes.length >= 3
-                text: {
-                    var s = root.computeIntervalStats()
-                    if (!s || s.count < 3) return ""
-                    if (s.trend === "better")
-                        return "↑ İyileşiyor — Son aralık " + s.lastInterval + "dk (ort. " + s.avg + "dk)"
-                    return "↓ Dikkat — Bozulmalar sıklaşıyor, son aralık " + s.lastInterval + "dk"
+                spacing: 4
+
+                property var _stats: root.computeIntervalStats()
+
+                AppIcon {
+                    visible: parent._stats && parent._stats.count >= 3
+                    name: (parent._stats && parent._stats.trend === "better") ? "trend-up" : "trend-down"
+                    size: 11
+                    color: (parent._stats && parent._stats.trend === "better") ? Theme.success : Theme.dangerMuted
                 }
-                color: {
-                    var s = root.computeIntervalStats()
-                    return (s && s.trend === "better") ? "#22c55e" : "#f87171"
+
+                Text {
+                    text: {
+                        var s = root.computeIntervalStats()
+                        if (!s || s.count < 3) return ""
+                        if (s.trend === "better")
+                            return Strings.distractionIntervalImprovingTemplate.replace("{last}", s.lastInterval).replace("{avg}", s.avg)
+                        return Strings.distractionIntervalWorseningTemplate.replace("{last}", s.lastInterval)
+                    }
+                    color: {
+                        var s = root.computeIntervalStats()
+                        return (s && s.trend === "better") ? Theme.success : Theme.dangerMuted
+                    }
+                    font.pixelSize: 11
                 }
-                font.pixelSize: 11
             }
         }
     }

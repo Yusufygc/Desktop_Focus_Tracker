@@ -5,7 +5,7 @@ GlassCard {
     id: root
     property string value: "0"
     property string label: ""
-    property string accentColor: "#a78bfa"
+    property string accentColor: Theme.accent
 
     height: 80
     property bool hovered: false
@@ -43,7 +43,7 @@ GlassCard {
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: root.label
-            color: "#64748b"
+            color: Theme.textMuted
             font.pixelSize: 10
             font.letterSpacing: 1
         }

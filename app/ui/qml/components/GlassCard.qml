@@ -6,11 +6,11 @@ import QtQuick
 // + ince border kombinasyonu kullanıyoruz.
 Rectangle {
     id: root
-    property string glowColor: "#7c3aed"
+    property string glowColor: Theme.primary
     property real glowOpacity: 0.0
 
-    color: "#111128"
-    border.color: "#2a2a4a"
+    color: Theme.surface2
+    border.color: Theme.border
     border.width: 1
     radius: 16
 
@@ -29,7 +29,7 @@ Rectangle {
     Rectangle {
         anchors { top: parent.top; left: parent.left; right: parent.right; topMargin: 1; leftMargin: 1; rightMargin: 1 }
         height: 1
-        color: "#3a3a6a"
+        color: Theme.borderDim
         radius: parent.radius
     }
 }

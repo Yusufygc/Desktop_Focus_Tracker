@@ -9,7 +9,7 @@ Popup {
     signal saved(string category, string note)
 
     anchors.centerIn: Overlay.overlay; width: 380; modal: true
-    Overlay.modal: Rectangle { color: "#d0000010" }
+    Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property var categoriesData: []
 
@@ -35,13 +35,13 @@ Popup {
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
 
     background: Rectangle {
-        color: "#0f0f28"; border.color: "#6b2020"; border.width: 1; radius: 16
+        color: Theme.surface1; border.color: Theme.dangerBorder; border.width: 1; radius: 16
         Rectangle {
             anchors { top: parent.top; left: parent.left; right: parent.right }
             height: 3; radius: parent.radius
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#dc2626" }
-                GradientStop { position: 1.0; color: "#7c3aed" }
+                GradientStop { position: 0.0; color: Theme.danger }
+                GradientStop { position: 1.0; color: Theme.primary }
             }
         }
     }
@@ -49,19 +49,23 @@ Popup {
     contentItem: Column {
         spacing: 0; padding: 24
 
-        Text { text: "⚡  Odak Bozuldu"; color: "#fca5a5"; font.pixelSize: 18; font.weight: Font.Bold; bottomPadding: 16 }
-        Text { text: "Kategori Ekle / Seç"; color: "#64748b"; font.pixelSize: 12; bottomPadding: 6 }
+        Row {
+            spacing: 8; bottomPadding: 16
+            AppIcon { name: "lightning"; size: 18; color: Theme.dangerMuted; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: Strings.distractionDialogTitle; color: Theme.dangerMuted; font.pixelSize: 18; font.weight: Font.Bold; anchors.verticalCenter: parent.verticalCenter }
+        }
+        Text { text: Strings.distractionCategoryLabel; color: Theme.textMuted; font.pixelSize: 12; bottomPadding: 6 }
 
         RowLayout {
             width: 332; spacing: 8
             Rectangle {
-                Layout.fillWidth: true; height: 36; radius: 8; color: "#161630"
-                border.color: "#2a2a50"; border.width: 1
+                Layout.fillWidth: true; height: 36; radius: 8; color: Theme.surface3
+                border.color: Theme.border; border.width: 1
                 TextInput {
                     id: newCatInput
                     anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                    verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13
-                    Text { anchors.verticalCenter: parent.verticalCenter; text: "Yeni kategori yazıp '+' bas..."; color: "#475569"; font.pixelSize: 13; visible: newCatInput.text === "" }
+                    verticalAlignment: TextInput.AlignVCenter; color: Theme.textPrimary; font.pixelSize: 13
+                    Text { anchors.verticalCenter: parent.verticalCenter; text: Strings.distractionNewCategoryPlaceholder; color: Theme.textDimmed; font.pixelSize: 13; visible: newCatInput.text === "" }
                     Keys.onReturnPressed: addCatBtn.clicked()
                     Keys.onEnterPressed:  addCatBtn.clicked()
                 }
@@ -89,13 +93,13 @@ Popup {
                 model: root.categoriesData
                 delegate: Rectangle {
                     width: (categoryGrid.width - categoryGrid.spacing) / 2; height: 36; radius: 8
-                    color: categoryGrid.selected === modelData.name ? "#2d1a6e" : "#161630"
-                    border.color: categoryGrid.selected === modelData.name ? "#7c3aed" : "#2a2a50"; border.width: 1
+                    color: categoryGrid.selected === modelData.name ? Theme.primaryDark : Theme.surface3
+                    border.color: categoryGrid.selected === modelData.name ? Theme.primary : Theme.border; border.width: 1
                     property bool itemHovered: catMouse.containsMouse
 
                     Text {
                         anchors.centerIn: parent; text: modelData.name
-                        color: categoryGrid.selected === modelData.name ? "#a78bfa" : "#94a3b8"
+                        color: categoryGrid.selected === modelData.name ? Theme.accent : Theme.textSecondary
                         font.pixelSize: 12; elide: Text.ElideRight
                         width: parent.width - 24; horizontalAlignment: Text.AlignHCenter
                     }
@@ -104,9 +108,9 @@ Popup {
                         cursorShape: Qt.PointingHandCursor; hoverEnabled: true
                         onClicked: categoryGrid.selected = modelData.name
                     }
-                    Text {
+                    AppIcon {
                         anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
-                        text: "×"; color: "#f87171"; font.pixelSize: 18
+                        name: "close"; size: 16; color: Theme.dangerMuted
                         visible: parent.itemHovered
                         MouseArea {
                             anchors.fill: parent; anchors.margins: -8; cursorShape: Qt.PointingHandCursor
@@ -117,18 +121,18 @@ Popup {
             }
         }
 
-        Text { text: "Not (opsiyonel)"; color: "#64748b"; font.pixelSize: 12; bottomPadding: 6; topPadding: 16 }
+        Text { text: Strings.distractionNoteLabel; color: Theme.textMuted; font.pixelSize: 12; bottomPadding: 6; topPadding: 16 }
 
         Rectangle {
-            width: 332; height: 40; radius: 8; color: "#161630"
-            border.color: noteField.activeFocus ? "#3d2490" : "#2a2a50"; border.width: 1
+            width: 332; height: 40; radius: 8; color: Theme.surface3
+            border.color: noteField.activeFocus ? Theme.borderActive : Theme.border; border.width: 1
             TextInput {
                 id: noteField
                 anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                verticalAlignment: TextInput.AlignVCenter; color: "#e2e8f0"; font.pixelSize: 13
+                verticalAlignment: TextInput.AlignVCenter; color: Theme.textPrimary; font.pixelSize: 13
                 Keys.onReturnPressed: saveBtn.clicked()
                 Keys.onEnterPressed:  saveBtn.clicked()
-                Text { anchors.verticalCenter: parent.verticalCenter; text: "Ne oldu? (Enter ile kaydet)"; color: "#334155"; font.pixelSize: 13; visible: noteField.text === "" }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: Strings.distractionNotePlaceholder; color: Theme.textSubtle; font.pixelSize: 13; visible: noteField.text === "" }
             }
         }
 
@@ -137,11 +141,11 @@ Popup {
         RowLayout {
             width: 332; spacing: 10
             FTButton {
-                Layout.fillWidth: true; height: 40; label: "İptal"; variant: "ghost"
+                Layout.fillWidth: true; height: 40; label: Strings.commonCancel; variant: "ghost"
                 onClicked: { root.close(); noteField.text = "" }
             }
             FTButton {
-                id: saveBtn; Layout.fillWidth: true; height: 40; label: "Kaydet"; variant: "danger"
+                id: saveBtn; Layout.fillWidth: true; height: 40; label: Strings.commonSave; variant: "danger"
                 onClicked: {
                     if (categoryGrid.selected !== "") {
                         root.saved(categoryGrid.selected, noteField.text)
