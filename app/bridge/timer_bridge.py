@@ -21,9 +21,9 @@ class TimerBridge(QObject):
     presetDeleted = Signal()
     errorOccurred = Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, timer_svc: TimerPresetService, parent=None):
         super().__init__(parent)
-        self._timer_svc = TimerPresetService()
+        self._timer_svc = timer_svc
         logger.debug("TimerBridge başlatıldı.")
 
     @Slot(result="QVariantList")

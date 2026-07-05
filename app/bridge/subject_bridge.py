@@ -21,9 +21,9 @@ class SubjectBridge(QObject):
     subjectDeleted = Signal()
     errorOccurred = Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, subject_svc: SubjectService, parent=None):
         super().__init__(parent)
-        self._subject_svc = SubjectService()
+        self._subject_svc = subject_svc
         logger.debug("SubjectBridge başlatıldı.")
 
     @Slot(result="QVariantList")
@@ -35,9 +35,9 @@ class SubjectBridge(QObject):
             self.errorOccurred.emit(Errors.SUBJECTS_LOAD_FAILED)
             return []
 
-    @Slot(str, result=bool)
-    def addSubject(self, name: str) -> bool:
-        success = self._subject_svc.add(name)
+    @Slot(str, str, result=bool)
+    def addSubject(self, name: str, color: str = "#4CAF50") -> bool:
+        success = self._subject_svc.add(name, color)
         if success:
             self.subjectAdded.emit()
         else:

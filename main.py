@@ -30,7 +30,14 @@ from app.core.database import db
 from app.core.session_store import SessionStore
 from app.ui.theme import AppTheme
 from app.ui.strings import AppStrings
-from app.services.session_service import SessionService
+from app.core.repositories.session_repo import SessionRepository
+from app.core.repositories.distraction_repo import DistractionRepository
+from app.core.repositories.category_repo import CategoryRepository
+from app.core.repositories.subject_repo import SubjectRepository
+from app.core.repositories.timer_preset_repo import TimerPresetRepository
+from app.services.category_service import CategoryService
+from app.services.subject_service import SubjectService
+from app.services.timer_preset_service import TimerPresetService\nfrom app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 
 QML_DIR = os.path.join(os.path.dirname(__file__), "app", "ui", "qml")
@@ -42,16 +49,26 @@ def main():
 
     db.connect()
 
+    # Repositories
+    session_repo      = SessionRepository(db)
+    distraction_repo  = DistractionRepository(db)
+    category_repo     = CategoryRepository(db)
+    subject_repo      = SubjectRepository(db)
+    timer_preset_repo = TimerPresetRepository(db)
+
     # Shared services (singleton instances)
-    session_svc      = SessionService()
-    distraction_svc  = DistractionService()
+    session_svc      = SessionService(session_repo)
+    distraction_svc  = DistractionService(distraction_repo)
+    category_svc     = CategoryService(category_repo)
+    subject_svc      = SubjectService(subject_repo)
+    timer_svc        = TimerPresetService(timer_preset_repo)
 
     # Bridges with injected dependencies
     session_bridge   = SessionBridge(session_svc, distraction_svc)
     analytics_bridge = AnalyticsBridge(session_svc, distraction_svc)
-    category_bridge  = CategoryBridge()
-    subject_bridge   = SubjectBridge()
-    timer_bridge     = TimerBridge()
+    category_bridge  = CategoryBridge(category_svc)
+    subject_bridge   = SubjectBridge(subject_svc)
+    timer_bridge     = TimerBridge(timer_svc)
     session_store    = SessionStore()
     theme            = AppTheme()
     strings          = AppStrings()

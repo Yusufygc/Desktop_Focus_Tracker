@@ -20,6 +20,8 @@ QML_IMPORT_MAJOR_VERSION = 1
 class SessionBridge(QObject):
     sessionStarted   = Signal()
     sessionFinished  = Signal()
+    sessionPaused    = Signal()
+    sessionResumed   = Signal()
     timerTick        = Signal(str)
     distractionAdded = Signal(int, str, str)
     errorOccurred    = Signal(str)
@@ -127,3 +129,22 @@ class SessionBridge(QObject):
         h, rem = divmod(self._elapsed, 3600)
         m, s   = divmod(rem, 60)
         self.timerTick.emit(f"{h:02d}:{m:02d}:{s:02d}")
+    @Slot()
+    def pauseSession(self):
+        if self._session_svc.has_active and not self._session_svc.active_session.is_paused:
+            self._session_svc.pause()
+            self._timer.stop()
+            self.sessionPaused.emit()
+
+    @Slot()
+    def resumeSession(self):
+        if self._session_svc.has_active and self._session_svc.active_session.is_paused:
+            self._session_svc.resume()
+            self._timer.start(1000)
+            self.sessionResumed.emit()
+
+    @Property(bool, notify=sessionPaused)
+    def isPaused(self) -> bool:
+        if self._session_svc.has_active:
+            return self._session_svc.active_session.is_paused
+        return False

@@ -21,9 +21,9 @@ class CategoryBridge(QObject):
     categoryDeleted = Signal()
     errorOccurred = Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, category_svc: CategoryService, parent=None):
         super().__init__(parent)
-        self._category_svc = CategoryService()
+        self._category_svc = category_svc
         logger.debug("CategoryBridge başlatıldı.")
 
     @Slot(result="QVariantList")

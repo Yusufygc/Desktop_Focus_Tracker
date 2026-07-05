@@ -1,15 +1,11 @@
 """
-Session repository — sessions tablosuna ait tüm DB işlemleri burada.
-İş mantığı içermez; yalnızca CRUD.
+Session repository.
 """
-
 from datetime import datetime
 from typing import List, Optional
-
-from app.core.database import db
 from app.core.models.models import Session
 from app.core.logger import logger
-
+from app.core.repositories.base_repository import BaseRepository
 
 def _row_to_session(row) -> Session:
     return Session(
@@ -21,46 +17,52 @@ def _row_to_session(row) -> Session:
         total_distractions=row["total_distractions"],
     )
 
-def insert(session: Session) -> int:
-    cur = db.conn.execute(
-        "INSERT INTO sessions (subject, started_at, notes) VALUES (?, ?, ?)",
-        (session.subject, session.started_at.isoformat(), session.notes),
-    )
-    db.conn.commit()
-    return cur.lastrowid
+class SessionRepository(BaseRepository):
+    def insert(self, session: Session) -> int:
+        cur = self.db.conn.execute(
+            "INSERT INTO sessions (subject, started_at, notes) VALUES (?, ?, ?)",
+            (session.subject, session.started_at.isoformat(), session.notes),
+        )
+        self.db.conn.commit()
+        return cur.lastrowid
 
-def update_end(session_id: int, ended_at: datetime, notes: str, total_distractions: int) -> None:
-    db.conn.execute(
-        "UPDATE sessions SET ended_at=?, notes=?, total_distractions=? WHERE id=?",
-        (ended_at.isoformat(), notes, total_distractions, session_id),
-    )
-    db.conn.commit()
+    def update_end(self, session_id: int, ended_at: datetime, notes: str, total_distractions: int) -> None:
+        self.db.conn.execute(
+            "UPDATE sessions SET ended_at=?, notes=?, total_distractions=? WHERE id=?",
+            (ended_at.isoformat(), notes, total_distractions, session_id),
+        )
+        self.db.conn.commit()
 
-# EKLENDİ: Geçmiş sayfasından konu ve not güncellemek için
-def update_info(session_id: int, subject: str, notes: str) -> None:
-    logger.debug(f"DB Güncelleme: Session ID {session_id} -> {subject}")
-    db.conn.execute(
-        "UPDATE sessions SET subject=?, notes=? WHERE id=?",
-        (subject, notes, session_id)
-    )
-    db.conn.commit()
+    def update_info(self, session_id: int, subject: str, notes: str) -> None:
+        logger.debug(f"DB Güncelleme: Session ID {session_id} -> {subject}")
+        self.db.conn.execute(
+            "UPDATE sessions SET subject=?, notes=? WHERE id=?",
+            (subject, notes, session_id)
+        )
+        self.db.conn.commit()
 
-def get_all() -> List[Session]:
-    rows = db.conn.execute(
-        "SELECT * FROM sessions ORDER BY started_at DESC"
-    ).fetchall()
-    return [_row_to_session(r) for r in rows]
+    def get_all(self) -> List[Session]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM sessions ORDER BY started_at DESC"
+        ).fetchall()
+        return [_row_to_session(r) for r in rows]
 
-def get_by_id(session_id: int) -> Optional[Session]:
-    row = db.conn.execute(
-        "SELECT * FROM sessions WHERE id=?", (session_id,)
-    ).fetchone()
-    return _row_to_session(row) if row else None
+    def get_by_id(self, session_id: int) -> Optional[Session]:
+        row = self.db.conn.execute(
+            "SELECT * FROM sessions WHERE id=?", (session_id,)
+        ).fetchone()
+        return _row_to_session(row) if row else None
 
-def delete(session_id: int) -> None:
-    logger.debug(f"DB Silme: Session ID {session_id}")
-    db.conn.execute("DELETE FROM sessions WHERE id=?", (session_id,))
-    # On cascade is not explicitly enforced by default in SQLite unless pragma foreign_keys=ON is enabled. 
-    # Let's delete distractions as well securely:
-    db.conn.execute("DELETE FROM distractions WHERE session_id=?", (session_id,))
-    db.conn.commit()
+    def delete(self, session_id: int) -> None:
+        logger.debug(f"DB Silme: Session ID {session_id}")
+        self.db.conn.execute("DELETE FROM sessions WHERE id=?", (session_id,))
+        self.db.conn.execute("DELETE FROM distractions WHERE session_id=?", (session_id,))
+        self.db.conn.commit()
+
+    def update_pause(self, session_id: int, total_paused_sec: int, last_paused_at: Optional[datetime]) -> None:
+        dt_str = last_paused_at.isoformat() if last_paused_at else None
+        self.db.conn.execute(
+            "UPDATE sessions SET total_paused_sec=?, last_paused_at=? WHERE id=?",
+            (total_paused_sec, dt_str, session_id)
+        )
+        self.db.conn.commit()

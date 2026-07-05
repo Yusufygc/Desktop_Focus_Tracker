@@ -11,25 +11,42 @@ Item {
         function onTimerTick(timeStr)              { timerCard.updateTime(timeStr) }
         function onSessionStarted()                { root._setActiveState() }
         function onSessionFinished()               { root._setIdleState() }
+        function onSessionPaused()                 { root._setPausedState() }
+        function onSessionResumed()                { root._setActiveState() }
         function onDistractionAdded(n, cat, note)  { distractionPanel.addEntry(n, cat, note) }
     }
 
     function _setActiveState() {
         subjectCombo.enabled       = false
-        startBtn.enabled           = false
+        startBtn.visible           = false
+        pauseBtn.visible           = true
+        pauseBtn.label             = "Duraklat"
+        pauseBtn.icon              = "pause"
         finishBtn.enabled          = true
         distractionBtn.isBtnActive = true
         statusDot.active           = true
-        distractionPanel.clear()
-        timerCard.reset()
+        statusDot.color            = Theme.success
+        if (sessionBridge.isActive && !sessionBridge.isPaused && timerCard.elapsed === 0) {
+            distractionPanel.clear()
+            timerCard.reset()
+        }
+    }
+
+    function _setPausedState() {
+        pauseBtn.label             = "Devam Et"
+        pauseBtn.icon              = "play"
+        statusDot.active           = false
+        statusDot.color            = Theme.warning
     }
 
     function _setIdleState() {
         subjectCombo.enabled       = true
-        startBtn.enabled           = true
+        startBtn.visible           = true
+        pauseBtn.visible           = false
         finishBtn.enabled          = false
         distractionBtn.isBtnActive = false
         statusDot.active           = false
+        statusDot.color            = Theme.borderDim
         distractionPanel.clear()
         timerCard.reset()
     }
@@ -73,6 +90,8 @@ Item {
                     ComboBox {
                         id: subjectCombo
                         Layout.fillWidth: true; editable: true
+                        textRole: "name"
+                        valueRole: "name"
                         model: subjectBridge ? subjectBridge.getSubjects() : []
                         background: Rectangle { color: "transparent" }
                         contentItem: TextInput {
@@ -82,7 +101,7 @@ Item {
                             onAccepted: {
                                 var txt = text.trim()
                                 if (txt.length > 0 && subjectCombo.find(txt) === -1) {
-                                    subjectBridge.addSubject(txt)
+                                    subjectBridge.addSubject(txt, "#4CAF50")
                                     subjectCombo.model = subjectBridge.getSubjects()
                                     subjectCombo.editText = txt
                                 }
@@ -93,9 +112,18 @@ Item {
                             name: "chevron-down"; size: 14; color: Theme.textSecondary
                         }
                         delegate: ItemDelegate {
-                            width: subjectCombo.width; height: 38
-                            contentItem: Text { text: modelData; color: Theme.textPrimary; font.pixelSize: 13; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
-                            background: Rectangle { color: parent.hovered ? Theme.primaryDark : Theme.surface1 }
+                            width: subjectCombo.width
+                            contentItem: RowLayout {
+                                spacing: 8
+                                Rectangle {
+                                    width: 12; height: 12; radius: 6
+                                    color: modelData.color || Theme.primary
+                                }
+                                Text { text: modelData.name; color: Theme.textPrimary; font.pixelSize: 14; Layout.fillWidth: true }
+                            }
+                            background: Rectangle {
+                                color: subjectCombo.highlightedIndex === index ? Theme.surface2 : "transparent"
+                            }
                         }
                         popup: Popup {
                             y: subjectCombo.height; width: subjectCombo.width
@@ -156,11 +184,27 @@ Item {
                 }
             }
 
-            // ── BAŞLAT / BİTİR ───────────────────────────────────────
+            // ── BAŞLAT / DURAKLAT / BİTİR ─────────────────────────────
             RowLayout {
                 Layout.fillWidth: true; spacing: 10
-                FTButton { id: startBtn; Layout.fillWidth: true; height: 44; label: Strings.trackerStartButton; icon: "play"; variant: "primary"; onClicked: sessionBridge.startSession(subjectCombo.editText.trim() || "Genel") }
-                FTButton { id: finishBtn; Layout.fillWidth: true; height: 44; label: Strings.trackerFinishButton; icon: "stop"; variant: "ghost"; enabled: false; onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() } }
+                FTButton { 
+                    id: startBtn; Layout.fillWidth: true; height: 44; 
+                    label: Strings.trackerStartButton; icon: "play"; variant: "primary"; 
+                    onClicked: sessionBridge.startSession(subjectCombo.editText.trim() || "Genel") 
+                }
+                FTButton { 
+                    id: pauseBtn; Layout.fillWidth: true; height: 44; visible: false;
+                    label: "Duraklat"; icon: "pause"; variant: "ghost"; 
+                    onClicked: {
+                        if (sessionBridge.isPaused) sessionBridge.resumeSession()
+                        else sessionBridge.pauseSession()
+                    }
+                }
+                FTButton { 
+                    id: finishBtn; Layout.fillWidth: true; height: 44; 
+                    label: Strings.trackerFinishButton; icon: "stop"; variant: "ghost"; enabled: false; 
+                    onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() } 
+                }
             }
 
             Item { Layout.fillHeight: true }

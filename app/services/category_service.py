@@ -1,27 +1,24 @@
 """
-Category service — kategori iş mantığı.
-Repository'yi kullanır; UI'dan bağımsızdır.
+Category service.
 """
-
 import sqlite3
 from typing import List, Dict
-
-from app.core.repositories import category_repo
+from app.core.repositories.category_repo import CategoryRepository
 from app.core.logger import logger
 
-
 class CategoryService:
+    def __init__(self, category_repo: CategoryRepository):
+        self._repo = category_repo
+
     def get_all(self) -> List[Dict]:
-        """Tüm kategorileri döner."""
-        return category_repo.get_all()
+        return self._repo.get_all()
 
     def add(self, name: str) -> bool:
-        """Yeni kategori ekler. Başarılıysa True, değilse False döner."""
         name = name.strip()
         if not name:
             return False
         try:
-            category_repo.insert(name)
+            self._repo.insert(name)
             logger.info(f"Yeni kategori eklendi: {name}")
             return True
         except sqlite3.IntegrityError:
@@ -32,9 +29,8 @@ class CategoryService:
             return False
 
     def delete(self, cat_id: int) -> bool:
-        """Kategoriyi siler. Başarılıysa True, değilse False döner."""
         try:
-            category_repo.delete(cat_id)
+            self._repo.delete(cat_id)
             logger.info(f"Kategori silindi, ID: {cat_id}")
             return True
         except sqlite3.Error as e:

@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Effects
+import Qt5Compat.GraphicalEffects
 
-// Merkezi ikon bileşeni: app/ui/qml/icons/<name>.svg dosyasını MultiEffect ile
+// Merkezi ikon bileşeni: app/ui/qml/icons/<name>.svg dosyasını ColorOverlay ile
 // istenen renge (ör. Theme.* token'ı) boyayarak render eder.
 Item {
     id: root
@@ -24,15 +24,11 @@ Item {
         visible: false
     }
 
-    // Doğrudan renk renklendirmesi (colorization) kullanarak siyah pikselleri
-    // hedef renge boyar. Maskeleme kullanılmadığı için kenarlardaki siyah/koyu
-    // halka (halo) ve pikselleşme sorunları tamamen çözülür.
-    MultiEffect {
+    // ColorOverlay ile ikonun alfa kanalı korunarak hedef renkle tam olarak boyanır
+    ColorOverlay {
         anchors.fill: parent
         source: img
-        brightness: 1.0
-        colorization: 1.0
-        colorizationColor: root.color
+        color: root.color
         antialiasing: true
     }
 }

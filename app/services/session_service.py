@@ -1,20 +1,17 @@
 """
-Session service — seans yaşam döngüsünü yönetir.
-Repository'yi kullanır; UI'dan bağımsızdır.
+Session service.
 """
-
 from datetime import datetime
-from typing import Optional
-
+from typing import Optional, List
 from app.core.models.models import Session
-from app.core.repositories import session_repo
+from app.core.repositories.session_repo import SessionRepository
 
+from app.core.exceptions import SessionError
 
 class SessionService:
-    def __init__(self):
+    def __init__(self, session_repo: SessionRepository):
+        self._repo = session_repo
         self._active: Optional[Session] = None
-
-    # ── Aktif Seans ──────────────────────────────────────────────
 
     @property
     def active_session(self) -> Optional[Session]:
@@ -26,18 +23,18 @@ class SessionService:
 
     def start(self, subject: str) -> Session:
         if self.has_active:
-            raise RuntimeError("Aktif seans zaten var.")
+            raise SessionError("Aktif seans zaten var.")
         session = Session(subject=subject)
-        session.id = session_repo.insert(session)
+        session.id = self._repo.insert(session)
         self._active = session
         return session
 
     def finish(self, notes: str = "") -> Session:
         if not self.has_active:
-            raise RuntimeError("Aktif seans yok.")
+            raise SessionError("Aktif seans yok.")
         self._active.ended_at = datetime.now()
         self._active.notes = notes
-        session_repo.update_end(
+        self._repo.update_end(
             self._active.id,
             self._active.ended_at,
             notes,
@@ -48,11 +45,28 @@ class SessionService:
         return finished
 
     def increment_distraction_count(self) -> None:
-        """Bir odak bozulma kaydedildiğinde seans sayacını artırır."""
         if self._active:
             self._active.total_distractions += 1
 
-    # ── Geçmiş ───────────────────────────────────────────────────
+    def get_all_sessions(self) -> List[Session]:
+        return self._repo.get_all()
 
-    def get_all_sessions(self):
-        return session_repo.get_all()
+    def update_info(self, session_id: int, subject: str, notes: str) -> None:
+        self._repo.update_info(session_id, subject, notes)
+
+    def delete(self, session_id: int) -> None:
+        self._repo.delete(session_id)
+
+    def pause(self) -> None:
+        if not self.has_active or self._active.is_paused:
+            return
+        self._active.last_paused_at = datetime.now()
+        self._repo.update_pause(self._active.id, self._active.total_paused_sec, self._active.last_paused_at)
+
+    def resume(self) -> None:
+        if not self.has_active or not self._active.is_paused:
+            return
+        pause_dur = int((datetime.now() - self._active.last_paused_at).total_seconds())
+        self._active.total_paused_sec += pause_dur
+        self._active.last_paused_at = None
+        self._repo.update_pause(self._active.id, self._active.total_paused_sec, None)

@@ -12,6 +12,8 @@ Popup {
     Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property var subjectsData: []
+    property string selectedColor: "#4CAF50"
+    property var colorOptions: ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4"]
 
     function loadSubjects() { subjectsData = subjectBridge.getSubjects() }
 
@@ -32,8 +34,42 @@ Popup {
         }
         Text { text: Strings.subjectManagerSubtitle; color: Theme.textMuted; font.pixelSize: 12 }
 
+        Popup {
+            id: colorPopup
+            width: 160; height: 110; padding: 12
+            background: Rectangle { color: Theme.surface2; border.color: Theme.borderActive; radius: 12 }
+            x: 24; y: 90
+            GridLayout {
+                columns: 3; rowSpacing: 10; columnSpacing: 10
+                Repeater {
+                    model: root.colorOptions
+                    delegate: Rectangle {
+                        width: 32; height: 32; radius: 16
+                        color: modelData
+                        border.color: root.selectedColor === modelData ? Theme.textPrimary : "transparent"
+                        border.width: 2
+                        MouseArea {
+                            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.selectedColor = modelData
+                                colorPopup.close()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         RowLayout {
             width: 332; spacing: 8
+            Rectangle {
+                width: 40; height: 40; radius: 20; color: root.selectedColor
+                border.color: Theme.borderDim; border.width: 1
+                MouseArea {
+                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                    onClicked: colorPopup.open()
+                }
+            }
             Rectangle {
                 Layout.fillWidth: true; height: 40; radius: 8; color: Theme.surface3
                 border.color: newSubjectInput.activeFocus ? Theme.primary : Theme.border; border.width: 1
@@ -52,7 +88,7 @@ Popup {
                 onClicked: {
                     var txt = newSubjectInput.text.trim()
                     if (txt !== "") {
-                        subjectBridge.addSubject(txt)
+                        subjectBridge.addSubject(txt, root.selectedColor)
                         newSubjectInput.text = ""
                         root.loadSubjects()
                         root.subjectsChanged()
@@ -78,14 +114,18 @@ Popup {
                     RowLayout {
                         anchors { fill: parent; leftMargin: 12; rightMargin: 8 }
                         spacing: 8
-                        Text { text: modelData; color: Theme.textPrimary; font.pixelSize: 13; Layout.fillWidth: true; elide: Text.ElideRight }
+                        Rectangle {
+                            width: 12; height: 12; radius: 6
+                            color: modelData.color || Theme.primary
+                        }
+                        Text { text: modelData.name; color: Theme.textPrimary; font.pixelSize: 13; Layout.fillWidth: true; elide: Text.ElideRight }
                         AppIcon {
                             name: "trash"; size: 14; color: Theme.textMuted
                             visible: itemMouse.containsMouse
                             MouseArea {
                                 anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    subjectBridge.deleteSubject(modelData)
+                                    subjectBridge.deleteSubject(modelData.name)
                                     subjectListView.dialogRef.loadSubjects()
                                     subjectListView.dialogRef.subjectsChanged()
                                 }

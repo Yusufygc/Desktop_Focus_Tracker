@@ -68,16 +68,14 @@ class TestAnalyticsBridge(unittest.TestCase):
         self.assertEqual(result[0]["category"], "Telefon")
         self.assertEqual(result[0]["note"], "not")
 
-    @patch("app.bridge.analytics_bridge.session_repo")
-    def test_update_session_info_success_returns_true(self, mock_repo):
+    def test_update_session_info_success_returns_true(self):
         result = self.bridge.updateSessionInfo(1, "Fizik", "not")
 
         self.assertTrue(result)
-        mock_repo.update_info.assert_called_once_with(1, "Fizik", "not")
+        self.session_svc.update_info.assert_called_once_with(1, "Fizik", "not")
 
-    @patch("app.bridge.analytics_bridge.session_repo")
-    def test_update_session_info_db_error_emits_errorOccurred(self, mock_repo):
-        mock_repo.update_info.side_effect = sqlite3.OperationalError("DB hatası")
+    def test_update_session_info_db_error_emits_errorOccurred(self):
+        self.session_svc.update_info.side_effect = sqlite3.OperationalError("DB hatası")
         received = []
         self.bridge.errorOccurred.connect(lambda msg: received.append(msg))
 
@@ -86,16 +84,14 @@ class TestAnalyticsBridge(unittest.TestCase):
         self.assertFalse(result)
         self.assertEqual(len(received), 1)
 
-    @patch("app.bridge.analytics_bridge.session_repo")
-    def test_delete_session_success_returns_true(self, mock_repo):
+    def test_delete_session_success_returns_true(self):
         result = self.bridge.deleteSession(1)
 
         self.assertTrue(result)
-        mock_repo.delete.assert_called_once_with(1)
+        self.session_svc.delete.assert_called_once_with(1)
 
-    @patch("app.bridge.analytics_bridge.session_repo")
-    def test_delete_session_db_error_emits_errorOccurred(self, mock_repo):
-        mock_repo.delete.side_effect = sqlite3.OperationalError("DB hatası")
+    def test_delete_session_db_error_emits_errorOccurred(self):
+        self.session_svc.delete.side_effect = sqlite3.OperationalError("DB hatası")
         received = []
         self.bridge.errorOccurred.connect(lambda msg: received.append(msg))
 

@@ -11,7 +11,6 @@ from PySide6.QtQml import QmlElement
 from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 from app.services.analytics_service import AnalyticsService
-from app.core.repositories import session_repo
 from app.core.logger import logger
 from app.core.strings import Errors
 
@@ -97,7 +96,7 @@ class AnalyticsBridge(QObject):
     def updateSessionInfo(self, session_id: int, subject: str, notes: str) -> bool:
         logger.info(f"QML'den güncelleme isteği geldi: Seans ID {session_id}")
         try:
-            session_repo.update_info(session_id, subject, notes)
+            self._session_svc.update_info(session_id, subject, notes)
             logger.info("Seans başarıyla güncellendi.")
             return True
         except sqlite3.Error as e:
@@ -109,7 +108,7 @@ class AnalyticsBridge(QObject):
     def deleteSession(self, session_id: int) -> bool:
         logger.info(f"QML'den silme isteği geldi: Seans ID {session_id}")
         try:
-            session_repo.delete(session_id)
+            self._session_svc.delete(session_id)
             logger.info("Seans başarıyla silindi.")
             return True
         except sqlite3.Error as e:

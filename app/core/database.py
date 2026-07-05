@@ -20,7 +20,9 @@ class Database:
             started_at         TEXT    NOT NULL,
             ended_at           TEXT,
             notes              TEXT    DEFAULT '',
-            total_distractions INTEGER DEFAULT 0
+            total_distractions INTEGER DEFAULT 0,
+            total_paused_sec   INTEGER DEFAULT 0,
+            last_paused_at     TEXT
         );
 
         CREATE TABLE IF NOT EXISTS distractions (
@@ -38,7 +40,8 @@ class Database:
 
         CREATE TABLE IF NOT EXISTS subjects (
             id   INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT    UNIQUE NOT NULL COLLATE NOCASE
+            name TEXT    UNIQUE NOT NULL COLLATE NOCASE,
+            color TEXT   DEFAULT '#4CAF50'
         );
 
         CREATE TABLE IF NOT EXISTS timer_presets (
@@ -115,6 +118,10 @@ class Database:
                 self._connection.execute("INSERT INTO timer_presets (minutes) VALUES (?)", (minutes,))
 
         self._connection.commit()
+        
+        # Add color column to subjects if it doesn't exist
+        self._migrate_sessions_add_paused()
+        self._migrate_subjects_add_color()
 
     def _migrate_case_insensitive_names(self, table: str) -> None:
         """
@@ -144,6 +151,24 @@ class Database:
         """)
         self._connection.execute(f"DROP TABLE {table}_old")
         self._connection.commit()
+
+    def _migrate_sessions_add_paused(self) -> None:
+        rows = self._connection.execute("PRAGMA table_info(sessions)").fetchall()
+        columns = [r["name"] for r in rows]
+        if "total_paused_sec" not in columns:
+            self._connection.execute("ALTER TABLE sessions ADD COLUMN total_paused_sec INTEGER DEFAULT 0")
+            self._connection.execute("ALTER TABLE sessions ADD COLUMN last_paused_at TEXT")
+            self._connection.commit()
+
+    def _migrate_subjects_add_color(self) -> None:
+        """
+        subjects tablosuna 'color' sütunu ekler (eğer yoksa).
+        """
+        rows = self._connection.execute("PRAGMA table_info(subjects)").fetchall()
+        columns = [r["name"] for r in rows]
+        if "color" not in columns:
+            self._connection.execute("ALTER TABLE subjects ADD COLUMN color TEXT DEFAULT '#4CAF50'")
+            self._connection.commit()
 
 
 import atexit

@@ -1,34 +1,19 @@
 """
-Subject repository — subjects tablosuna ait tüm DB işlemleri.
-İş mantığı içermez; yalnızca CRUD.
+Subject repository.
 """
+from typing import List, Dict
+from app.core.repositories.base_repository import BaseRepository
 
-from typing import List
+class SubjectRepository(BaseRepository):
+    def get_all(self) -> List[Dict]:
+        rows = self.db.conn.execute("SELECT name, color FROM subjects ORDER BY id").fetchall()
+        return [{"name": r["name"], "color": r["color"]} for r in rows]
 
-from app.core.database import db
+    def insert(self, name: str, color: str = "#4CAF50") -> int:
+        cur = self.db.conn.execute("INSERT INTO subjects (name, color) VALUES (?, ?)", (name, color))
+        self.db.conn.commit()
+        return cur.lastrowid
 
-
-def get_all() -> List[str]:
-    """Tüm ders konularını isim listesi olarak döner."""
-    rows = db.conn.execute(
-        "SELECT name FROM subjects ORDER BY id"
-    ).fetchall()
-    return [r["name"] for r in rows]
-
-
-def insert(name: str) -> int:
-    """Yeni konu ekler, eklenen satırın ID'sini döner."""
-    cur = db.conn.execute(
-        "INSERT INTO subjects (name) VALUES (?)", (name,)
-    )
-    db.conn.commit()
-    return cur.lastrowid
-
-
-def delete_by_name(name: str) -> None:
-    """İsme göre konu siler."""
-    db.conn.execute(
-        "DELETE FROM subjects WHERE name=?", (name,)
-    )
-    db.conn.commit()
-
+    def delete_by_name(self, name: str) -> None:
+        self.db.conn.execute("DELETE FROM subjects WHERE name=?", (name,))
+        self.db.conn.commit()
