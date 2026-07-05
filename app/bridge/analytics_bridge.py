@@ -3,6 +3,8 @@ AnalyticsBridge — analiz ve geçmiş verilerini QML'e açar.
 Tüm veri QML'e QVariantList/QVariantMap olarak geçer.
 """
 
+import sqlite3
+
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtQml import QmlElement
 
@@ -44,15 +46,12 @@ class AnalyticsBridge(QObject):
     @Slot(result="QVariantMap")
     def getSummaryStats(self) -> dict:
         distractions = self._distraction_svc.get_all()
-        total = len(distractions)
-        days  = len({d.occurred_at.date() for d in distractions}) or 1
-        hourly = self._analytics.distractions_per_hour(distractions)
-        cats   = self._analytics.distractions_per_category(distractions)
+        stats = self._analytics.summary_stats(distractions)
         return {
-            "total":      total,
-            "dailyAvg":   round(total / days, 1),
-            "peakHour":   f"{max(hourly, key=hourly.get)}:00" if hourly else "-",
-            "topCategory": max(cats, key=cats.get) if cats else "-",
+            "total":       stats["total"],
+            "dailyAvg":    stats["dailyAvg"],
+            "peakHour":    stats["peakHour"],
+            "topCategory": stats["topCategory"],
         }
 
     @Slot(result="QVariantList")
@@ -100,8 +99,8 @@ class AnalyticsBridge(QObject):
             session_repo.update_info(session_id, subject, notes)
             logger.info("Seans başarıyla güncellendi.")
             return True
-        except Exception as e:
-            logger.error(f"Seans güncellenirken hata oluştu: {e}")
+        except sqlite3.Error as e:
+            logger.error(f"Seans güncellenirken DB hatası: {e}", exc_info=True)
             self.errorOccurred.emit(f"Güncelleme Hatası: {str(e)}")
             return False
 
@@ -112,7 +111,7 @@ class AnalyticsBridge(QObject):
             session_repo.delete(session_id)
             logger.info("Seans başarıyla silindi.")
             return True
-        except Exception as e:
-            logger.error(f"Seans silinirken hata oluştu: {e}")
+        except sqlite3.Error as e:
+            logger.error(f"Seans silinirken DB hatası: {e}", exc_info=True)
             self.errorOccurred.emit(f"Silme Hatası: {str(e)}")
             return False

@@ -3,6 +3,7 @@ Merkezi loglama mekanizması.
 Uygulamanın nerede tıkandığını görmek için kullanılır.
 """
 import logging
+from logging.handlers import RotatingFileHandler
 import sys
 from config import DEBUG, LOG_PATH
 
@@ -18,8 +19,8 @@ def setup_logger():
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # 2. Dosya Çıktısı (focustracker.log)
-    file_handler = logging.FileHandler(LOG_PATH, encoding='utf-8')
+    # 2. Dosya Çıktısı (focustracker.log) — 2MB'de rotate, 3 yedek dosya
+    file_handler = RotatingFileHandler(LOG_PATH, maxBytes=2_000_000, backupCount=3, encoding='utf-8')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 

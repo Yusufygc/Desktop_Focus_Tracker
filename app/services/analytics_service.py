@@ -42,3 +42,23 @@ class AnalyticsService:
             "distractions_per_hour": round(per_hour, 1),
             "category_breakdown": self.distractions_per_category(distractions),
         }
+
+    def summary_stats(self, distractions: List[Distraction]) -> Dict:
+        """Tüm veriler için özet istatistik döner (Analiz sayfası için)."""
+        total = len(distractions)
+        if total == 0:
+            return {
+                "total": 0,
+                "dailyAvg": 0,
+                "peakHour": "-",
+                "topCategory": "-",
+            }
+        days = len({d.occurred_at.date() for d in distractions}) or 1
+        hourly = self.distractions_per_hour(distractions)
+        cats = self.distractions_per_category(distractions)
+        return {
+            "total": total,
+            "dailyAvg": round(total / days, 1),
+            "peakHour": f"{max(hourly, key=hourly.get)}:00" if hourly else "-",
+            "topCategory": max(cats, key=cats.get) if cats else "-",
+        }

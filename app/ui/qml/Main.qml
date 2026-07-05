@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "components"
 
 ApplicationWindow {
     id: root
@@ -59,4 +60,16 @@ ApplicationWindow {
         cancelText: "İptal"
         onConfirmed: { sessionBridge.finishSessionSilent(); Qt.quit() }
     }
+
+    // ── Hata bildirimi ────────────────────────────────────────────
+    Toast {
+        id: errorToast
+        anchors.fill: parent
+    }
+
+    Connections { target: sessionBridge;   function onErrorOccurred(msg) { errorToast.show(msg) } }
+    Connections { target: analyticsBridge; function onErrorOccurred(msg) { errorToast.show(msg) } }
+    Connections { target: categoryBridge;  function onErrorOccurred(msg) { errorToast.show(msg) } }
+    Connections { target: subjectBridge;   function onErrorOccurred(msg) { errorToast.show(msg) } }
+    Connections { target: timerBridge;     function onErrorOccurred(msg) { errorToast.show(msg) } }
 }

@@ -3,6 +3,7 @@ Category service — kategori iş mantığı.
 Repository'yi kullanır; UI'dan bağımsızdır.
 """
 
+import sqlite3
 from typing import List, Dict
 
 from app.core.repositories import category_repo
@@ -23,8 +24,11 @@ class CategoryService:
             category_repo.insert(name)
             logger.info(f"Yeni kategori eklendi: {name}")
             return True
-        except Exception as e:
-            logger.error(f"Kategori eklenirken hata (muhtemelen duplicate): {e}")
+        except sqlite3.IntegrityError:
+            logger.warning(f"Kategori zaten mevcut: {name}")
+            return False
+        except sqlite3.Error as e:
+            logger.error(f"Kategori eklenirken DB hatası: {e}", exc_info=True)
             return False
 
     def delete(self, cat_id: int) -> bool:
@@ -33,6 +37,6 @@ class CategoryService:
             category_repo.delete(cat_id)
             logger.info(f"Kategori silindi, ID: {cat_id}")
             return True
-        except Exception as e:
-            logger.error(f"Kategori silinirken hata: {e}")
+        except sqlite3.Error as e:
+            logger.error(f"Kategori silinirken DB hatası: {e}", exc_info=True)
             return False

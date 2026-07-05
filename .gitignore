@@ -30,7 +30,7 @@ ENV/
 .project
 .classpath
 .settings/
-
+.claude/
 # --- İşletim Sistemi ---
 Thumbs.db
 Desktop.ini

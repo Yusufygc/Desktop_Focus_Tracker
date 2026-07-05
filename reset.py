@@ -1,4 +1,6 @@
 import os
+import shutil
+from datetime import datetime
 from config import DB_PATH
 
 def reset_database():
@@ -7,6 +9,9 @@ def reset_database():
         print("\nDIKKAT: Veritabanındaki tüm seanslar ve geçmiş kalıcı olarak silinecektir!")
         cevap = input("Emin misiniz? Onaylamak için 'evet' yazın: ")
         if cevap.strip().lower() == "evet":
+            backup_path = f"{DB_PATH}.bak-{datetime.now():%Y%m%d%H%M%S}"
+            shutil.copy2(DB_PATH, backup_path)
+            print(f"Yedek alındı: {backup_path}")
             os.remove(DB_PATH)
             print("✅ Veritabanı başarıyla silindi.")
             print("Uygulamayı yeniden başlattığınızda tertemiz bir veritabanı oluşturulacak.")
