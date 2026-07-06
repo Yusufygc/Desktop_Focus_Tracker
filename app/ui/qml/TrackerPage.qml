@@ -8,6 +8,7 @@ Item {
 
     property int todaySessionCount: 0
     property int todayFocusSec: 0
+    property string currentSubjectText: subjectCombo.editText ? subjectCombo.editText.trim() : "Genel"
 
     signal miniModeRequested()
 
@@ -102,6 +103,11 @@ Item {
         timerCard.reset()
     }
 
+    function triggerFinish() {
+        summaryDialog.pendingStats = sessionBridge.peekStats()
+        summaryDialog.open()
+    }
+
     // ── ANA LAYOUT ────────────────────────────────────────────────────
     RowLayout {
         anchors { fill: parent; margins: 24 }
@@ -164,8 +170,8 @@ Item {
                                 var txt = text.trim()
                                 if (txt.length > 0 && subjectCombo.find(txt) === -1) {
                                     // SubjectManagerDialog'daki renk paleti ile aynı —
-                                    // hızlı ekleme de her konuya farklı renk atasın diye döngüsel seçim.
-                                    var palette = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4"]
+                                    // Hızlı ekleme de her konuya farklı renk atasın diye döngüsel seçim.
+                                    var palette = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4", "#E91E63", "#3F51B5", "#009688", "#795548", "#607D8B", "#FFC107"]
                                     var color = palette[subjectCombo.count % palette.length]
                                     subjectBridge.addSubject(txt, color)
                                     subjectCombo.model = subjectBridge.getSubjects()
@@ -229,12 +235,14 @@ Item {
                         icon: "clock"
                         variant: sessionBridge.isPomodoroMode ? "primary" : "ghost"
                         enabled: !sessionBridge.isActive
+                        toolTipText: "Katı Pomodoro Modu\n(25dk Odak + 5dk Mola)"
                         onClicked: sessionBridge.isPomodoroMode = !sessionBridge.isPomodoroMode
                     }
                     FTButton {
                         Layout.preferredWidth: 40; height: 36
                         icon: "trend-down"
                         variant: "ghost"
+                        toolTipText: "Mini Moda Geç"
                         onClicked: root.miniModeRequested()
                     }
                 }

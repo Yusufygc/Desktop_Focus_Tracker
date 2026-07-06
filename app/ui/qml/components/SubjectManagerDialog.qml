@@ -13,7 +13,7 @@ Popup {
 
     property var subjectsData: []
     property string selectedColor: "#4CAF50"
-    property var colorOptions: ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4"]
+    property var colorOptions: ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4", "#E91E63", "#3F51B5", "#009688", "#795548", "#607D8B", "#FFC107"]
 
     function loadSubjects() { subjectsData = subjectBridge.getSubjects() }
 
@@ -49,7 +49,7 @@ Popup {
 
         Popup {
             id: colorPopup
-            width: 160; height: 110; padding: 12
+            width: 160; height: 182; padding: 12
             background: Rectangle { color: Theme.surface2; border.color: Theme.borderActive; radius: 12 }
             x: 24; y: 90
             GridLayout {

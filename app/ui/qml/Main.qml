@@ -73,6 +73,14 @@ ApplicationWindow {
             miniWindow.hide()
             root.show()
         }
+        onStartRequested: {
+            sessionBridge.startSession(trackerPage.currentSubjectText)
+        }
+        onFinishRequested: {
+            miniWindow.hide()
+            root.show()
+            trackerPage.triggerFinish()
+        }
     }
 
     // ── Hata bildirimi ────────────────────────────────────────────

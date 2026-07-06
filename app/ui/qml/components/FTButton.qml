@@ -22,6 +22,25 @@ Rectangle {
     radius: 10
     opacity: root.enabled ? 1.0 : 0.35
 
+    property string toolTipText: ""
+    ToolTip {
+        id: ftToolTip
+        visible: mouseArea.containsMouse && root.toolTipText !== ""
+        text: root.toolTipText
+        delay: 500
+        contentItem: Text {
+            text: ftToolTip.text
+            color: Theme.textPrimary
+            font.pixelSize: 11
+        }
+        background: Rectangle {
+            color: Theme.surface1
+            border.color: Theme.border
+            border.width: 1
+            radius: 4
+        }
+    }
+
     // Renk tablosu — Theme.buttonStyles'tan gelir (dark/light paletle birlikte değişir)
     readonly property var styles: Theme.buttonStyles
 

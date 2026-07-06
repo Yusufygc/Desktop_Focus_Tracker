@@ -4,12 +4,14 @@ import QtQuick.Layouts
 
 Window {
     id: miniRoot
-    width: 240
+    width: 280
     height: 90
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
 
     signal maximizeRequested()
+    signal startRequested()
+    signal finishRequested()
 
     Rectangle {
         anchors.fill: parent
@@ -86,24 +88,50 @@ Window {
             }
 
             // Butonlar
-            FTButton {
-                Layout.preferredWidth: 36
-                height: 36
-                icon: sessionBridge.isPaused ? "play" : "pause"
-                variant: "ghost"
-                enabled: sessionBridge.isActive
-                onClicked: {
-                    if (sessionBridge.isPaused) sessionBridge.resumeSession()
-                    else sessionBridge.pauseSession()
+            RowLayout {
+                spacing: 6
+
+                // Başlat Butonu
+                FTButton {
+                    Layout.preferredWidth: 36; height: 36
+                    icon: "play"
+                    variant: "ghost"
+                    visible: !sessionBridge.isActive
+                    toolTipText: "Başlat"
+                    onClicked: miniRoot.startRequested()
                 }
-            }
-            
-            FTButton {
-                Layout.preferredWidth: 50
-                height: 36
-                label: "Büyüt"
-                variant: "primary"
-                onClicked: miniRoot.maximizeRequested()
+
+                // Duraklat / Devam Et Butonu
+                FTButton {
+                    Layout.preferredWidth: 36; height: 36
+                    icon: sessionBridge.isPaused ? "play" : "pause"
+                    variant: "ghost"
+                    visible: sessionBridge.isActive
+                    toolTipText: sessionBridge.isPaused ? "Devam Et" : "Duraklat"
+                    onClicked: {
+                        if (sessionBridge.isPaused) sessionBridge.resumeSession()
+                        else sessionBridge.pauseSession()
+                    }
+                }
+
+                // Bitir Butonu
+                FTButton {
+                    Layout.preferredWidth: 36; height: 36
+                    icon: "stop"
+                    variant: "danger"
+                    visible: sessionBridge.isActive
+                    toolTipText: "Bitir"
+                    onClicked: miniRoot.finishRequested()
+                }
+
+                // Büyüt Butonu
+                FTButton {
+                    Layout.preferredWidth: 50; height: 36
+                    label: "Büyüt"
+                    variant: "primary"
+                    toolTipText: "Ana Pencereye Dön"
+                    onClicked: miniRoot.maximizeRequested()
+                }
             }
         }
     }

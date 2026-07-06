@@ -107,7 +107,7 @@ class Summary:
 
 class SubjectManager:
     TITLE = "Konu Yönetimi"
-    SUBTITLE = "Sık kullandığınız ders konularını buradan yönetin."
+    SUBTITLE = "Sık kullandığınız odak konularını ve projelerinizi buradan yönetin."
     NEW_SUBJECT_PLACEHOLDER = "Yeni konu adı..."
     ADD_BUTTON = "+ Ekle"
     EMPTY_LIST = "Henüz konu eklenmemiş"
