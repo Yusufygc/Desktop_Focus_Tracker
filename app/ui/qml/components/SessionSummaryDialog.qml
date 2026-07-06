@@ -12,6 +12,7 @@ FTDialog {
     gradientStart: Theme.success
     gradientEnd: Theme.infoAlt
     width: 420
+    padding: 28
 
     property var pendingStats: ({})
 
@@ -24,7 +25,7 @@ FTDialog {
     }
 
     contentItem: Column {
-        spacing: 0; padding: 28
+        spacing: 0
 
         Row {
             spacing: 8; bottomPadding: 20
@@ -34,7 +35,7 @@ FTDialog {
 
         // AnalyticsPage/SessionDetailPanel ile aynı görsel dil — gerçek StatCard
         GridLayout {
-            columns: 2; columnSpacing: 10; rowSpacing: 10; width: 364
+            columns: 2; columnSpacing: 10; rowSpacing: 10; width: parent.width
 
             StatCard {
                 Layout.fillWidth: true
@@ -69,7 +70,7 @@ FTDialog {
         Text { text: Strings.summaryNoteLabel; color: Theme.textMuted; font.pixelSize: 12; bottomPadding: 8; topPadding: 16 }
 
         Rectangle {
-            width: 364; height: 72; radius: 8; color: Theme.surface3
+            width: parent.width; height: 72; radius: 8; color: Theme.surface3
             border.color: summaryNote.activeFocus ? Theme.success : Theme.border; border.width: 1
             clip: true
             ScrollView {
@@ -91,7 +92,7 @@ FTDialog {
         Item { height: 16; width: 1 }
 
         FTButton {
-            width: 364; height: 44; label: Strings.summarySaveButton; variant: "primary"
+            width: parent.width; height: 44; label: Strings.summarySaveButton; variant: "primary"
             onClicked: {
                 root.summaryConfirmed(summaryNote.text)
                 summaryNote.text = ""

@@ -8,7 +8,7 @@ Popup {
 
     signal saved(int sessionId, string subject, string notes)
 
-    anchors.centerIn: Overlay.overlay; width: 380; modal: true
+    anchors.centerIn: Overlay.overlay; width: 380; padding: 24; modal: true
     Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property int _sessionId: -1
@@ -22,10 +22,23 @@ Popup {
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
     exit:  Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
 
-    background: Rectangle { color: Theme.surface1; border.color: Theme.borderActive; border.width: 1; radius: 16 }
+    background: Rectangle {
+        radius: 16
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: Theme.primary }
+            GradientStop { position: 1.0; color: Theme.infoAlt }
+        }
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: 15
+            color: Theme.surface1
+        }
+    }
 
     contentItem: Column {
-        spacing: 16; padding: 24
+        spacing: 16
 
         Row {
             spacing: 8

@@ -25,11 +25,4 @@ Rectangle {
         Behavior on opacity { NumberAnimation { duration: 200 } }
     }
 
-    // Üst parlaklık çizgisi
-    Rectangle {
-        anchors { top: parent.top; left: parent.left; right: parent.right; topMargin: 1; leftMargin: 1; rightMargin: 1 }
-        height: 1
-        color: Theme.borderDim
-        radius: parent.radius
-    }
 }

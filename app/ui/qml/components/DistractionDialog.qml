@@ -8,7 +8,7 @@ Popup {
 
     signal saved(string category, string note)
 
-    anchors.centerIn: Overlay.overlay; width: 380; modal: true
+    anchors.centerIn: Overlay.overlay; width: 380; padding: 24; modal: true
     Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property var categoriesData: []
@@ -35,19 +35,22 @@ Popup {
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
 
     background: Rectangle {
-        color: Theme.surface1; border.color: Theme.dangerBorder; border.width: 1; radius: 16
+        radius: 16
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: Theme.danger }
+            GradientStop { position: 1.0; color: Theme.primary }
+        }
         Rectangle {
-            anchors { top: parent.top; left: parent.left; right: parent.right }
-            height: 3; radius: parent.radius
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: Theme.danger }
-                GradientStop { position: 1.0; color: Theme.primary }
-            }
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: 15
+            color: Theme.surface1
         }
     }
 
     contentItem: Column {
-        spacing: 0; padding: 24
+        spacing: 0
 
         Row {
             spacing: 8; bottomPadding: 16
@@ -57,7 +60,7 @@ Popup {
         Text { text: Strings.distractionCategoryLabel; color: Theme.textMuted; font.pixelSize: 12; bottomPadding: 6 }
 
         RowLayout {
-            width: 332; spacing: 8
+            width: parent.width; spacing: 8
             Rectangle {
                 Layout.fillWidth: true; height: 36; radius: 8; color: Theme.surface3
                 border.color: Theme.border; border.width: 1
@@ -86,7 +89,7 @@ Popup {
 
         Grid {
             id: categoryGrid
-            columns: 2; spacing: 8; width: 332
+            columns: 2; spacing: 8; width: parent.width
             property string selected: ""
 
             Repeater {
@@ -124,7 +127,7 @@ Popup {
         Text { text: Strings.distractionNoteLabel; color: Theme.textMuted; font.pixelSize: 12; bottomPadding: 6; topPadding: 16 }
 
         Rectangle {
-            width: 332; height: 40; radius: 8; color: Theme.surface3
+            width: parent.width; height: 40; radius: 8; color: Theme.surface3
             border.color: noteField.activeFocus ? Theme.borderActive : Theme.border; border.width: 1
             TextInput {
                 id: noteField
@@ -139,7 +142,7 @@ Popup {
         Item { height: 16; width: 1 }
 
         RowLayout {
-            width: 332; spacing: 10
+            width: parent.width; spacing: 10
             FTButton {
                 Layout.fillWidth: true; height: 40; label: Strings.commonCancel; variant: "ghost"
                 onClicked: { root.close(); noteField.text = "" }

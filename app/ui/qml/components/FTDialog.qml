@@ -17,6 +17,7 @@ Popup {
 
     anchors.centerIn: Overlay.overlay
     width: 400
+    padding: 24
     modal: true
     closePolicy: Popup.NoAutoClose
 
@@ -31,19 +32,17 @@ Popup {
     }
 
     background: Rectangle {
-        color: Theme.surface1
-        border.color: root.borderColor
-        border.width: 1
         radius: 16
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: root.gradientStart }
+            GradientStop { position: 1.0; color: root.gradientEnd }
+        }
         Rectangle {
-            anchors { top: parent.top; left: parent.left; right: parent.right }
-            height: 3
-            radius: parent.radius
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0.0; color: root.gradientStart }
-                GradientStop { position: 1.0; color: root.gradientEnd }
-            }
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: 15
+            color: Theme.surface1
         }
     }
 

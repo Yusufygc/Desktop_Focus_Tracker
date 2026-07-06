@@ -8,7 +8,7 @@ Popup {
 
     signal subjectsChanged()
 
-    anchors.centerIn: Overlay.overlay; width: 380; modal: true
+    anchors.centerIn: Overlay.overlay; width: 380; padding: 24; modal: true
     Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property var subjectsData: []
@@ -22,10 +22,23 @@ Popup {
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
     exit:  Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
 
-    background: Rectangle { color: Theme.surface1; border.color: Theme.borderActive; border.width: 1; radius: 16 }
+    background: Rectangle {
+        radius: 16
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: Theme.primary }
+            GradientStop { position: 1.0; color: Theme.infoAlt }
+        }
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: 15
+            color: Theme.surface1
+        }
+    }
 
     contentItem: Column {
-        spacing: 16; padding: 24
+        spacing: 16
 
         Row {
             spacing: 8
@@ -61,7 +74,7 @@ Popup {
         }
 
         RowLayout {
-            width: 332; spacing: 8
+            width: parent.width; spacing: 8
             Rectangle {
                 width: 40; height: 40; radius: 20; color: root.selectedColor
                 border.color: Theme.borderDim; border.width: 1
@@ -98,7 +111,7 @@ Popup {
         }
 
         Rectangle {
-            width: 332; height: Math.min(subjectListView.contentHeight + 16, 240)
+            width: parent.width; height: Math.min(subjectListView.contentHeight + 16, 240)
             radius: 10; color: Theme.surface2; border.color: Theme.borderDim; border.width: 1
 
             ListView {
@@ -146,6 +159,6 @@ Popup {
             }
         }
 
-        FTButton { width: 332; height: 40; label: Strings.commonClose; variant: "ghost"; onClicked: root.close() }
+        FTButton { width: parent.width; height: 40; label: Strings.commonClose; variant: "ghost"; onClicked: root.close() }
     }
 }
