@@ -160,7 +160,7 @@ class AppStrings(QObject):
     def historyNoteLabel(self):         return History.NOTE_LABEL
 
     @Property(str, constant=True)
-    def historyDistractionsCountTemplate(self): return History.DISTRACTIONS_COUNT_TEMPLATE
+    def historyDistractionsListTitle(self): return History.DISTRACTIONS_LIST_TITLE
 
     @Property(str, constant=True)
     def historyNoDistractions(self):    return History.NO_DISTRACTIONS

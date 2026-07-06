@@ -71,7 +71,7 @@ class History:
     DURATION_LABEL = "SÜRE"
     DISTRACTIONS_LABEL = "BOZULMA"
     NOTE_LABEL = "Not"
-    DISTRACTIONS_COUNT_TEMPLATE = "Bozulmalar ({count})"
+    DISTRACTIONS_LIST_TITLE = "Bozulmalar"
     NO_DISTRACTIONS = "Bu seansta hiç bozulma kaydedilmemiş"
     EDIT_BUTTON = "Düzenle"
     DELETE_BUTTON = "Sil"

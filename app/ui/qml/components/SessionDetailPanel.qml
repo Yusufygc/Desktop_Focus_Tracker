@@ -114,7 +114,7 @@ GlassCard {
                 Layout.fillWidth: true; spacing: 8
                 visible: root.distractions.length > 0
 
-                Text { text: Strings.historyDistractionsCountTemplate.replace("{count}", root.distractions.length); color: Theme.textDimmed; font.pixelSize: 12; topPadding: 10 }
+                Text { text: Strings.historyDistractionsListTitle; color: Theme.textDimmed; font.pixelSize: 12; topPadding: 10 }
 
                 Repeater {
                     model: root.distractions
