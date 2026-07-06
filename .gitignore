@@ -70,3 +70,6 @@ build/
 *.tmp
 *.temp
 .antigravityignore
+
+# --- Inno Setup ---
+Output/
