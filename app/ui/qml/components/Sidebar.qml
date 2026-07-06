@@ -31,22 +31,7 @@ Item {
             Layout.bottomMargin: 20
             spacing: 10
 
-            Rectangle {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 40
-                radius: 11
-                gradient: Gradient {
-                    orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: Theme.primary }
-                    GradientStop { position: 1.0; color: Theme.infoAlt }
-                }
-                AppIcon {
-                    anchors.centerIn: parent
-                    name: "lightning"
-                    size: 18
-                    color: "#ffffff"
-                }
-            }
+
             Text {
                 text: Strings.appName
                 color: Theme.textPrimary

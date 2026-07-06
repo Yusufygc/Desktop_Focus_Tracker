@@ -40,7 +40,13 @@ ApplicationWindow {
             Layout.fillHeight: true
             currentIndex: 0
 
-            TrackerPage  { id: trackerPage }
+            TrackerPage  { 
+                id: trackerPage 
+                onMiniModeRequested: {
+                    root.hide()
+                    miniWindow.show()
+                }
+            }
             AnalyticsPage {
                 id: analyticsPage
                 onVisibleChanged: if (visible) analyticsPage.reload()
@@ -59,6 +65,14 @@ ApplicationWindow {
         confirmText: Strings.saveAndExit
         cancelText: Strings.commonCancel
         onConfirmed: { sessionBridge.finishSessionSilent(); Qt.quit() }
+    }
+
+    MiniWindow {
+        id: miniWindow
+        onMaximizeRequested: {
+            miniWindow.hide()
+            root.show()
+        }
     }
 
     // ── Hata bildirimi ────────────────────────────────────────────

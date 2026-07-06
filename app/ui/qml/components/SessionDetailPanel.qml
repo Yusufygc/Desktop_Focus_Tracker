@@ -89,6 +89,18 @@ GlassCard {
                     accentColor: Theme.dangerMuted
                     icon: "lightning"
                 }
+                StatCard {
+                    Layout.fillWidth: true
+                    value: String(root.sessionData.focusScore || 0)
+                    label: "Odak Puanı"
+                    accentColor: {
+                        var s = root.sessionData.focusScore || 0;
+                        if (s >= 80) return Theme.success;
+                        if (s >= 50) return Theme.warning;
+                        return Theme.dangerMuted;
+                    }
+                    icon: "sparkles"
+                }
             }
 
             // Seans notu
