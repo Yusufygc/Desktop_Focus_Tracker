@@ -19,13 +19,16 @@ _SETTINGS_KEY = "ui/isDark"
 
 
 _DARK = {
-    "primary":        "#7c3aed",
-    "primaryHover":   "#6030f0",
-    "primaryDark":    "#2d1a6e",
-    "primaryBorder":  "#3d2490",
-    "accent":         "#a78bfa",
+    "primary":        "#6366f1",
+    "primaryHover":   "#818cf8",
+    "primaryDark":    "#312e81",
+    "primaryBorder":  "#4338ca",
+    "accent":         "#a5b4fc",
+    "accentWarm":     "#f59e0b",
 
     "danger":         "#ef4444",
+    "onDanger":       "#ffffff",
+    "onSolid":        "#ffffff",
     "dangerMuted":    "#f87171",
     "dangerDark":     "#991b1b",
     "dangerBg":       "#3d1010",
@@ -62,8 +65,11 @@ _LIGHT = {
     "primaryDark":    "#e0e7ff",
     "primaryBorder":  "#c7d2fe",
     "accent":         "#4f46e5",
+    "accentWarm":     "#d97706",
 
     "danger":         "#dc2626",
+    "onDanger":       "#ffffff",
+    "onSolid":        "#ffffff",
     "dangerMuted":    "#ef4444",
     "dangerDark":     "#991b1b",
     "dangerBg":       "#fee2e2",
@@ -95,7 +101,7 @@ _LIGHT = {
 }
 
 _BUTTON_STYLES_DARK = {
-    "primary": {"bg": "#7c3aed", "hover": "#6030f0", "border": "#3d2490"},
+    "primary": {"bg": "#6366f1", "hover": "#818cf8", "border": "#4338ca"},
     "danger":  {"bg": "#991b1b", "hover": "#b91c1c", "border": "#7f1d1d"},
     "ghost":   {"bg": "#1e1e40", "hover": "#252550", "border": "#3a3a6a"},
 }
@@ -158,9 +164,18 @@ class AppTheme(QObject):
     @Property(str, notify=themeChanged)
     def accent(self):         return self._palette["accent"]
 
+    @Property(str, notify=themeChanged)
+    def accentWarm(self):     return self._palette["accentWarm"]
+
     # ── Hata / Tehlike ────────────────────────────────────────
     @Property(str, notify=themeChanged)
     def danger(self):         return self._palette["danger"]
+
+    @Property(str, notify=themeChanged)
+    def onDanger(self):       return self._palette["onDanger"]
+
+    @Property(str, notify=themeChanged)
+    def onSolid(self):        return self._palette["onSolid"]
 
     @Property(str, notify=themeChanged)
     def dangerMuted(self):    return self._palette["dangerMuted"]

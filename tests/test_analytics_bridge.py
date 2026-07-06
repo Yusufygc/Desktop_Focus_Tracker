@@ -17,7 +17,9 @@ class TestAnalyticsBridge(unittest.TestCase):
     def setUp(self):
         self.session_svc = Mock()
         self.distraction_svc = Mock()
-        self.bridge = AnalyticsBridge(self.session_svc, self.distraction_svc)
+        self.subject_svc = Mock()
+        self.subject_svc.get_color_map.return_value = {}
+        self.bridge = AnalyticsBridge(self.session_svc, self.distraction_svc, self.subject_svc)
 
     def test_get_hourly_data_returns_24_entries(self):
         self.distraction_svc.get_all.return_value = [
@@ -50,13 +52,24 @@ class TestAnalyticsBridge(unittest.TestCase):
     def test_get_session_history_maps_fields(self):
         session = Session(subject="Matematik", id=5, started_at=datetime.now(), notes="not")
         self.session_svc.get_all_sessions.return_value = [session]
+        self.subject_svc.get_color_map.return_value = {"Matematik": "#ff0000"}
 
         result = self.bridge.getSessionHistory()
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["id"], 5)
         self.assertEqual(result[0]["subject"], "Matematik")
+        self.assertEqual(result[0]["subjectColor"], "#ff0000")
         self.assertEqual(result[0]["dateGroup"], "Bugün")
+
+    def test_get_session_history_unknown_subject_uses_fallback_color(self):
+        session = Session(subject="Silinmiş Konu", id=6, started_at=datetime.now())
+        self.session_svc.get_all_sessions.return_value = [session]
+        self.subject_svc.get_color_map.return_value = {}
+
+        result = self.bridge.getSessionHistory()
+
+        self.assertEqual(result[0]["subjectColor"], "#4f46e5")
 
     def test_get_session_distractions_maps_fields(self):
         self.distraction_svc.get_for_session.return_value = [

@@ -6,11 +6,37 @@ import "components"
 Item {
     id: root
 
+    property int todaySessionCount: 0
+    property int todayFocusSec: 0
+
+    Component.onCompleted: root._refreshTodaySummary()
+
+    function _refreshTodaySummary() {
+        if (!analyticsBridge) return
+        var sessions = analyticsBridge.getSessionHistory()
+        var count = 0, totalSec = 0
+        for (var i = 0; i < sessions.length; i++) {
+            if (sessions[i].dateGroup === "Bugün") {
+                count++
+                totalSec += sessions[i].durationSec
+            }
+        }
+        root.todaySessionCount = count
+        root.todayFocusSec = totalSec
+    }
+
+    function _fmtTodayFocus(sec) {
+        var h = Math.floor(sec / 3600)
+        var m = Math.floor((sec % 3600) / 60)
+        if (h > 0) return h + "sa " + m + "dk"
+        return m + "dk"
+    }
+
     Connections {
         target: sessionBridge
         function onTimerTick(timeStr)              { timerCard.updateTime(timeStr) }
         function onSessionStarted()                { root._setActiveState() }
-        function onSessionFinished()               { root._setIdleState() }
+        function onSessionFinished()               { root._setIdleState(); root._refreshTodaySummary() }
         function onSessionPaused()                 { root._setPausedState() }
         function onSessionResumed()                { root._setActiveState() }
         function onDistractionAdded(n, cat, note)  { distractionPanel.addEntry(n, cat, note) }
@@ -101,15 +127,31 @@ Item {
                             onAccepted: {
                                 var txt = text.trim()
                                 if (txt.length > 0 && subjectCombo.find(txt) === -1) {
-                                    subjectBridge.addSubject(txt, "#4CAF50")
+                                    // SubjectManagerDialog'daki renk paleti ile aynı —
+                                    // hızlı ekleme de her konuya farklı renk atasın diye döngüsel seçim.
+                                    var palette = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4"]
+                                    var color = palette[subjectCombo.count % palette.length]
+                                    subjectBridge.addSubject(txt, color)
                                     subjectCombo.model = subjectBridge.getSubjects()
                                     subjectCombo.editText = txt
                                 }
                             }
                         }
-                        indicator: AppIcon {
-                            x: subjectCombo.width - width - 12; y: (subjectCombo.height - height) / 2
-                            name: "chevron-down"; size: 14; color: Theme.textSecondary
+                        indicator: Item {
+                            x: subjectCombo.width - width
+                            y: 0
+                            width: 36; height: subjectCombo.height
+
+                            AppIcon {
+                                anchors.centerIn: parent
+                                name: "chevron-down"; size: 14; color: Theme.textSecondary
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: subjectCombo.popup.visible ? subjectCombo.popup.close() : subjectCombo.popup.open()
+                            }
                         }
                         delegate: ItemDelegate {
                             width: subjectCombo.width
@@ -119,7 +161,7 @@ Item {
                                     width: 12; height: 12; radius: 6
                                     color: modelData.color || Theme.primary
                                 }
-                                Text { text: modelData.name; color: Theme.textPrimary; font.pixelSize: 14; Layout.fillWidth: true }
+                                Text { text: modelData.name; color: Theme.textPrimary; font.pixelSize: 14; Layout.fillWidth: true; elide: Text.ElideRight }
                             }
                             background: Rectangle {
                                 color: subjectCombo.highlightedIndex === index ? Theme.surface2 : "transparent"
@@ -160,22 +202,18 @@ Item {
                 Layout.fillWidth: true; height: 80; radius: 14
                 property bool isBtnActive: false
                 opacity: isBtnActive ? 1.0 : 0.35
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: Theme.dangerBg }
-                    GradientStop { position: 0.5; color: Theme.dangerBgMid }
-                    GradientStop { position: 1.0; color: Theme.dangerBg }
-                }
+                color: Theme.danger
                 border.color: Theme.dangerBorder; border.width: 1
 
                 Rectangle {
-                    anchors.fill: parent; radius: parent.radius; color: Theme.dangerMuted
-                    opacity: btnMouse.containsMouse && distractionBtn.isBtnActive ? 0.08 : 0.0
+                    anchors.fill: parent; radius: parent.radius; color: "#000000"
+                    opacity: btnMouse.containsMouse && distractionBtn.isBtnActive ? 0.12 : 0.0
                     Behavior on opacity { NumberAnimation { duration: 150 } }
                 }
                 Column {
                     anchors.centerIn: parent; spacing: 4
-                    AppIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "lightning"; size: 24; color: Theme.dangerMuted }
-                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: Strings.trackerDistractionButton; color: Theme.dangerMuted; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 2 }
+                    AppIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "lightning"; size: 24; color: Theme.onDanger }
+                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: Strings.trackerDistractionButton; color: Theme.onDanger; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 2 }
                 }
                 MouseArea {
                     id: btnMouse; anchors.fill: parent; hoverEnabled: true
@@ -211,10 +249,49 @@ Item {
         }
 
         // ── SAĞ PANEL ─────────────────────────────────────────────────
-        DistractionListPanel {
-            id: distractionPanel
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            spacing: 14
+
+            // Bugün özeti — mevcut analyticsBridge verisiyle, ek backend gerekmez.
+            GlassCard {
+                Layout.fillWidth: true; height: 60; radius: 12
+                RowLayout {
+                    anchors { fill: parent; leftMargin: 16; rightMargin: 16 }
+                    spacing: 20
+
+                    RowLayout {
+                        spacing: 8
+                        AppIcon { name: "target"; size: 16; color: Theme.accentWarm }
+                        Text {
+                            text: root.todaySessionCount + " seans"
+                            color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold
+                        }
+                        Text { text: "bugün"; color: Theme.textDimmed; font.pixelSize: 12 }
+                    }
+
+                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; Layout.topMargin: 12; Layout.bottomMargin: 12; color: Theme.borderDim }
+
+                    RowLayout {
+                        spacing: 8
+                        AppIcon { name: "clock"; size: 16; color: Theme.info }
+                        Text {
+                            text: root._fmtTodayFocus(root.todayFocusSec)
+                            color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold
+                        }
+                        Text { text: "odak süresi"; color: Theme.textDimmed; font.pixelSize: 12 }
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
+            }
+
+            DistractionListPanel {
+                id: distractionPanel
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
         }
     }
 

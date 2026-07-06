@@ -32,34 +32,37 @@ FTDialog {
             Text { text: Strings.summaryTitle; color: Theme.success; font.pixelSize: 18; font.weight: Font.Bold; anchors.verticalCenter: parent.verticalCenter }
         }
 
-        Grid {
-            columns: 2; spacing: 10; width: 364
-            Repeater {
-                model: [
-                    { label: Strings.summaryDurationLabel,     value: root.fmtDur(root.pendingStats.durationSec || 0),   color: Theme.accent },
-                    { label: Strings.summaryDistractionsLabel, value: String(root.pendingStats.totalDistractions || 0),  color: Theme.dangerMuted },
-                    { label: Strings.summaryPerHourLabel,      value: String(root.pendingStats.distractionsPerHour || 0), color: Theme.warning },
-                    { label: Strings.summarySubjectLabel,      value: root.pendingStats.subject || "-",                  color: Theme.info }
-                ]
-                delegate: Rectangle {
-                    width: (364 - 10) / 2
-                    implicitHeight: statCol.implicitHeight + 24
-                    radius: 10; color: Theme.surface3; border.color: Theme.borderDim; border.width: 1
-                    Column {
-                        id: statCol
-                        anchors.centerIn: parent; width: parent.width - 16; spacing: 4
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: modelData.value; color: modelData.color
-                            font.pixelSize: 20; font.weight: Font.Bold
-                            width: parent.width; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap
-                        }
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: modelData.label; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 1
-                        }
-                    }
-                }
+        // AnalyticsPage/SessionDetailPanel ile aynı görsel dil — gerçek StatCard
+        GridLayout {
+            columns: 2; columnSpacing: 10; rowSpacing: 10; width: 364
+
+            StatCard {
+                Layout.fillWidth: true
+                value: root.fmtDur(root.pendingStats.durationSec || 0)
+                label: Strings.summaryDurationLabel
+                accentColor: Theme.accent
+                icon: "clock"
+            }
+            StatCard {
+                Layout.fillWidth: true
+                value: String(root.pendingStats.totalDistractions || 0)
+                label: Strings.summaryDistractionsLabel
+                accentColor: Theme.dangerMuted
+                icon: "lightning"
+            }
+            StatCard {
+                Layout.fillWidth: true
+                value: String(root.pendingStats.distractionsPerHour || 0)
+                label: Strings.summaryPerHourLabel
+                accentColor: Theme.warning
+                icon: "trend-up"
+            }
+            StatCard {
+                Layout.fillWidth: true
+                value: root.pendingStats.subject || "-"
+                label: Strings.summarySubjectLabel
+                accentColor: Theme.info
+                icon: "book"
             }
         }
 
@@ -68,11 +71,20 @@ FTDialog {
         Rectangle {
             width: 364; height: 72; radius: 8; color: Theme.surface3
             border.color: summaryNote.activeFocus ? Theme.success : Theme.border; border.width: 1
-            TextEdit {
-                id: summaryNote
+            clip: true
+            ScrollView {
                 anchors { fill: parent; margins: 12 }
-                color: Theme.textPrimary; font.pixelSize: 13; wrapMode: TextEdit.Wrap
-                Text { anchors.fill: parent; text: Strings.summaryNotePlaceholder; color: Theme.textSubtle; font.pixelSize: 13; visible: summaryNote.text === "" }
+                clip: true
+                TextEdit {
+                    id: summaryNote
+                    width: parent.width
+                    color: Theme.textPrimary; font.pixelSize: 13; wrapMode: TextEdit.Wrap
+                }
+            }
+            Text {
+                anchors { left: parent.left; top: parent.top; margins: 12 }
+                text: Strings.summaryNotePlaceholder; color: Theme.textSubtle; font.pixelSize: 13
+                visible: summaryNote.text === ""
             }
         }
 

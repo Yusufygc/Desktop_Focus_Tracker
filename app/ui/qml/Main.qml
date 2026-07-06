@@ -5,9 +5,9 @@ import "components"
 
 ApplicationWindow {
     id: root
-    width: 980
-    height: 660
-    minimumWidth: 860
+    width: 1180
+    height: 720
+    minimumWidth: 980
     minimumHeight: 580
     visible: true
     title: Strings.appName
@@ -29,7 +29,7 @@ ApplicationWindow {
 
         Sidebar {
             id: sidebar
-            Layout.preferredWidth: 72
+            Layout.preferredWidth: 220
             Layout.fillHeight: true
             onTabChanged: function(index) { contentStack.currentIndex = index }
         }

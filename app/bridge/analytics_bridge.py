@@ -11,6 +11,7 @@ from PySide6.QtQml import QmlElement
 from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 from app.services.analytics_service import AnalyticsService
+from app.services.subject_service import SubjectService
 from app.core.logger import logger
 from app.core.strings import Errors
 
@@ -25,10 +26,12 @@ class AnalyticsBridge(QObject):
     dataReady = Signal()
     errorOccurred = Signal(str)
 
-    def __init__(self, session_svc: SessionService, distraction_svc: DistractionService, parent=None):
+    def __init__(self, session_svc: SessionService, distraction_svc: DistractionService,
+                 subject_svc: SubjectService, parent=None):
         super().__init__(parent)
         self._session_svc     = session_svc
         self._distraction_svc = distraction_svc
+        self._subject_svc     = subject_svc
         self._analytics       = AnalyticsService()
 
     @Slot(result="QVariantList")
@@ -57,6 +60,7 @@ class AnalyticsBridge(QObject):
     @Slot(result="QVariantList")
     def getSessionHistory(self) -> list:
         sessions = self._session_svc.get_all_sessions()
+        color_map = self._subject_svc.get_color_map()
         today = date.today()
         yesterday = today - timedelta(days=1)
         result = []
@@ -72,6 +76,7 @@ class AnalyticsBridge(QObject):
             result.append({
                 "id":          s.id,
                 "subject":     s.subject,
+                "subjectColor": color_map.get(s.subject, "#4f46e5"),
                 "startedAt":   s.started_at.strftime("%d.%m.%Y %H:%M"),
                 "durationSec": s.duration_seconds,
                 "distractions": s.total_distractions,

@@ -47,6 +47,11 @@ GlassCard {
             RowLayout {
                 Layout.fillWidth: true; spacing: 12
 
+                Rectangle {
+                    Layout.preferredWidth: 10; Layout.preferredHeight: 10; radius: 5
+                    Layout.alignment: Qt.AlignVCenter
+                    color: root.sessionData.subjectColor || Theme.primary
+                }
                 Text {
                     text: root.sessionData.subject || ""
                     color: Theme.accent; font.pixelSize: 20; font.weight: Font.Bold
@@ -67,24 +72,22 @@ GlassCard {
                 }
             }
 
-            // İstatistik kartları
+            // İstatistik kartları — AnalyticsPage'deki StatCard ile aynı görsel dil
             RowLayout {
                 Layout.fillWidth: true; spacing: 10
-                Repeater {
-                    model: [
-                        { v: root._fmtDur(root.sessionData.durationSec || 0), label: Strings.historyDurationLabel,     color: Theme.info },
-                        { v: String(root.sessionData.distractions || 0),      label: Strings.historyDistractionsLabel, color: Theme.dangerMuted }
-                    ]
-                    delegate: Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: statCol.implicitHeight + 24
-                        radius: 10; color: Theme.surface3; border.color: Theme.borderDim; border.width: 1
-                        Column {
-                            id: statCol; anchors.centerIn: parent; spacing: 4
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.v; color: modelData.color; font.pixelSize: 20; font.weight: Font.Bold }
-                            Text { anchors.horizontalCenter: parent.horizontalCenter; text: modelData.label; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 1 }
-                        }
-                    }
+                StatCard {
+                    Layout.fillWidth: true
+                    value: root._fmtDur(root.sessionData.durationSec || 0)
+                    label: Strings.historyDurationLabel
+                    accentColor: Theme.info
+                    icon: "clock"
+                }
+                StatCard {
+                    Layout.fillWidth: true
+                    value: String(root.sessionData.distractions || 0)
+                    label: Strings.historyDistractionsLabel
+                    accentColor: Theme.dangerMuted
+                    icon: "lightning"
                 }
             }
 

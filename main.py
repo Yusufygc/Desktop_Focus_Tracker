@@ -37,7 +37,8 @@ from app.core.repositories.subject_repo import SubjectRepository
 from app.core.repositories.timer_preset_repo import TimerPresetRepository
 from app.services.category_service import CategoryService
 from app.services.subject_service import SubjectService
-from app.services.timer_preset_service import TimerPresetService\nfrom app.services.session_service import SessionService
+from app.services.timer_preset_service import TimerPresetService
+from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 
 QML_DIR = os.path.join(os.path.dirname(__file__), "app", "ui", "qml")
@@ -65,7 +66,7 @@ def main():
 
     # Bridges with injected dependencies
     session_bridge   = SessionBridge(session_svc, distraction_svc)
-    analytics_bridge = AnalyticsBridge(session_svc, distraction_svc)
+    analytics_bridge = AnalyticsBridge(session_svc, distraction_svc, subject_svc)
     category_bridge  = CategoryBridge(category_svc)
     subject_bridge   = SubjectBridge(subject_svc)
     timer_bridge     = TimerBridge(timer_svc)

@@ -108,6 +108,7 @@ ColumnLayout {
             id: sessionDelegate
             required property int    index
             required property string subject
+            required property string subjectColor
             required property string startedAt
             required property int    durationSec
             required property int    distractions
@@ -120,8 +121,9 @@ ColumnLayout {
 
             Rectangle {
                 anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-                width: 3; radius: 2; color: Theme.primary
-                opacity: root.selectedIndex === sessionDelegate.index ? 1 : 0
+                width: 3; radius: 2
+                color: sessionDelegate.subjectColor || Theme.primary
+                opacity: root.selectedIndex === sessionDelegate.index ? 1 : 0.35
             }
 
             Column {
@@ -131,7 +133,7 @@ ColumnLayout {
 
                 Text {
                     text: sessionDelegate.subject
-                    color: root.selectedIndex === sessionDelegate.index ? Theme.accent : Theme.textSubtle
+                    color: root.selectedIndex === sessionDelegate.index ? Theme.accent : Theme.textDimmed
                     font.pixelSize: 13; font.weight: Font.Medium
                     elide: Text.ElideRight; width: parent.width
                 }

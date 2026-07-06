@@ -18,7 +18,7 @@ class Common:
     SAVE = "Kaydet"
     CLOSE = "Kapat"
     CONFIRM = "Onayla"
-    EMPTY_CHART = "Henüz veri yok ✨"
+    EMPTY_CHART = "Henüz veri yok"
     THEME_TOGGLE_LIGHT_LABEL = "Açık temaya geç"
     THEME_TOGGLE_DARK_LABEL = "Koyu temaya geç"
 
@@ -46,7 +46,7 @@ class Distraction:
     NOTE_LABEL = "Not (opsiyonel)"
     NOTE_PLACEHOLDER = "Ne oldu? (Enter ile kaydet)"
     PANEL_TITLE = "Bu Seansın Bozulmaları"
-    EMPTY_LIST = "Henüz kayıt yok ✨"
+    EMPTY_LIST = "Henüz kayıt yok"
     INTERVAL_ANALYSIS_TITLE = "ODAK ARALIK ANALİZİ"
     INTERVAL_AVG_TEMPLATE = "~{avg} dk'de bir odağınız bozuluyor"
     INTERVAL_IMPROVING_TEMPLATE = "İyileşiyor — Son aralık {last}dk (ort. {avg}dk)"
@@ -72,7 +72,7 @@ class History:
     DISTRACTIONS_LABEL = "BOZULMA"
     NOTE_LABEL = "Not"
     DISTRACTIONS_COUNT_TEMPLATE = "Bozulmalar ({count})"
-    NO_DISTRACTIONS = "Bu seansta hiç bozulma kaydedilmemiş ✨"
+    NO_DISTRACTIONS = "Bu seansta hiç bozulma kaydedilmemiş"
     EDIT_BUTTON = "Düzenle"
     DELETE_BUTTON = "Sil"
 

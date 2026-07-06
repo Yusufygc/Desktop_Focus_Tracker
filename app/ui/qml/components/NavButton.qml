@@ -1,6 +1,9 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
+// Etiketli sidebar nav satırı: ikon + metin, tüm satır genişliğinde
+// aktif/hover zemin. Discoverability için ikon-only rail yerine kullanılır.
 Item {
     id: root
     property string icon: ""
@@ -8,47 +11,46 @@ Item {
     property bool active: false
     signal clicked()
 
-    width: 56
-    height: 56
+    Layout.fillWidth: true
+    height: 44
+
+    property bool hovered: false
+
+    Rectangle {
+        anchors.fill: parent
+        radius: 10
+        color: active ? Theme.primaryDark : (hovered ? Theme.surface4 : "transparent")
+        Behavior on color { ColorAnimation { duration: 150 } }
+    }
 
     // Aktif sol çizgi
     Rectangle {
         anchors { left: parent.left; verticalCenter: parent.verticalCenter }
         width: 3
-        height: active ? 28 : 0
+        height: active ? 24 : 0
         radius: 2
         color: Theme.accent
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     }
 
-    // Arka plan
-    Rectangle {
-        anchors.centerIn: parent
-        width: 44; height: 44; radius: 12
-        color: active ? Theme.primaryDark : (hovered ? Theme.surface4 : "transparent")
-        border.color: active ? Theme.borderActive : "transparent"
-        border.width: 1
-        Behavior on color { ColorAnimation { duration: 150 } }
-    }
+    RowLayout {
+        anchors { fill: parent; leftMargin: 16; rightMargin: 12 }
+        spacing: 12
 
-    AppIcon {
-        anchors.centerIn: parent
-        name: root.icon
-        size: 22
-        color: active ? Theme.accent : Theme.textSecondary
-        opacity: active ? 1.0 : 0.55
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        AppIcon {
+            name: root.icon
+            size: 20
+            color: active ? Theme.accent : Theme.textSecondary
+        }
+        Text {
+            text: root.label
+            color: active ? Theme.textPrimary : Theme.textSecondary
+            font.pixelSize: 14
+            font.weight: active ? Font.DemiBold : Font.Normal
+            Layout.fillWidth: true
+            elide: Text.ElideRight
+        }
     }
-
-    ToolTip {
-        visible: hovered
-        text: root.label
-        delay: 500
-        contentItem: Text { text: root.label; color: Theme.textPrimary; font.pixelSize: 12 }
-        background: Rectangle { color: Theme.surface4; border.color: Theme.borderActive; border.width: 1; radius: 6 }
-    }
-
-    property bool hovered: false
 
     MouseArea {
         anchors.fill: parent

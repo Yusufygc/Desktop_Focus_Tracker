@@ -7,7 +7,11 @@ Rectangle {
     property string label: ""
     property string variant: "primary"  // primary | danger | ghost
     property string icon: ""            // opsiyonel öncü ikon adı
-    property color iconColor: Theme.textPrimary
+    // ghost: açık/koyu tint zemin -> normal metin rengi yeterli.
+    // primary/danger: doygun solid dolgu -> her zaman beyaz (Theme.onSolid) gerekir,
+    // yoksa light modda koyu metin koyu zemin üstünde kontrastsız kalır.
+    readonly property color contentColor: variant === "ghost" ? Theme.textPrimary : Theme.onSolid
+    property color iconColor: root.contentColor
     
     // NOT: "property bool enabled: true" satırı silindi 
     // çünkü Rectangle zaten 'enabled' özelliğine varsayılan olarak sahiptir. (Override hatasını çözer)
@@ -38,7 +42,7 @@ Rectangle {
         AppIcon { name: root.icon; size: 16; color: root.iconColor; visible: root.icon !== "" }
         Text {
             text: root.label
-            color: Theme.textPrimary
+            color: root.contentColor
             font.pixelSize: 14
             font.weight: Font.Medium
         }

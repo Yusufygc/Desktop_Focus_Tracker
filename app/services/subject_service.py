@@ -13,6 +13,10 @@ class SubjectService:
     def get_all(self) -> List[Dict]:
         return self._repo.get_all()
 
+    def get_color_map(self) -> Dict[str, str]:
+        """Konu adı -> renk eşlemesi. History'de subject rengini göstermek için."""
+        return {s["name"]: s["color"] for s in self._repo.get_all()}
+
     def add(self, name: str, color: str = "#4CAF50") -> bool:
         name = name.strip()
         if not name:
