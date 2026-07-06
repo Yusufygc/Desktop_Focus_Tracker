@@ -73,6 +73,9 @@ class AnalyticsBridge(QObject):
             else:
                 group = s.started_at.strftime("%d.%m.%Y")
 
+            distractions = self._distraction_svc.get_for_session(s.id)
+            stats = self._analytics.session_stats(s, distractions)
+
             result.append({
                 "id":          s.id,
                 "subject":     s.subject,
@@ -82,6 +85,7 @@ class AnalyticsBridge(QObject):
                 "distractions": s.total_distractions,
                 "notes":       s.notes or "",
                 "dateGroup":   group,
+                "focusScore":  stats["focus_score"],
             })
         return result
 

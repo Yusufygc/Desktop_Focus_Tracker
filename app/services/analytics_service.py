@@ -36,13 +36,18 @@ class AnalyticsService:
         dur = session.duration_seconds
         if dur >= 60:
             per_hour = (session.total_distractions / dur * 3600)
+            score = 100 - (per_hour * 10)
+            focus_score = max(0, min(100, int(score)))
         else:
             per_hour = 0.0
+            focus_score = 0
+
         return {
             "subject": session.subject,
             "duration_sec": dur,
             "total_distractions": session.total_distractions,
             "distractions_per_hour": round(per_hour, 1),
+            "focus_score": focus_score,
             "category_breakdown": self.distractions_per_category(distractions),
         }
 
