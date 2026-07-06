@@ -29,6 +29,11 @@ class Tracker:
     START_BUTTON = "Başlat"
     FINISH_BUTTON = "Bitir"
     DISTRACTION_BUTTON = "ODAK BOZULDU"
+    POMODORO_MODE = "Pomodoro Modu"
+    POMODORO_FOCUS_STATE = "Odak (Pomodoro)"
+    POMODORO_SHORT_BREAK_STATE = "Kısa Mola"
+    POMODORO_LONG_BREAK_STATE = "Uzun Mola"
+    POMODORO_BREAK_ENDED = "Mola bitti! Devam etmek için butona basın."
 
 
 class Timer:

@@ -9,6 +9,8 @@ Item {
     property int todaySessionCount: 0
     property int todayFocusSec: 0
 
+    signal miniModeRequested()
+
     Component.onCompleted: root._refreshTodaySummary()
 
     function _refreshTodaySummary() {
@@ -40,6 +42,27 @@ Item {
         function onSessionPaused()                 { root._setPausedState() }
         function onSessionResumed()                { root._setActiveState() }
         function onDistractionAdded(n, cat, note)  { distractionPanel.addEntry(n, cat, note) }
+        function onPomodoroStateChanged(state)     { root._updatePomodoroStatus() }
+        function onPomodoroBreakEnded()            { root._handleBreakEnded() }
+    }
+
+    function _updatePomodoroStatus() {
+        if (!sessionBridge.isPomodoroMode) return
+        var s = sessionBridge.pomodoroState
+        if (s === "SHORT_BREAK" || s === "LONG_BREAK") {
+            statusDot.active = true
+            statusDot.color  = Theme.info
+            var label = s === "SHORT_BREAK" ? Strings.trackerPomodoroShortBreak : Strings.trackerPomodoroLongBreak
+            pauseBtn.label = "Devam Et"
+            pauseBtn.icon  = "play"
+        }
+    }
+
+    function _handleBreakEnded() {
+        statusDot.active = false
+        statusDot.color  = Theme.warning
+        pauseBtn.label = "Devam Et"
+        pauseBtn.icon  = "play"
     }
 
     function _setActiveState() {
@@ -56,6 +79,7 @@ Item {
             distractionPanel.clear()
             timerCard.reset()
         }
+        _updatePomodoroStatus()
     }
 
     function _setPausedState() {
@@ -63,6 +87,7 @@ Item {
         pauseBtn.icon              = "play"
         statusDot.active           = false
         statusDot.color            = Theme.warning
+        _updatePomodoroStatus()
     }
 
     function _setIdleState() {
@@ -91,7 +116,18 @@ Item {
             // Başlık + durum noktası
             RowLayout {
                 spacing: 10
-                Text { text: Strings.trackerTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
+                Text { 
+                    text: {
+                        if (!sessionBridge.isPomodoroMode) return Strings.trackerTitle
+                        if (!sessionBridge.isActive) return Strings.trackerPomodoroMode
+                        var s = sessionBridge.pomodoroState
+                        if (s === "FOCUS") return Strings.trackerPomodoroFocus
+                        if (s === "SHORT_BREAK") return Strings.trackerPomodoroShortBreak
+                        if (s === "LONG_BREAK") return Strings.trackerPomodoroLongBreak
+                        return Strings.trackerPomodoroMode
+                    }
+                    color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold 
+                }
                 Rectangle {
                     id: statusDot; property bool active: false
                     width: 8; height: 8; radius: 4
@@ -186,6 +222,20 @@ Item {
                             cursorShape: Qt.PointingHandCursor; hoverEnabled: true
                             onClicked: subjectManagerDialog.open()
                         }
+                    }
+                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; Layout.topMargin: 4; Layout.bottomMargin: 4; color: Theme.borderDim }
+                    FTButton {
+                        Layout.preferredWidth: 40; height: 36
+                        icon: "clock"
+                        variant: sessionBridge.isPomodoroMode ? "primary" : "ghost"
+                        enabled: !sessionBridge.isActive
+                        onClicked: sessionBridge.isPomodoroMode = !sessionBridge.isPomodoroMode
+                    }
+                    FTButton {
+                        Layout.preferredWidth: 40; height: 36
+                        icon: "trend-down"
+                        variant: "ghost"
+                        onClicked: root.miniModeRequested()
                     }
                 }
             }

@@ -15,13 +15,17 @@ GlassCard {
     function loadPresets() { presets = timerBridge.getTimerPresets() }
 
     function updateTime(timeStr) {
-        timerLabel.text = timeStr
+        if (!sessionBridge.isPomodoroMode) {
+            timerLabel.text = timeStr
+        }
         elapsed++
         arc.requestPaint()
     }
 
     function reset() {
-        timerLabel.text   = "00:00:00"
+        if (!sessionBridge.isPomodoroMode) {
+            timerLabel.text = "00:00:00"
+        }
         elapsed           = 0
         plannedMinutes    = 0
         addPresetMode     = false
@@ -53,7 +57,44 @@ GlassCard {
                     var ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
 
-                    if (timerCard.plannedMinutes > 0) {
+                    if (sessionBridge.isPomodoroMode) {
+                        var target = sessionBridge.pomodoroTarget
+                        var state = sessionBridge.pomodoroState
+                        var progress = 0.0
+                        
+                        if (target > 0) {
+                            if (state === "FOCUS") {
+                                var currElapsed = timerCard.elapsed % target
+                                progress = Math.min(1.0, currElapsed / target)
+                            } else if (state === "SHORT_BREAK" || state === "LONG_BREAK") {
+                                progress = Math.min(1.0, sessionBridge.pomodoroBreakElapsed / target)
+                            }
+                        }
+                        
+                        ctx.beginPath()
+                        ctx.arc(70, 70, 52, 0, Math.PI * 2)
+                        ctx.strokeStyle = Theme.surface3
+                        ctx.lineWidth = 12
+                        ctx.stroke()
+
+                        if (progress > 0) {
+                            var startA = -Math.PI / 2
+                            ctx.beginPath()
+                            ctx.arc(70, 70, 52, startA, startA + 2 * Math.PI * progress)
+                            var grad = ctx.createLinearGradient(0, 0, width, height)
+                            if (state === "FOCUS") {
+                                grad.addColorStop(0, Theme.primary)
+                                grad.addColorStop(1, Theme.infoAlt)
+                            } else {
+                                grad.addColorStop(0, Theme.success)
+                                grad.addColorStop(1, Theme.info)
+                            }
+                            ctx.strokeStyle = grad
+                            ctx.lineWidth   = 12
+                            ctx.lineCap     = "round"
+                            ctx.stroke()
+                        }
+                    } else if (timerCard.plannedMinutes > 0) {
                         var total    = timerCard.plannedMinutes * 60
                         var progress = Math.min(1.0, timerCard.elapsed / total)
                         var startA   = -Math.PI / 2
@@ -97,14 +138,31 @@ GlassCard {
                 Text {
                     id: timerLabel
                     Layout.alignment: Qt.AlignHCenter
-                    text: "00:00:00"
-                    color: (timerCard.plannedMinutes > 0 && timerCard.elapsed >= timerCard.plannedMinutes * 60)
-                           ? Theme.dangerMuted : Theme.accent
+                    text: {
+                        if (sessionBridge.isPomodoroMode) {
+                            var target = sessionBridge.pomodoroTarget
+                            var rem = 0
+                            if (sessionBridge.pomodoroState === "FOCUS") {
+                                rem = target - (timerCard.elapsed % target)
+                            } else if (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK") {
+                                rem = target - sessionBridge.pomodoroBreakElapsed
+                            }
+                            if (rem < 0) rem = 0
+                            var m = Math.floor(rem / 60)
+                            var s = rem % 60
+                            return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s)
+                        } else {
+                            return timerLabel.text // koru
+                        }
+                    }
+                    color: (sessionBridge.isPomodoroMode && (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK")) ? Theme.success :
+                           ((!sessionBridge.isPomodoroMode && timerCard.plannedMinutes > 0 && timerCard.elapsed >= timerCard.plannedMinutes * 60)
+                           ? Theme.dangerMuted : Theme.accent)
                     font.pixelSize: 38; font.weight: Font.Bold; font.family: "Consolas"
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
-                    visible: timerCard.plannedMinutes > 0
+                    visible: !sessionBridge.isPomodoroMode && timerCard.plannedMinutes > 0
                     spacing: 4
 
                     readonly property int rem: timerCard.plannedMinutes * 60 - timerCard.elapsed
@@ -131,6 +189,7 @@ GlassCard {
         Flow {
             Layout.fillWidth: true
             spacing: 6
+            visible: !sessionBridge.isPomodoroMode
 
             Repeater {
                 model: timerCard.presets

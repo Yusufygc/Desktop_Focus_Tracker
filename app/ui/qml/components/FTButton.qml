@@ -45,6 +45,7 @@ Rectangle {
             color: root.contentColor
             font.pixelSize: 14
             font.weight: Font.Medium
+            visible: root.label !== ""
         }
     }
 

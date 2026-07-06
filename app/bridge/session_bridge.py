@@ -25,6 +25,9 @@ class SessionBridge(QObject):
     timerTick        = Signal(str)
     distractionAdded = Signal(int, str, str)
     errorOccurred    = Signal(str)
+    pomodoroStateChanged = Signal(str)
+    pomodoroBreakEnded   = Signal()
+    isActiveChanged      = Signal()
 
     def __init__(self, session_svc: SessionService, distraction_svc: DistractionService, parent=None):
         super().__init__(parent)
@@ -33,11 +36,53 @@ class SessionBridge(QObject):
         self._analytics       = AnalyticsService()
         self._elapsed         = 0
 
+        self._is_pomodoro_mode = False
+        self._pomodoro_state = "IDLE"  # IDLE, FOCUS, SHORT_BREAK, LONG_BREAK
+        self._pomodoro_cycles = 0
+        self._pomodoro_break_elapsed = 0
+        
+        # Test için kolaylık (production: 25*60, 5*60, 15*60)
+        self._focus_duration = 25 * 60
+        self._short_break = 5 * 60
+        self._long_break = 15 * 60
+
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
         logger.debug("SessionBridge başlatıldı (seans + timer + distraction).")
 
-    @Property(bool, notify=sessionStarted)
+    @Property(bool, notify=pomodoroStateChanged)
+    def isPomodoroMode(self):
+        return self._is_pomodoro_mode
+
+    @isPomodoroMode.setter
+    def isPomodoroMode(self, val):
+        self._is_pomodoro_mode = val
+        self.pomodoroStateChanged.emit(self._pomodoro_state)
+
+    @Property(str, notify=pomodoroStateChanged)
+    def pomodoroState(self):
+        return self._pomodoro_state
+        
+    @Property(int, notify=pomodoroStateChanged)
+    def pomodoroCycles(self):
+        return self._pomodoro_cycles
+
+    @Property(int, notify=pomodoroStateChanged)
+    def pomodoroBreakElapsed(self):
+        return self._pomodoro_break_elapsed
+        
+    @Property(int, notify=pomodoroStateChanged)
+    def pomodoroTarget(self):
+        if self._pomodoro_state == "FOCUS": return self._focus_duration
+        if self._pomodoro_state == "SHORT_BREAK": return self._short_break
+        if self._pomodoro_state == "LONG_BREAK": return self._long_break
+        return 0
+
+    @Property(int, notify=timerTick)
+    def elapsedSec(self) -> int:
+        return self._elapsed
+
+    @Property(bool, notify=isActiveChanged)
     def isActive(self) -> bool:
         return self._session_svc.has_active
 
@@ -63,7 +108,16 @@ class SessionBridge(QObject):
         logger.info(f"Yeni Seans Başlatıldı: {sub}")
         self._session_svc.start(sub)
         self._elapsed = 0
+        if self._is_pomodoro_mode:
+            self._pomodoro_state = "FOCUS"
+            self._pomodoro_cycles = 0
+            self._pomodoro_break_elapsed = 0
+            self.pomodoroStateChanged.emit(self._pomodoro_state)
+        else:
+            self._pomodoro_state = "IDLE"
+            self.pomodoroStateChanged.emit(self._pomodoro_state)
         self._timer.start(1000)
+        self.isActiveChanged.emit()
         self.sessionStarted.emit()
 
     @Slot(str, str, result=str)
@@ -108,6 +162,9 @@ class SessionBridge(QObject):
         stats = self._analytics.session_stats(session, distractions)
 
         self._session_svc.finish(notes=notes)
+        self._pomodoro_state = "IDLE"
+        self.pomodoroStateChanged.emit(self._pomodoro_state)
+        self.isActiveChanged.emit()
         self.sessionFinished.emit()
 
         return {
@@ -122,13 +179,44 @@ class SessionBridge(QObject):
         if self._session_svc.has_active:
             logger.info("Uygulama kapatıldı, açık seans sessizce kaydediliyor.")
             self._timer.stop()
+            self._pomodoro_state = "IDLE"
             self._session_svc.finish(notes="[Uygulama kapatıldı]")
+            self.isActiveChanged.emit()
 
     def _tick(self):
+        # Mola sayacı (seans duraklatılmışken)
+        if self._session_svc.has_active and self._session_svc.active_session.is_paused:
+            if self._is_pomodoro_mode and self._pomodoro_state in ["SHORT_BREAK", "LONG_BREAK"]:
+                self._pomodoro_break_elapsed += 1
+                self.pomodoroStateChanged.emit(self._pomodoro_state)
+                
+                target = self._long_break if self._pomodoro_state == "LONG_BREAK" else self._short_break
+                if self._pomodoro_break_elapsed >= target:
+                    self._timer.stop()
+                    self.pomodoroBreakEnded.emit()
+            return
+
         self._elapsed += 1
         h, rem = divmod(self._elapsed, 3600)
         m, s   = divmod(rem, 60)
         self.timerTick.emit(f"{h:02d}:{m:02d}:{s:02d}")
+        
+        # Pomodoro odak döngüsü kontrolü
+        if self._is_pomodoro_mode and self._pomodoro_state == "FOCUS":
+            # self._elapsed sürekli artar, her self._focus_duration geçişinde bir döngü biter
+            current_focus_elapsed = self._elapsed % self._focus_duration
+            if current_focus_elapsed == 0 and self._elapsed > 0:
+                self._pomodoro_cycles += 1
+                self.pauseSession() # Bu timer'ı durdurur
+                
+                if self._pomodoro_cycles % 4 == 0:
+                    self._pomodoro_state = "LONG_BREAK"
+                else:
+                    self._pomodoro_state = "SHORT_BREAK"
+                    
+                self._pomodoro_break_elapsed = 0
+                self.pomodoroStateChanged.emit(self._pomodoro_state)
+                self._timer.start(1000) # Mola sayacı için tekrar başlat
     @Slot()
     def pauseSession(self):
         if self._session_svc.has_active and not self._session_svc.active_session.is_paused:
@@ -140,6 +228,9 @@ class SessionBridge(QObject):
     def resumeSession(self):
         if self._session_svc.has_active and self._session_svc.active_session.is_paused:
             self._session_svc.resume()
+            if self._is_pomodoro_mode and self._pomodoro_state in ["SHORT_BREAK", "LONG_BREAK"]:
+                self._pomodoro_state = "FOCUS"
+                self.pomodoroStateChanged.emit(self._pomodoro_state)
             self._timer.start(1000)
             self.sessionResumed.emit()
 

@@ -65,6 +65,21 @@ class AppStrings(QObject):
     @Property(str, constant=True)
     def trackerDistractionButton(self): return Tracker.DISTRACTION_BUTTON
 
+    @Property(str, constant=True)
+    def trackerPomodoroMode(self):      return Tracker.POMODORO_MODE
+
+    @Property(str, constant=True)
+    def trackerPomodoroFocus(self):     return Tracker.POMODORO_FOCUS_STATE
+
+    @Property(str, constant=True)
+    def trackerPomodoroShortBreak(self): return Tracker.POMODORO_SHORT_BREAK_STATE
+
+    @Property(str, constant=True)
+    def trackerPomodoroLongBreak(self):  return Tracker.POMODORO_LONG_BREAK_STATE
+
+    @Property(str, constant=True)
+    def trackerPomodoroBreakEnded(self): return Tracker.POMODORO_BREAK_ENDED
+
     # ── Timer ─────────────────────────────────────────────────
     @Property(str, constant=True)
     def timerLabel(self):               return Timer.LABEL
