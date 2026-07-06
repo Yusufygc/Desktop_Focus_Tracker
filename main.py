@@ -11,7 +11,7 @@ from app.core.logger import logger
 # Native style (Windows default) ComboBox/TextField background vs. override'ına izin vermez.
 os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtCore import QUrl
 
@@ -41,12 +41,22 @@ from app.services.timer_preset_service import TimerPresetService
 from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 
-QML_DIR = os.path.join(os.path.dirname(__file__), "app", "ui", "qml")
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+QML_DIR = os.path.join(BASE_DIR, "app", "ui", "qml")
+ICONS_DIR = os.path.join(BASE_DIR, "icons")
 
 def main():
     logger.info("--- FocusTracker Başlatılıyor ---")
     app = QGuiApplication(sys.argv)
     app.setApplicationName("FocusTracker")
+
+    app_icon_path = os.path.join(ICONS_DIR, "256_converted.ico")
+    if os.path.exists(app_icon_path):
+        app.setWindowIcon(QIcon(app_icon_path))
 
     db.connect()
 
