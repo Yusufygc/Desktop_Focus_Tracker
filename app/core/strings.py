@@ -61,11 +61,30 @@ class Distraction:
 class Analytics:
     NAV_LABEL = "Analiz"
     TITLE = "Analiz"
+    SUBTITLE = "Odağınızı nelerin böldüğünü inceleyin"
     TOTAL_LABEL = "TOPLAM BOZULMA"
     DAILY_AVG_LABEL = "GÜNLÜK ORT."
     PEAK_HOUR_LABEL = "EN YOĞUN SAAT"
     TOP_CATEGORY_LABEL = "EN SIK KATEGORİ"
     HOURLY_CHART_TITLE = "Saate Göre Bozulma (0–23)"
+    HOURLY_TOOLTIP_TEMPLATE = "{hour}:00 — {count} bozulma"
+
+
+class FocusStats:
+    NAV_LABEL = "İstatistikler"
+    TITLE = "Odak İstatistikleri"
+    SUBTITLE = "Ne kadar başarıyla odaklandığınızı görün"
+    PERIOD_DAY = "Gün"
+    PERIOD_WEEK = "Hafta"
+    PERIOD_MONTH = "Ay"
+    PERIOD_YEAR = "Yıl"
+    TOTAL_LABEL = "TOPLAM ODAK"
+    COMPARISON_LABEL = "ÖNCEKİ DÖNEME GÖRE"
+    STREAK_LABEL = "GÜNLÜK SERİ"
+    STREAK_UNIT_TEMPLATE = "{days} gün"
+    CHART_TITLE = "Geçmiş Dönemler"
+    HEATMAP_TITLE = "Yıllık Odak Haritası"
+    HEATMAP_TOOLTIP_TEMPLATE = "{date}: {duration}"
 
 
 class History:
@@ -126,3 +145,4 @@ class Errors:
     PRESET_DELETE_FAILED = "Timer preset silinemedi."
     UPDATE_ERROR_TEMPLATE = "Güncelleme Hatası: {error}"
     DELETE_ERROR_TEMPLATE = "Silme Hatası: {error}"
+    FOCUS_STATS_LOAD_FAILED = "Odak istatistikleri yüklenemedi."

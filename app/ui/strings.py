@@ -8,7 +8,7 @@ from PySide6.QtCore import QObject, Property
 
 from app.core.strings import (
     App, Common, Tracker, Timer, Distraction, Analytics,
-    History, SessionEdit, SessionDelete, Summary, SubjectManager,
+    History, SessionEdit, SessionDelete, Summary, SubjectManager, FocusStats,
 )
 
 
@@ -138,6 +138,9 @@ class AppStrings(QObject):
     def analyticsTitle(self):           return Analytics.TITLE
 
     @Property(str, constant=True)
+    def analyticsSubtitle(self):        return Analytics.SUBTITLE
+
+    @Property(str, constant=True)
     def analyticsTotalLabel(self):      return Analytics.TOTAL_LABEL
 
     @Property(str, constant=True)
@@ -151,6 +154,52 @@ class AppStrings(QObject):
 
     @Property(str, constant=True)
     def analyticsHourlyChartTitle(self): return Analytics.HOURLY_CHART_TITLE
+
+    @Property(str, constant=True)
+    def analyticsHourlyTooltipTemplate(self): return Analytics.HOURLY_TOOLTIP_TEMPLATE
+
+    # ── Odak İstatistikleri (FocusStats) ─────────────────────
+    @Property(str, constant=True)
+    def focusStatsNavLabel(self):       return FocusStats.NAV_LABEL
+
+    @Property(str, constant=True)
+    def focusStatsTitle(self):          return FocusStats.TITLE
+
+    @Property(str, constant=True)
+    def focusStatsSubtitle(self):       return FocusStats.SUBTITLE
+
+    @Property(str, constant=True)
+    def focusStatsPeriodDay(self):      return FocusStats.PERIOD_DAY
+
+    @Property(str, constant=True)
+    def focusStatsPeriodWeek(self):     return FocusStats.PERIOD_WEEK
+
+    @Property(str, constant=True)
+    def focusStatsPeriodMonth(self):    return FocusStats.PERIOD_MONTH
+
+    @Property(str, constant=True)
+    def focusStatsPeriodYear(self):     return FocusStats.PERIOD_YEAR
+
+    @Property(str, constant=True)
+    def focusStatsTotalLabel(self):     return FocusStats.TOTAL_LABEL
+
+    @Property(str, constant=True)
+    def focusStatsComparisonLabel(self): return FocusStats.COMPARISON_LABEL
+
+    @Property(str, constant=True)
+    def focusStatsStreakLabel(self):    return FocusStats.STREAK_LABEL
+
+    @Property(str, constant=True)
+    def focusStatsStreakUnitTemplate(self): return FocusStats.STREAK_UNIT_TEMPLATE
+
+    @Property(str, constant=True)
+    def focusStatsChartTitle(self):     return FocusStats.CHART_TITLE
+
+    @Property(str, constant=True)
+    def focusStatsHeatmapTitle(self):   return FocusStats.HEATMAP_TITLE
+
+    @Property(str, constant=True)
+    def focusStatsHeatmapTooltipTemplate(self): return FocusStats.HEATMAP_TOOLTIP_TEMPLATE
 
     # ── Geçmiş (History) ─────────────────────────────────────
     @Property(str, constant=True)

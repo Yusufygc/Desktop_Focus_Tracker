@@ -51,6 +51,10 @@ ApplicationWindow {
                 id: analyticsPage
                 onVisibleChanged: if (visible) analyticsPage.reload()
             }
+            FocusStatsPage {
+                id: focusStatsPage
+                onVisibleChanged: if (visible) focusStatsPage.reload()
+            }
             HistoryPage {
                 id: historyPage
                 onVisibleChanged: if (visible) historyPage.reload()
@@ -94,4 +98,5 @@ ApplicationWindow {
     Connections { target: categoryBridge;  function onErrorOccurred(msg) { errorToast.show(msg) } }
     Connections { target: subjectBridge;   function onErrorOccurred(msg) { errorToast.show(msg) } }
     Connections { target: timerBridge;     function onErrorOccurred(msg) { errorToast.show(msg) } }
+    Connections { target: focusStatsBridge; function onErrorOccurred(msg) { errorToast.show(msg) } }
 }

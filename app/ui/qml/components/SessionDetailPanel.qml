@@ -51,6 +51,7 @@ GlassCard {
                     Layout.preferredWidth: 10; Layout.preferredHeight: 10; radius: 5
                     Layout.alignment: Qt.AlignVCenter
                     color: root.sessionData.subjectColor || Theme.primary
+                    Behavior on color { ColorAnimation { duration: 200 } }
                 }
                 Text {
                     text: root.sessionData.subject || ""

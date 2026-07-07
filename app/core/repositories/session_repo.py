@@ -15,6 +15,8 @@ def _row_to_session(row) -> Session:
         ended_at=datetime.fromisoformat(row["ended_at"]) if row["ended_at"] else None,
         notes=row["notes"] or "",
         total_distractions=row["total_distractions"],
+        total_paused_sec=row["total_paused_sec"] or 0,
+        last_paused_at=datetime.fromisoformat(row["last_paused_at"]) if row["last_paused_at"] else None,
     )
 
 class SessionRepository(BaseRepository):

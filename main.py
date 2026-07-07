@@ -20,12 +20,14 @@ import app.bridge.analytics_bridge   # noqa: F401 — @QmlElement kaydı
 import app.bridge.category_bridge    # noqa: F401 — @QmlElement kaydı
 import app.bridge.subject_bridge     # noqa: F401 — @QmlElement kaydı
 import app.bridge.timer_bridge       # noqa: F401 — @QmlElement kaydı
+import app.bridge.focus_stats_bridge # noqa: F401 — @QmlElement kaydı
 
 from app.bridge.session_bridge import SessionBridge
 from app.bridge.analytics_bridge import AnalyticsBridge
 from app.bridge.category_bridge import CategoryBridge
 from app.bridge.subject_bridge import SubjectBridge
 from app.bridge.timer_bridge import TimerBridge
+from app.bridge.focus_stats_bridge import FocusStatsBridge
 from app.core.database import db
 from app.core.session_store import SessionStore
 from app.ui.theme import AppTheme
@@ -80,6 +82,7 @@ def main():
     category_bridge  = CategoryBridge(category_svc)
     subject_bridge   = SubjectBridge(subject_svc)
     timer_bridge     = TimerBridge(timer_svc)
+    focus_stats_bridge = FocusStatsBridge(session_svc)
     session_store    = SessionStore()
     theme            = AppTheme()
     strings          = AppStrings()
@@ -92,6 +95,7 @@ def main():
     engine.rootContext().setContextProperty("categoryBridge",  category_bridge)
     engine.rootContext().setContextProperty("subjectBridge",   subject_bridge)
     engine.rootContext().setContextProperty("timerBridge",     timer_bridge)
+    engine.rootContext().setContextProperty("focusStatsBridge", focus_stats_bridge)
     engine.rootContext().setContextProperty("sessionStore",    session_store)
     engine.rootContext().setContextProperty("Theme",           theme)
     engine.rootContext().setContextProperty("Strings",         strings)

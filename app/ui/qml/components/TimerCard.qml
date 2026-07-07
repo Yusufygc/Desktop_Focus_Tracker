@@ -12,6 +12,30 @@ GlassCard {
     property bool addPresetMode: false
     property var presets: []
 
+    // Ark ilerlemesi saniyede bir sıçramak yerine akıcı ilerlesin diye
+    // ham oran burada yumuşatılıyor (arc.onPaint bunu okuyor, ham oranı değil).
+    property real animatedProgress: 0
+    Behavior on animatedProgress { NumberAnimation { duration: 900; easing.type: Easing.Linear } }
+    onAnimatedProgressChanged: arc.requestPaint()
+
+    function _computeRawProgress() {
+        if (sessionBridge.isPomodoroMode) {
+            var target = sessionBridge.pomodoroTarget
+            var state  = sessionBridge.pomodoroState
+            if (target <= 0) return 0.0
+            if (state === "FOCUS") {
+                var currElapsed = timerCard.elapsed % target
+                return Math.min(1.0, currElapsed / target)
+            } else if (state === "SHORT_BREAK" || state === "LONG_BREAK") {
+                return Math.min(1.0, sessionBridge.pomodoroBreakElapsed / target)
+            }
+            return 0.0
+        } else if (timerCard.plannedMinutes > 0) {
+            return Math.min(1.0, timerCard.elapsed / (timerCard.plannedMinutes * 60))
+        }
+        return 0.0
+    }
+
     function loadPresets() { presets = timerBridge.getTimerPresets() }
 
     function updateTime(timeStr) {
@@ -19,6 +43,7 @@ GlassCard {
             timerLabel.text = timeStr
         }
         elapsed++
+        animatedProgress = _computeRawProgress()
         arc.requestPaint()
     }
 
@@ -29,6 +54,7 @@ GlassCard {
         elapsed           = 0
         plannedMinutes    = 0
         addPresetMode     = false
+        animatedProgress  = 0
         arc.requestPaint()
     }
 
@@ -58,19 +84,9 @@ GlassCard {
                     ctx.clearRect(0, 0, width, height)
 
                     if (sessionBridge.isPomodoroMode) {
-                        var target = sessionBridge.pomodoroTarget
                         var state = sessionBridge.pomodoroState
-                        var progress = 0.0
-                        
-                        if (target > 0) {
-                            if (state === "FOCUS") {
-                                var currElapsed = timerCard.elapsed % target
-                                progress = Math.min(1.0, currElapsed / target)
-                            } else if (state === "SHORT_BREAK" || state === "LONG_BREAK") {
-                                progress = Math.min(1.0, sessionBridge.pomodoroBreakElapsed / target)
-                            }
-                        }
-                        
+                        var progress = timerCard.animatedProgress
+
                         ctx.beginPath()
                         ctx.arc(70, 70, 52, 0, Math.PI * 2)
                         ctx.strokeStyle = Theme.surface3
@@ -95,8 +111,7 @@ GlassCard {
                             ctx.stroke()
                         }
                     } else if (timerCard.plannedMinutes > 0) {
-                        var total    = timerCard.plannedMinutes * 60
-                        var progress = Math.min(1.0, timerCard.elapsed / total)
+                        var progress = timerCard.animatedProgress
                         var startA   = -Math.PI / 2
 
                         ctx.beginPath()
@@ -201,6 +216,8 @@ GlassCard {
                     color: timerCard.plannedMinutes === modelData.minutes ? Theme.primaryDark : Theme.surface3
                     border.color: timerCard.plannedMinutes === modelData.minutes ? Theme.primary : Theme.border
                     border.width: 1
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
                     property bool hov: chipMouse.containsMouse
 
                     Row {
@@ -254,6 +271,7 @@ GlassCard {
                     name: timerCard.addPresetMode ? "minus" : "plus"
                     size: 16
                     color: timerCard.addPresetMode ? Theme.accent : Theme.textMuted
+                    Behavior on color { ColorAnimation { duration: 150 } }
                 }
                 MouseArea {
                     id: addBtnMouse

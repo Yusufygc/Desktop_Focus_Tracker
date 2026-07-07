@@ -47,6 +47,7 @@ Item {
             model: [
                 { icon: "target",    label: Strings.trackerNavLabel   },
                 { icon: "chart-bar", label: Strings.analyticsNavLabel },
+                { icon: "trend-up",  label: Strings.focusStatsNavLabel },
                 { icon: "clipboard", label: Strings.historyNavLabel   }
             ]
             delegate: NavButton {

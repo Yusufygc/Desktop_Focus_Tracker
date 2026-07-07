@@ -93,6 +93,9 @@ ColumnLayout {
         Layout.fillWidth: true; Layout.fillHeight: true; spacing: 6; clip: true
         model: sessionModel
 
+        add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
+        remove: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
+
         section.property: "dateGroup"
         section.criteria: ViewSection.FullString
         section.delegate: Item {

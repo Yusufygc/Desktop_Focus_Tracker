@@ -26,6 +26,7 @@ Item {
             spacing: 20
 
             Text { text: Strings.analyticsTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
+            Text { text: Strings.analyticsSubtitle; color: Theme.textSecondary; font.pixelSize: 13 }
 
             // ── Özet istatistik kartları ─────────────────────────────
             RowLayout {

@@ -114,10 +114,22 @@ Item {
         spacing: 20
 
         // ── SOL PANEL ─────────────────────────────────────────────────
+        // Sabit yükseklikli kartların (TimerCard 268 + bozulma butonu 80 + ...) toplamı
+        // minimum pencere yüksekliğinde (580px) taşabiliyor — ScrollView kaçış yolu sağlar
+        // (AnalyticsPage/FocusStatsPage'deki aynı ScrollView deseni).
         ColumnLayout {
             Layout.preferredWidth: 360
             Layout.fillHeight: true
-            spacing: 14
+
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: availableWidth
+                clip: true
+
+                ColumnLayout {
+                    width: parent.width
+                    spacing: 14
 
             // Başlık + durum noktası
             RowLayout {
@@ -260,6 +272,7 @@ Item {
                 Layout.fillWidth: true; height: 80; radius: 14
                 property bool isBtnActive: false
                 opacity: isBtnActive ? 1.0 : 0.35
+                Behavior on opacity { NumberAnimation { duration: 200 } }
                 color: Theme.danger
                 border.color: Theme.dangerBorder; border.width: 1
 
@@ -296,14 +309,14 @@ Item {
                         else sessionBridge.pauseSession()
                     }
                 }
-                FTButton { 
-                    id: finishBtn; Layout.fillWidth: true; height: 44; 
-                    label: Strings.trackerFinishButton; icon: "stop"; variant: "ghost"; enabled: false; 
-                    onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() } 
+                FTButton {
+                    id: finishBtn; Layout.fillWidth: true; height: 44;
+                    label: Strings.trackerFinishButton; icon: "stop"; variant: "ghost"; enabled: false;
+                    onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() }
                 }
             }
-
-            Item { Layout.fillHeight: true }
+                }
+            }
         }
 
         // ── SAĞ PANEL ─────────────────────────────────────────────────
@@ -325,6 +338,15 @@ Item {
                         Text {
                             text: root.todaySessionCount + " seans"
                             color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold
+
+                            NumberAnimation on scale {
+                                id: sessionCountPulse
+                                running: false
+                                from: 1.2; to: 1.0
+                                duration: 300
+                                easing.type: Easing.OutBack
+                            }
+                            onTextChanged: sessionCountPulse.running = true
                         }
                         Text { text: "bugün"; color: Theme.textDimmed; font.pixelSize: 12 }
                     }
@@ -337,6 +359,15 @@ Item {
                         Text {
                             text: root._fmtTodayFocus(root.todayFocusSec)
                             color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold
+
+                            NumberAnimation on scale {
+                                id: focusTimePulse
+                                running: false
+                                from: 1.2; to: 1.0
+                                duration: 300
+                                easing.type: Easing.OutBack
+                            }
+                            onTextChanged: focusTimePulse.running = true
                         }
                         Text { text: "odak süresi"; color: Theme.textDimmed; font.pixelSize: 12 }
                     }

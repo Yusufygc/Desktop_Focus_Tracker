@@ -87,6 +87,26 @@ class TestSessionRepo(unittest.TestCase):
 
         self.assertEqual(self.distraction_repo.get_by_session(session_id), [])
 
+    def test_pause_fields_roundtrip_through_get_by_id(self):
+        session_id = self.repo.insert(Session(subject="Biyoloji"))
+        paused_at = datetime(2026, 1, 1, 9, 0, 0)
+
+        self.repo.update_pause(session_id, 120, paused_at)
+
+        session = self.repo.get_by_id(session_id)
+        self.assertEqual(session.total_paused_sec, 120)
+        self.assertEqual(session.last_paused_at, paused_at)
+
+    def test_pause_fields_survive_resume_via_get_all(self):
+        session_id = self.repo.insert(Session(subject="Kimya"))
+        self.repo.update_pause(session_id, 300, datetime(2026, 1, 1, 9, 0, 0))
+        self.repo.update_pause(session_id, 450, None)  # resume() son duraklamayı temizler
+
+        sessions = self.repo.get_all()
+
+        self.assertEqual(sessions[0].total_paused_sec, 450)
+        self.assertIsNone(sessions[0].last_paused_at)
+
 
 if __name__ == "__main__":
     unittest.main()
