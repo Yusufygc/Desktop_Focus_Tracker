@@ -17,10 +17,15 @@ Item {
     readonly property int weekCount: Math.ceil(root.chartData.length / 7)
     readonly property real naturalWidth: Math.max(1, weekCount) * (cellSize + cellGap)
     // Konteyner dar olduğunda (ör. pencere küçültüldüğünde) hücreleri orantılı küçült —
-    // sabit 795px genişlik dar pencerede kartın dışına taşıp kırpılıyordu.
-    readonly property real scale: root.width > 0 ? Math.min(1, root.width / naturalWidth) : 1
+    // sabit 795px genişlik dar pencerede kartın dışına taşıp kırpılıyordu. Üst sınır da
+    // (2.2) var — aksi halde geniş/maximize pencerede hücreler büyümeden sabit 795px'te
+    // kalıp kartın solunda "kısa" görünüyordu; şimdi konteyner genişledikçe hücreler de
+    // büyüyor, aşırı iri görünmesin diye 2.2x'te sınırlanıyor.
+    readonly property real scale: root.width > 0 ? Math.min(2.2, root.width / naturalWidth) : 1
     readonly property real effCellSize: Math.max(4, cellSize * scale)
     readonly property real effCellGap: Math.max(1, cellGap * scale)
+    readonly property real renderedWidth: weekCount * (effCellSize + effCellGap)
+    readonly property real xOffset: Math.max(0, (root.width - renderedWidth) / 2)
 
     implicitWidth: naturalWidth
     implicitHeight: 7 * (effCellSize + effCellGap)
@@ -68,8 +73,8 @@ Item {
                 var row = i % 7
                 ctx.fillStyle = root.colorFor(root.chartData[i].seconds)
                 ctx.beginPath()
-                if (ctx.roundRect) ctx.roundRect(col * step, row * step, root.effCellSize, root.effCellSize, 2)
-                else ctx.rect(col * step, row * step, root.effCellSize, root.effCellSize)
+                if (ctx.roundRect) ctx.roundRect(root.xOffset + col * step, row * step, root.effCellSize, root.effCellSize, 2)
+                else ctx.rect(root.xOffset + col * step, row * step, root.effCellSize, root.effCellSize)
                 ctx.fill()
             }
         }
@@ -80,7 +85,7 @@ Item {
         hoverEnabled: true
         onPositionChanged: function(mouse) {
             var step = root.effCellSize + root.effCellGap
-            var col = Math.floor(mouse.x / step)
+            var col = Math.floor((mouse.x - root.xOffset) / step)
             var row = Math.floor(mouse.y / step)
             var idx = col * 7 + row
             if (idx >= 0 && idx < root.chartData.length) {

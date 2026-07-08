@@ -16,6 +16,10 @@ from config import BASE_DIR
 
 _SETTINGS_PATH = os.path.join(BASE_DIR, "settings.ini")
 _SETTINGS_KEY = "ui/isDark"
+_ACCENT_SETTINGS_KEY = "ui/accentPreset"
+_DEFAULT_ACCENT_PRESET = "indigo"  # tema varsayılanı — override uygulanmaz
+_BIOME_SETTINGS_KEY = "ui/settlementBiome"
+_DEFAULT_BIOME = "default"
 
 
 _DARK = {
@@ -112,6 +116,35 @@ _BUTTON_STYLES_LIGHT = {
     "ghost":   {"bg": "#e0e7ff", "hover": "#c7d2fe", "border": "#a5b4fc"},
 }
 
+# Küratörlü accent ön ayarları — serbest RGB seçici değil, kısıtlı/exclusive bir set.
+# "indigo" özel: tema varsayılanını (dark/light kendi paletinden) kullanır, override yok —
+# böylece varsayılan görünüm bu özellik eklenmeden önceki haliyle birebir kalır.
+_ACCENT_PRESETS = {
+    "emerald": {"primary": "#10b981", "hover": "#34d399", "border": "#047857", "accent": "#6ee7b7"},
+    "rose":    {"primary": "#f43f5e", "hover": "#fb7185", "border": "#be123c", "accent": "#fda4af"},
+    "amber":   {"primary": "#f59e0b", "hover": "#fbbf24", "border": "#b45309", "accent": "#fcd34d"},
+    "cyan":    {"primary": "#06b6d4", "hover": "#22d3ee", "border": "#0e7490", "accent": "#67e8f9"},
+    "violet":  {"primary": "#8b5cf6", "hover": "#a78bfa", "border": "#6d28d9", "accent": "#c4b5fd"},
+}
+
+_ACCENT_PRESET_LABELS = [
+    {"key": "indigo",  "label": "Indigo (Varsayılan)", "color": "#6366f1"},
+    {"key": "emerald", "label": "Zümrüt",               "color": "#10b981"},
+    {"key": "rose",    "label": "Gül",                  "color": "#f43f5e"},
+    {"key": "amber",   "label": "Kehribar",             "color": "#f59e0b"},
+    {"key": "cyan",    "label": "Turkuaz",               "color": "#06b6d4"},
+    {"key": "violet",  "label": "Menekşe",              "color": "#8b5cf6"},
+]
+
+# Yerleşim (SettlementView) için biome seçenekleri — renk paleti SettlementView.qml
+# içinde tutuluyor (bu sadece kullanıcı tercihini persist eden anahtar/liste).
+_BIOME_LABELS = [
+    {"key": "default", "label": "Varsayılan", "color": "#6366f1"},
+    {"key": "autumn",  "label": "Sonbahar",   "color": "#c2410c"},
+    {"key": "winter",  "label": "Kış",        "color": "#0ea5e9"},
+    {"key": "night",   "label": "Gece",       "color": "#312e81"},
+]
+
 
 class AppTheme(QObject):
 
@@ -123,6 +156,13 @@ class AppTheme(QObject):
         self._is_dark = self._settings.value(_SETTINGS_KEY, True, type=bool)
         self._palette = _DARK if self._is_dark else _LIGHT
         self._button_styles = _BUTTON_STYLES_DARK if self._is_dark else _BUTTON_STYLES_LIGHT
+        self._accent_preset = self._settings.value(_ACCENT_SETTINGS_KEY, _DEFAULT_ACCENT_PRESET, type=str)
+        if self._accent_preset not in _ACCENT_PRESETS and self._accent_preset != _DEFAULT_ACCENT_PRESET:
+            self._accent_preset = _DEFAULT_ACCENT_PRESET
+
+        self._biome = self._settings.value(_BIOME_SETTINGS_KEY, _DEFAULT_BIOME, type=str)
+        if self._biome not in [b["key"] for b in _BIOME_LABELS]:
+            self._biome = _DEFAULT_BIOME
 
     # ── Geçiş mekanizması ─────────────────────────────────────
     @Property(bool, notify=themeChanged)
@@ -146,11 +186,58 @@ class AppTheme(QObject):
 
     @Property("QVariantMap", notify=themeChanged)
     def buttonStyles(self):
-        return self._button_styles
+        preset = _ACCENT_PRESETS.get(self._accent_preset)
+        if preset is None:
+            return self._button_styles
+        return {
+            **self._button_styles,
+            "primary": {"bg": preset["primary"], "hover": preset["hover"], "border": preset["border"]},
+        }
+
+    # ── Accent ön ayarı ───────────────────────────────────────
+    @Slot(str)
+    def setAccentPreset(self, name: str):
+        if name != _DEFAULT_ACCENT_PRESET and name not in _ACCENT_PRESETS:
+            return
+        if name == self._accent_preset:
+            return
+        self._accent_preset = name
+        self._settings.setValue(_ACCENT_SETTINGS_KEY, name)
+        self._settings.sync()
+        self.themeChanged.emit()
+
+    @Property(str, notify=themeChanged)
+    def accentPreset(self):
+        return self._accent_preset
+
+    @Property("QVariantList", constant=True)
+    def accentPresets(self):
+        return _ACCENT_PRESET_LABELS
+
+    # ── Yerleşim biome tercihi ────────────────────────────────
+    @Slot(str)
+    def setSettlementBiome(self, name: str):
+        valid_keys = [b["key"] for b in _BIOME_LABELS]
+        if name not in valid_keys or name == self._biome:
+            return
+        self._biome = name
+        self._settings.setValue(_BIOME_SETTINGS_KEY, name)
+        self._settings.sync()
+        self.themeChanged.emit()
+
+    @Property(str, notify=themeChanged)
+    def settlementBiome(self):
+        return self._biome
+
+    @Property("QVariantList", constant=True)
+    def settlementBiomes(self):
+        return _BIOME_LABELS
 
     # ── Birincil renkler ─────────────────────────────────────
     @Property(str, notify=themeChanged)
-    def primary(self):        return self._palette["primary"]
+    def primary(self):
+        preset = _ACCENT_PRESETS.get(self._accent_preset)
+        return preset["primary"] if preset else self._palette["primary"]
 
     @Property(str, notify=themeChanged)
     def primaryHover(self):   return self._palette["primaryHover"]
@@ -162,7 +249,9 @@ class AppTheme(QObject):
     def primaryBorder(self):  return self._palette["primaryBorder"]
 
     @Property(str, notify=themeChanged)
-    def accent(self):         return self._palette["accent"]
+    def accent(self):
+        preset = _ACCENT_PRESETS.get(self._accent_preset)
+        return preset["accent"] if preset else self._palette["accent"]
 
     @Property(str, notify=themeChanged)
     def accentWarm(self):     return self._palette["accentWarm"]

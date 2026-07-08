@@ -8,7 +8,7 @@ Popup {
 
     signal saved(int sessionId, string subject, string notes)
 
-    anchors.centerIn: Overlay.overlay; width: 380; padding: 24; modal: true
+    anchors.centerIn: Overlay.overlay; width: 380; padding: 24; modal: true; focus: true
     Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property int _sessionId: -1
@@ -19,6 +19,13 @@ Popup {
         editNoteField.text    = notes
     }
 
+    // Not alanı (TextEdit, çok satırlı) Enter'ı kendi içinde yeni satır için tüketir —
+    // bu handler'lar sadece odak orada değilken (ör. konu alanında veya hiçbir alanda
+    // değilken) tetiklenir, çok satırlı not yazımını bozmaz.
+    function _save() {
+        root.saved(root._sessionId, editSubjectField.text, editNoteField.text)
+        root.close()
+    }
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 } }
     exit:  Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: 150 } }
 
@@ -39,6 +46,10 @@ Popup {
 
     contentItem: Column {
         spacing: 16
+
+        // Popup Item tabanlı olmadığı için Keys buraya (contentItem'a) taşındı.
+        Keys.onReturnPressed: root._save()
+        Keys.onEnterPressed:  root._save()
 
         Row {
             spacing: 8
@@ -85,10 +96,7 @@ Popup {
             FTButton { Layout.fillWidth: true; height: 42; label: Strings.commonCancel; variant: "ghost"; onClicked: root.close() }
             FTButton {
                 Layout.fillWidth: true; height: 42; label: Strings.commonSave; variant: "primary"
-                onClicked: {
-                    root.saved(root._sessionId, editSubjectField.text, editNoteField.text)
-                    root.close()
-                }
+                onClicked: root._save()
             }
         }
     }

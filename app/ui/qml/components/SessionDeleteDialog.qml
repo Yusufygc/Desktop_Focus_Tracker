@@ -8,7 +8,7 @@ Popup {
 
     signal confirmed(int sessionId)
 
-    anchors.centerIn: Overlay.overlay; width: 360; padding: 24; modal: true
+    anchors.centerIn: Overlay.overlay; width: 360; padding: 24; modal: true; focus: true
     Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property int sessionId: -1
@@ -33,6 +33,10 @@ Popup {
 
     contentItem: Column {
         spacing: 16
+
+        // Popup Item tabanlı olmadığı için Keys buraya (contentItem'a) taşındı.
+        Keys.onReturnPressed: { root.confirmed(root.sessionId); root.close() }
+        Keys.onEnterPressed:  { root.confirmed(root.sessionId); root.close() }
 
         Row {
             spacing: 8

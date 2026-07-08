@@ -71,6 +71,50 @@ class TestPeriodTotals(unittest.TestCase):
             self.svc.period_totals([], "decade", self.ref)
 
 
+class TestPeriodNavigation(unittest.TestCase):
+    """shift_reference_date / is_current_period / period_range_label —
+    istatistik sayfasındaki geçmiş dönem gezinme toolbar'ının backend'i."""
+
+    def setUp(self):
+        self.svc = FocusStatsService()
+        self.ref = date(2026, 7, 7)  # Salı, hafta başlangıcı 2026-07-06
+
+    def test_shift_week_back_one(self):
+        result = self.svc.shift_reference_date("week", self.ref, -1)
+        self.assertEqual(result, date(2026, 6, 29))
+
+    def test_shift_week_forward_one(self):
+        result = self.svc.shift_reference_date("week", self.ref, 1)
+        self.assertEqual(result, date(2026, 7, 13))
+
+    def test_shift_month_back_one(self):
+        result = self.svc.shift_reference_date("month", date(2026, 7, 15), -1)
+        self.assertEqual(result, date(2026, 6, 1))
+
+    def test_is_current_period_true_for_today(self):
+        self.assertTrue(self.svc.is_current_period("week", self.ref, today=self.ref))
+
+    def test_is_current_period_false_for_past_week(self):
+        past = self.svc.shift_reference_date("week", self.ref, -1)
+        self.assertFalse(self.svc.is_current_period("week", past, today=self.ref))
+
+    def test_range_label_day(self):
+        self.assertEqual(self.svc.period_range_label("day", self.ref), "07.07.2026")
+
+    def test_range_label_week(self):
+        self.assertEqual(self.svc.period_range_label("week", self.ref), "06.07 - 12.07.2026")
+
+    def test_range_label_month(self):
+        self.assertEqual(self.svc.period_range_label("month", date(2026, 7, 15)), "Temmuz 2026")
+
+    def test_range_label_year(self):
+        self.assertEqual(self.svc.period_range_label("year", date(2026, 7, 15)), "2026")
+
+    def test_range_label_unknown_period_raises(self):
+        with self.assertRaises(ValueError):
+            self.svc.period_range_label("decade", self.ref)
+
+
 class TestPeriodBuckets(unittest.TestCase):
     def setUp(self):
         self.svc = FocusStatsService()
@@ -153,6 +197,48 @@ class TestDailyHeatmap(unittest.TestCase):
     def test_default_days_is_371(self):
         result = self.svc.daily_heatmap([], today=self.today)
         self.assertEqual(len(result), 371)
+
+
+class TestSettlementStage(unittest.TestCase):
+    def setUp(self):
+        self.svc = FocusStatsService()
+        self.ref = date(2026, 7, 7)
+
+    def test_no_sessions_is_hut_stage(self):
+        result = self.svc.settlement_stage([])
+        self.assertEqual(result["stage_index"], 0)
+        self.assertEqual(result["stage_key"], "hut")
+        self.assertEqual(result["progress_to_next"], 0.0)
+
+    def test_below_first_threshold_stays_hut(self):
+        sessions = [_s(0, 4 * 3600, self.ref)]  # 4sa < 5sa (ev eşiği)
+        result = self.svc.settlement_stage(sessions)
+        self.assertEqual(result["stage_key"], "hut")
+
+    def test_exactly_at_threshold_advances_stage(self):
+        sessions = [_s(0, 5 * 3600, self.ref)]  # tam 5sa
+        result = self.svc.settlement_stage(sessions)
+        self.assertEqual(result["stage_key"], "house")
+        self.assertEqual(result["stage_index"], 1)
+
+    def test_progress_to_next_fraction(self):
+        sessions = [_s(0, int(12.5 * 3600), self.ref)]  # 12.5sa, ev(5)->çiftlik(20), aralık 15
+        result = self.svc.settlement_stage(sessions)
+        self.assertEqual(result["stage_key"], "house")
+        self.assertAlmostEqual(result["progress_to_next"], 0.5, places=3)
+
+    def test_above_max_threshold_is_city_and_max(self):
+        sessions = [_s(0, 400 * 3600, self.ref)]  # 400sa > 300sa (şehir eşiği)
+        result = self.svc.settlement_stage(sessions)
+        self.assertEqual(result["stage_key"], "city")
+        self.assertEqual(result["stage_index"], 5)
+        self.assertEqual(result["progress_to_next"], 1.0)
+        self.assertIsNone(result["next_stage_key"])
+        self.assertIsNone(result["hours_to_next"])
+
+    def test_total_focus_seconds_sums_all_sessions(self):
+        sessions = [_s(0, 100, self.ref), _s(-5, 200, self.ref)]
+        self.assertEqual(self.svc.total_focus_seconds(sessions), 300)
 
 
 if __name__ == "__main__":

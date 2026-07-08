@@ -16,11 +16,16 @@ ApplicationWindow {
         color: Theme.surface0
     }
 
+    // Pencere kapatma (X): aktif seans yoksa uygulama tamamen kapanır.
+    // Aktif seans varken önce onay diyaloğu açılır — "Kaydet & Çık" zaten Qt.quit() çağırıyor.
     onClosing: function(close) {
         if (sessionBridge.isActive) {
             close.accepted = false
             closeDialog.open()
+            return
         }
+        close.accepted = true
+        Qt.quit()
     }
 
     RowLayout {
@@ -99,4 +104,9 @@ ApplicationWindow {
     Connections { target: subjectBridge;   function onErrorOccurred(msg) { errorToast.show(msg) } }
     Connections { target: timerBridge;     function onErrorOccurred(msg) { errorToast.show(msg) } }
     Connections { target: focusStatsBridge; function onErrorOccurred(msg) { errorToast.show(msg) } }
+    Connections { target: achievementBridge; function onErrorOccurred(msg) { errorToast.show(msg) } }
+
+    AppTrayIcon {
+        mainWindow: root
+    }
 }

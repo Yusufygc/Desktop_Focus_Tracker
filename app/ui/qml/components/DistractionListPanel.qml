@@ -51,23 +51,7 @@ ColumnLayout {
 
     spacing: 12
 
-    // ── Başlık + sayaç ────────────────────────────────────────────
-    RowLayout {
-        Layout.fillWidth: true; spacing: 8
-        Text { text: Strings.distractionPanelTitle; color: Theme.textMuted; font.pixelSize: 12; font.letterSpacing: 1 }
-        Item { Layout.fillWidth: true }
-        Rectangle {
-            width: 38; height: 22; radius: 11
-            color: Theme.dangerBg; border.color: Theme.dangerBorder; border.width: 1
-            Text {
-                id: countLabel
-                anchors.centerIn: parent
-                text: "0"; color: Theme.dangerMuted; font.pixelSize: 12; font.weight: Font.Bold
-            }
-        }
-    }
-
-    // ── Bozulma listesi ───────────────────────────────────────────
+    // ── Bozulma listesi (başlık + sayaç rozeti artık kart içinde) ──
     GlassCard {
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -75,54 +59,75 @@ ColumnLayout {
 
         ListModel { id: distractionModel }
 
-        ListView {
-            id: distractionList
-            anchors { fill: parent; margins: 12 }
-            spacing: 6; clip: true
-            model: distractionModel
+        ColumnLayout {
+            anchors { fill: parent; margins: 16 }
+            spacing: 10
 
-            delegate: Rectangle {
-                id: delRect
-                width: distractionList.width; height: 40; radius: 8
-                color: index % 2 === 0 ? Theme.surface2 : "transparent"
-                opacity: 0; x: -20
-                Component.onCompleted: slideIn.running = true
-                ParallelAnimation {
-                    id: slideIn
-                    NumberAnimation { target: delRect; property: "opacity"; to: 1; duration: 300; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: delRect; property: "x";       to: 0; duration: 300; easing.type: Easing.OutCubic }
-                }
-                RowLayout {
-                    anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                    spacing: 12
-                    Text { text: "#" + model.n;   color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold }
-                    Text { text: model.cat;        color: Theme.dangerMuted; font.pixelSize: 13 }
+            RowLayout {
+                Layout.fillWidth: true; spacing: 8
+                Text { text: Strings.distractionPanelTitle; color: Theme.textMuted; font.pixelSize: 12; font.letterSpacing: 1 }
+                Item { Layout.fillWidth: true }
+                Rectangle {
+                    width: 38; height: 22; radius: 11
+                    color: Theme.dangerBg; border.color: Theme.dangerBorder; border.width: 1
                     Text {
-                        text: model.note || ""; color: Theme.textMuted; font.pixelSize: 12
-                        visible: model.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight
+                        id: countLabel
+                        anchors.centerIn: parent
+                        text: "0"; color: Theme.dangerMuted; font.pixelSize: 12; font.weight: Font.Bold
                     }
                 }
             }
 
-            Column {
-                anchors.centerIn: parent
-                spacing: 8
-                visible: distractionModel.count === 0
+            ListView {
+                id: distractionList
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 6; clip: true
+                model: distractionModel
 
-                AppIcon {
-                    name: "target"
-                    size: 36
-                    color: Theme.textMuted
-                    opacity: 0.3
-                    anchors.horizontalCenter: parent.horizontalCenter
+                delegate: Rectangle {
+                    id: delRect
+                    width: distractionList.width; height: 40; radius: 8
+                    color: index % 2 === 0 ? Theme.surface2 : "transparent"
+                    opacity: 0; x: -20
+                    Component.onCompleted: slideIn.running = true
+                    ParallelAnimation {
+                        id: slideIn
+                        NumberAnimation { target: delRect; property: "opacity"; to: 1; duration: 300; easing.type: Easing.OutCubic }
+                        NumberAnimation { target: delRect; property: "x";       to: 0; duration: 300; easing.type: Easing.OutCubic }
+                    }
+                    RowLayout {
+                        anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
+                        spacing: 12
+                        Text { text: "#" + model.n;   color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold }
+                        Text { text: model.cat;        color: Theme.dangerMuted; font.pixelSize: 13 }
+                        Text {
+                            text: model.note || ""; color: Theme.textMuted; font.pixelSize: 12
+                            visible: model.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight
+                        }
+                    }
                 }
 
-                Text {
-                    text: "Bu seansa ait bir odak bozulması bulunmuyor."
-                    color: Theme.textMuted
-                    font.pixelSize: 13
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    visible: distractionModel.count === 0
+
+                    AppIcon {
+                        name: "target"
+                        size: 36
+                        color: Theme.textMuted
+                        opacity: 0.3
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+
+                    Text {
+                        text: "Bu seansa ait bir odak bozulması bulunmuyor."
+                        color: Theme.textMuted
+                        font.pixelSize: 13
+                        horizontalAlignment: Text.AlignHCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
                 }
             }
         }

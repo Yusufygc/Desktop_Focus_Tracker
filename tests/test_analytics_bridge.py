@@ -5,7 +5,7 @@ SessionService/DistractionService constructor'dan enjekte edilir; session_repo m
 
 import sqlite3
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 from app.bridge.analytics_bridge import AnalyticsBridge
@@ -112,6 +112,63 @@ class TestAnalyticsBridge(unittest.TestCase):
 
         self.assertFalse(result)
         self.assertEqual(len(received), 1)
+
+    def test_get_subject_breakdown_sorted_descending(self):
+        s1 = Session(subject="Matematik", started_at=datetime(2026, 1, 1, 10, 0),
+                      ended_at=datetime(2026, 1, 1, 11, 0))
+        s2 = Session(subject="Fizik", started_at=datetime(2026, 1, 1, 10, 0),
+                      ended_at=datetime(2026, 1, 1, 10, 30))
+        self.session_svc.get_all_sessions.return_value = [s1, s2]
+        self.subject_svc.get_color_map.return_value = {"Matematik": "#ff0000"}
+
+        result = self.bridge.getSubjectBreakdown()
+
+        self.assertEqual(result[0]["subject"], "Matematik")
+        self.assertEqual(result[0]["color"], "#ff0000")
+        self.assertEqual(result[0]["totalSec"], 3600)
+
+    def test_get_subject_breakdown_db_error_emits_errorOccurred(self):
+        self.session_svc.get_all_sessions.side_effect = sqlite3.OperationalError("DB hatası")
+        received = []
+        self.bridge.errorOccurred.connect(lambda msg: received.append(msg))
+
+        result = self.bridge.getSubjectBreakdown()
+
+        self.assertEqual(result, [])
+        self.assertEqual(len(received), 1)
+
+    def test_get_focus_quality_trend_returns_list(self):
+        self.session_svc.get_all_sessions.return_value = []
+
+        result = self.bridge.getFocusQualityTrend("week")
+
+        self.assertEqual(result, [])
+
+    def test_get_focus_quality_trend_invalid_period_emits_errorOccurred(self):
+        self.session_svc.get_all_sessions.return_value = []
+        received = []
+        self.bridge.errorOccurred.connect(lambda msg: received.append(msg))
+
+        result = self.bridge.getFocusQualityTrend("decade")
+
+        self.assertEqual(result, [])
+        self.assertEqual(len(received), 1)
+
+    def test_get_digest_text_no_data(self):
+        self.session_svc.get_all_sessions.return_value = []
+
+        result = self.bridge.getDigestText("week")
+
+        self.assertIn("henüz odaklanma kaydın yok", result)
+
+    def test_get_digest_text_with_data(self):
+        start = datetime.now()
+        session = Session(subject="Matematik", started_at=start, ended_at=start + timedelta(hours=1))
+        self.session_svc.get_all_sessions.return_value = [session]
+
+        result = self.bridge.getDigestText("week")
+
+        self.assertIn("odaklandın", result)
 
 
 if __name__ == "__main__":

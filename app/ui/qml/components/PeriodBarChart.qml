@@ -7,6 +7,10 @@ Item {
     id: root
     property var chartData: []
     property real progress: 0
+    // (entry) -> string. Verilmezse "label: value" varsayılanı kullanılır — bu bileşen
+    // saniye (İstatistikler) ve 0-100 skor (Analiz) gibi farklı birimlerle tekrar
+    // kullanıldığı için tek sabit format yazılamıyor, çağıran özelleştirir.
+    property var tooltipFormatter: null
 
     NumberAnimation {
         id: growAnim
@@ -16,6 +20,8 @@ Item {
 
     onChartDataChanged: { progress = 0; growAnim.restart() }
     onProgressChanged: canvas.requestPaint()
+    onWidthChanged: canvas.requestPaint()
+    onHeightChanged: canvas.requestPaint()
 
     Connections {
         target: Theme
@@ -71,5 +77,42 @@ Item {
         visible: root.chartData.length === 0 || root.chartData.every(function(d) { return d.value === 0 })
         AppIcon { name: "sparkles"; size: 14; color: Theme.textDimmed; anchors.verticalCenter: parent.verticalCenter }
         Text { text: Strings.commonEmptyChart; color: Theme.textDimmed; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: function(mouse) {
+            if (!root.chartData || root.chartData.length === 0) return
+            var n = root.chartData.length
+            var j = Math.floor(mouse.x / (width / n))
+            if (j < 0) j = 0
+            if (j > n - 1) j = n - 1
+            var entry = root.chartData[j]
+            tip.text = root.tooltipFormatter ? root.tooltipFormatter(entry) : (entry.label + ": " + entry.value)
+            tip.visible = true
+            tip.x = Math.min(mouse.x + 8, root.width - tip.width)
+            tip.y = Math.max(mouse.y - 28, 0)
+        }
+        onExited: tip.visible = false
+    }
+
+    Rectangle {
+        id: tip
+        visible: false
+        property alias text: tipText.text
+        width: tipText.implicitWidth + 12
+        height: tipText.implicitHeight + 8
+        color: Theme.surface4
+        border.color: Theme.border
+        radius: 6
+        z: 10
+
+        Text {
+            id: tipText
+            anchors.centerIn: parent
+            color: Theme.textPrimary
+            font.pixelSize: 11
+        }
     }
 }

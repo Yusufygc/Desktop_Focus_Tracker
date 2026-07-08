@@ -4,7 +4,8 @@ Ham veriyi alır, UI'ya hazır dict/liste döner.
 """
 
 from collections import defaultdict
-from typing import Dict, List
+from datetime import date, datetime, timedelta
+from typing import Dict, List, Tuple
 
 from app.core.models.models import Distraction, Session
 
@@ -75,3 +76,57 @@ class AnalyticsService:
             "peakHour": f"{max(hourly, key=hourly.get)}:00" if hourly else "-",
             "topCategory": max(cats, key=cats.get) if cats else "-",
         }
+
+    def time_per_subject(self, sessions: List[Session]) -> Dict[str, int]:
+        """Konuya göre toplam odaklanma süresini (sn) döner."""
+        totals = defaultdict(int)
+        for s in sessions:
+            totals[s.subject] += s.duration_seconds
+        return dict(totals)
+
+    @staticmethod
+    def _week_start(d: date) -> date:
+        return d - timedelta(days=d.weekday())
+
+    def _bucket_key(self, dt: datetime, period: str) -> date:
+        d = dt.date()
+        if period == "day":
+            return d
+        if period == "week":
+            return self._week_start(d)
+        if period == "month":
+            return d.replace(day=1)
+        if period == "year":
+            return date(d.year, 1, 1)
+        raise ValueError(f"Bilinmeyen periyot: {period}")
+
+    @staticmethod
+    def _bucket_label(key: date, period: str) -> str:
+        if period in ("day", "week"):
+            return key.strftime("%d.%m")
+        if period == "month":
+            return key.strftime("%m.%Y")
+        return str(key.year)
+
+    def focus_score_trend(self, sessions_with_distractions: List[Tuple[Session, List[Distraction]]],
+                           period: str, count: int = 8) -> List[Dict]:
+        """Dönem bucket'ı başına ortalama focus_score (0-100) döner, en eskiden en yeniye.
+        FocusStatsService'teki bucket-sınırı mantığının küçük bir tekrarı — cross-import yerine
+        (RULES.md: no premature abstraction, ~15 satırlık tekrar kabul edilebilir)."""
+        if period not in ("day", "week", "month", "year"):
+            raise ValueError(f"Bilinmeyen periyot: {period}")
+
+        bucket_scores: Dict[date, List[int]] = defaultdict(list)
+        for session, distractions in sessions_with_distractions:
+            stats = self.session_stats(session, distractions)
+            key = self._bucket_key(session.started_at, period)
+            bucket_scores[key].append(stats["focus_score"])
+
+        sorted_keys = sorted(bucket_scores.keys())[-count:]
+        return [
+            {
+                "label": self._bucket_label(key, period),
+                "avgScore": round(sum(bucket_scores[key]) / len(bucket_scores[key]), 1),
+            }
+            for key in sorted_keys
+        ]

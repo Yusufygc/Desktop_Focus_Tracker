@@ -8,7 +8,8 @@ from PySide6.QtCore import QObject, Property
 
 from app.core.strings import (
     App, Common, Tracker, Timer, Distraction, Analytics,
-    History, SessionEdit, SessionDelete, Summary, SubjectManager, FocusStats,
+    History, SessionEdit, SessionDelete, Summary, SubjectManager, FocusStats, Settlement,
+    Achievements, Settings, Goals,
 )
 
 
@@ -96,6 +97,9 @@ class AppStrings(QObject):
     @Property(str, constant=True)
     def timerAddButton(self):           return Timer.ADD_BUTTON
 
+    @Property(str, constant=True)
+    def timerDurationPlaceholder(self): return Timer.DURATION_PLACEHOLDER
+
     # ── Odak Bozuldu (Distraction) ───────────────────────────
     @Property(str, constant=True)
     def distractionDialogTitle(self):          return Distraction.DIALOG_TITLE
@@ -158,6 +162,12 @@ class AppStrings(QObject):
     @Property(str, constant=True)
     def analyticsHourlyTooltipTemplate(self): return Analytics.HOURLY_TOOLTIP_TEMPLATE
 
+    @Property(str, constant=True)
+    def analyticsSubjectBreakdownTitle(self): return Analytics.SUBJECT_BREAKDOWN_TITLE
+
+    @Property(str, constant=True)
+    def analyticsQualityTrendTitle(self): return Analytics.QUALITY_TREND_TITLE
+
     # ── Odak İstatistikleri (FocusStats) ─────────────────────
     @Property(str, constant=True)
     def focusStatsNavLabel(self):       return FocusStats.NAV_LABEL
@@ -200,6 +210,55 @@ class AppStrings(QObject):
 
     @Property(str, constant=True)
     def focusStatsHeatmapTooltipTemplate(self): return FocusStats.HEATMAP_TOOLTIP_TEMPLATE
+
+    # ── Yerleşim (Settlement) ─────────────────────────────────
+    @Property(str, constant=True)
+    def settlementSectionTitle(self): return Settlement.SECTION_TITLE
+
+    @Property(str, constant=True)
+    def settlementProgressTemplate(self): return Settlement.PROGRESS_TEMPLATE
+
+    @Property(str, constant=True)
+    def settlementMaxStageText(self): return Settlement.MAX_STAGE_TEXT
+
+    # ── Başarılar (Achievements) ──────────────────────────────
+    @Property(str, constant=True)
+    def achievementsTitle(self): return Achievements.TITLE
+
+    @Property(str, constant=True)
+    def achievementsUnlockedLabel(self): return Achievements.UNLOCKED_LABEL
+
+    @Property(str, constant=True)
+    def achievementsLockedLabel(self): return Achievements.LOCKED_LABEL
+
+    # ── Ayarlar (Settings) ────────────────────────────────────
+    @Property(str, constant=True)
+    def settingsTitle(self): return Settings.TITLE
+
+    @Property(str, constant=True)
+    def settingsAccentSectionTitle(self): return Settings.ACCENT_SECTION_TITLE
+
+    @Property(str, constant=True)
+    def settingsBiomeSectionTitle(self): return Settings.BIOME_SECTION_TITLE
+
+    # ── Hedef (Goals) ─────────────────────────────────────────
+    @Property(str, constant=True)
+    def goalsSectionTitle(self): return Goals.SECTION_TITLE
+
+    @Property(str, constant=True)
+    def goalsDailyLabel(self): return Goals.DAILY_LABEL
+
+    @Property(str, constant=True)
+    def goalsWeeklyLabel(self): return Goals.WEEKLY_LABEL
+
+    @Property(str, constant=True)
+    def goalsProgressTitle(self): return Goals.PROGRESS_TITLE
+
+    @Property(str, constant=True)
+    def goalsProgressTemplate(self): return Goals.PROGRESS_TEMPLATE
+
+    @Property(str, constant=True)
+    def goalsMetText(self): return Goals.MET_TEXT
 
     # ── Geçmiş (History) ─────────────────────────────────────
     @Property(str, constant=True)

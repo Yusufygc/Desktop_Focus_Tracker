@@ -12,13 +12,22 @@ from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 from app.services.analytics_service import AnalyticsService
 from app.services.subject_service import SubjectService
+from app.services.focus_stats_service import FocusStatsService
 from app.core.logger import logger
-from app.core.strings import Errors
+from app.core.strings import Errors, Digest
 
 from datetime import date, timedelta
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
+
+
+def _format_duration(total_sec: int) -> str:
+    h, rem = divmod(max(0, int(total_sec)), 3600)
+    m = rem // 60
+    if h > 0:
+        return f"{h}sa {m}dk"
+    return f"{m}dk"
 
 @QmlElement
 class AnalyticsBridge(QObject):
@@ -33,6 +42,7 @@ class AnalyticsBridge(QObject):
         self._distraction_svc = distraction_svc
         self._subject_svc     = subject_svc
         self._analytics       = AnalyticsService()
+        self._focus_stats     = FocusStatsService()
 
     @Slot(result="QVariantList")
     def getHourlyData(self) -> list:
@@ -124,3 +134,62 @@ class AnalyticsBridge(QObject):
             logger.error(f"Seans silinirken DB hatası: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.DELETE_ERROR_TEMPLATE.format(error=str(e)))
             return False
+
+    @Slot(result="QVariantList")
+    def getSubjectBreakdown(self) -> list:
+        try:
+            sessions = self._session_svc.get_all_sessions()
+            totals = self._analytics.time_per_subject(sessions)
+            color_map = self._subject_svc.get_color_map()
+            items = sorted(totals.items(), key=lambda x: -x[1])
+            return [
+                {
+                    "subject": subject,
+                    "color": color_map.get(subject, "#4f46e5"),
+                    "totalSec": total_sec,
+                    "label": _format_duration(total_sec),
+                }
+                for subject, total_sec in items
+            ]
+        except sqlite3.Error as e:
+            logger.error(f"Konu dağılımı alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return []
+
+    @Slot(str, result="QVariantList")
+    def getFocusQualityTrend(self, period: str) -> list:
+        try:
+            sessions = self._session_svc.get_all_sessions()
+            pairs = [(s, self._distraction_svc.get_for_session(s.id)) for s in sessions]
+            return self._analytics.focus_score_trend(pairs, period)
+        except (sqlite3.Error, ValueError) as e:
+            logger.error(f"Odak kalitesi trendi alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return []
+
+    @Slot(str, result=str)
+    def getDigestText(self, period: str) -> str:
+        try:
+            sessions = self._session_svc.get_all_sessions()
+            totals = self._focus_stats.period_totals(sessions, period)
+            current_sec = totals["current_total_sec"]
+            period_label = Digest.PERIOD_LABELS.get(period, period)
+
+            if current_sec <= 0:
+                return Digest.NO_DATA_TEMPLATE.format(periodLabel=period_label)
+
+            daily_buckets = self._focus_stats.period_buckets(sessions, "day", count=7)
+            best = max(daily_buckets, key=lambda b: b["seconds"]) if daily_buckets else None
+            best_label = best["label"] if best and best["seconds"] > 0 else "-"
+            best_total = _format_duration(best["seconds"]) if best else "0dk"
+
+            return Digest.TEMPLATE.format(
+                periodLabel=period_label,
+                total=_format_duration(current_sec),
+                bestLabel=best_label,
+                bestTotal=best_total,
+            )
+        except (sqlite3.Error, ValueError) as e:
+            logger.error(f"Özet metni oluşturulurken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return ""

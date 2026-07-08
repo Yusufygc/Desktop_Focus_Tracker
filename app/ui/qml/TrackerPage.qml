@@ -8,11 +8,38 @@ Item {
 
     property int todaySessionCount: 0
     property int todayFocusSec: 0
-    property string currentSubjectText: subjectCombo.editText ? subjectCombo.editText.trim() : "Genel"
+    property string currentSubjectText: root._resolveSubjectName(subjectCombo.editText || "")
 
     signal miniModeRequested()
 
-    Component.onCompleted: root._refreshTodaySummary()
+    // Yazılan konu, mevcut bir konuyla sadece büyük/küçük harf farkıyla eşleşiyorsa
+    // (ör. "matematik" yazılınca "Matematik" varsa) kayıtlı adı (orijinal harf durumuyla)
+    // döner — böylece seanslar/analizler harf farkıyla bölünmüş konulara ayrılmaz.
+    function _resolveSubjectName(text) {
+        var trimmed = text.trim()
+        if (!trimmed) return "Genel"
+        var model = subjectCombo.model || []
+        for (var i = 0; i < model.length; i++) {
+            if (model[i].name.toLocaleLowerCase() === trimmed.toLocaleLowerCase()) {
+                return model[i].name
+            }
+        }
+        return trimmed
+    }
+
+    Component.onCompleted: {
+        root._refreshTodaySummary()
+        root._checkAchievements()
+    }
+
+    function _checkAchievements() {
+        if (!achievementBridge) return
+        var newUnlocks = achievementBridge.checkAndGetNewUnlocks()
+        if (newUnlocks.length === 0) return
+        var names = newUnlocks.map(function(u) { return u.name }).join(", ")
+        achievementToast.show("Yeni başarı: " + names)
+        confettiOverlay.burst()
+    }
 
     function _refreshTodaySummary() {
         if (!analyticsBridge) return
@@ -39,11 +66,11 @@ Item {
         target: sessionBridge
         function onTimerTick(timeStr)              { timerCard.updateTime(timeStr) }
         function onSessionStarted()                { root._setActiveState() }
-        function onSessionFinished()               { root._setIdleState(); root._refreshTodaySummary() }
+        function onSessionFinished()               { root._setIdleState(); root._refreshTodaySummary(); root._checkAchievements() }
         function onSessionPaused()                 { root._setPausedState() }
         function onSessionResumed()                { root._setActiveState() }
         function onDistractionAdded(n, cat, note)  { distractionPanel.addEntry(n, cat, note) }
-        function onPomodoroStateChanged(state)     { root._updatePomodoroStatus() }
+        function onPomodoroStateChanged(state)     { root._updatePomodoroStatus(); timerCard.refreshProgress() }
         function onPomodoroBreakEnded()            { root._handleBreakEnded() }
     }
 
@@ -109,30 +136,20 @@ Item {
     }
 
     // ── ANA LAYOUT ────────────────────────────────────────────────────
-    RowLayout {
+    // GridLayout: sol/sağ panel öğeleri artık aynı grid'in doğrudan çocukları.
+    // Her satırın yüksekliği o satırdaki iki kolonun içeriğinden max alınarak
+    // hesaplanıyor — bu yüzden aynı satırdaki öğeler piksel bazında hizalı
+    // (önceki ColumnLayout ikilisiyle "ayna tutmaya" çalışmak yerine).
+    GridLayout {
         anchors { fill: parent; margins: 24 }
-        spacing: 20
+        columns: 2
+        rowSpacing: 14
+        columnSpacing: 20
 
-        // ── SOL PANEL ─────────────────────────────────────────────────
-        // Sabit yükseklikli kartların (TimerCard 268 + bozulma butonu 80 + ...) toplamı
-        // minimum pencere yüksekliğinde (580px) taşabiliyor — ScrollView kaçış yolu sağlar
-        // (AnalyticsPage/FocusStatsPage'deki aynı ScrollView deseni).
-        ColumnLayout {
-            Layout.preferredWidth: 360
-            Layout.fillHeight: true
-
-            ScrollView {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                contentWidth: availableWidth
-                clip: true
-
-                ColumnLayout {
-                    width: parent.width
-                    spacing: 14
-
-            // Başlık + durum noktası
+            // Başlık + durum noktası (satır 0, sadece sol kolon)
             RowLayout {
+                id: titleRow
+                Layout.row: 0; Layout.column: 0
                 spacing: 10
                 Text { 
                     text: {
@@ -160,9 +177,10 @@ Item {
                 }
             }
 
-            // ── KONU SEÇİMİ ──────────────────────────────────────────
+            // ── KONU SEÇİMİ (satır 1, sol) ────────────────────────────
             GlassCard {
-                Layout.fillWidth: true; height: 64; radius: 12
+                Layout.row: 1; Layout.column: 0
+                Layout.fillWidth: true; Layout.minimumWidth: 360; height: 64; radius: 12
                 RowLayout {
                     anchors { fill: parent; leftMargin: 16; rightMargin: 12; topMargin: 8; bottomMargin: 8 }
                     spacing: 8
@@ -180,7 +198,15 @@ Item {
                             verticalAlignment: TextInput.AlignVCenter
                             onAccepted: {
                                 var txt = text.trim()
-                                if (txt.length > 0 && subjectCombo.find(txt) === -1) {
+                                if (txt.length === 0) return
+                                var existingMatch = root._resolveSubjectName(txt)
+                                if (existingMatch !== txt) {
+                                    // Sadece harf durumu farklı bir konuyla eşleşiyor — yeni eklemek
+                                    // yerine kayıtlı (orijinal harf durumlu) ada geç.
+                                    subjectCombo.editText = existingMatch
+                                    return
+                                }
+                                if (subjectCombo.find(txt) === -1) {
                                     // SubjectManagerDialog'daki renk paleti ile aynı —
                                     // Hızlı ekleme de her konuya farklı renk atasın diye döngüsel seçim.
                                     var palette = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4", "#E91E63", "#3F51B5", "#009688", "#795548", "#607D8B", "#FFC107"]
@@ -260,15 +286,19 @@ Item {
                 }
             }
 
-            // ── TIMER KARTI ───────────────────────────────────────────
+            // ── TIMER KARTI (satır 2, sol) ────────────────────────────
             TimerCard {
                 id: timerCard
+                Layout.row: 2; Layout.column: 0
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 280
             }
 
-            // ── ODAK BOZULDU BUTONU ───────────────────────────────────
+            // ── ODAK BOZULDU BUTONU (satır 3, sol) ────────────────────
             Rectangle {
                 id: distractionBtn
+                Layout.row: 3; Layout.column: 0
                 Layout.fillWidth: true; height: 80; radius: 14
                 property bool isBtnActive: false
                 opacity: isBtnActive ? 1.0 : 0.35
@@ -293,13 +323,14 @@ Item {
                 }
             }
 
-            // ── BAŞLAT / DURAKLAT / BİTİR ─────────────────────────────
+            // ── BAŞLAT / DURAKLAT / BİTİR (satır 4, sol) ──────────────
             RowLayout {
+                Layout.row: 4; Layout.column: 0
                 Layout.fillWidth: true; spacing: 10
                 FTButton { 
                     id: startBtn; Layout.fillWidth: true; height: 44; 
-                    label: Strings.trackerStartButton; icon: "play"; variant: "primary"; 
-                    onClicked: sessionBridge.startSession(subjectCombo.editText.trim() || "Genel") 
+                    label: Strings.trackerStartButton; icon: "play"; variant: "primary";
+                    onClicked: sessionBridge.startSession(root.currentSubjectText)
                 }
                 FTButton { 
                     id: pauseBtn; Layout.fillWidth: true; height: 44; visible: false;
@@ -315,24 +346,22 @@ Item {
                     onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() }
                 }
             }
-                }
-            }
-        }
 
-        // ── SAĞ PANEL ─────────────────────────────────────────────────
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: 14
-
+            // ── SAĞ PANEL (satır 1, sağ kolon) ────────────────────────
             // Bugün özeti — mevcut analyticsBridge verisiyle, ek backend gerekmez.
+            // GridLayout'ta aynı satırda (row:1) olduğu için "Programlama"
+            // kartıyla otomatik hizalanıyor — ayrı spacer/height-mirror gerekmez.
             GlassCard {
-                Layout.fillWidth: true; height: 60; radius: 12
+                Layout.row: 1; Layout.column: 1
+                Layout.alignment: Qt.AlignRight
+                Layout.fillWidth: false; Layout.preferredWidth: 360; height: 60; radius: 12
+                clip: true
                 RowLayout {
                     anchors { fill: parent; leftMargin: 16; rightMargin: 16 }
                     spacing: 20
 
                     RowLayout {
+                        Layout.fillWidth: true
                         spacing: 8
                         AppIcon { name: "target"; size: 16; color: Theme.accentWarm }
                         Text {
@@ -348,12 +377,17 @@ Item {
                             }
                             onTextChanged: sessionCountPulse.running = true
                         }
-                        Text { text: "bugün"; color: Theme.textDimmed; font.pixelSize: 12 }
+                        Text {
+                            text: "bugün"; color: Theme.textDimmed; font.pixelSize: 12
+                            Layout.fillWidth: true; Layout.minimumWidth: 0
+                            elide: Text.ElideRight
+                        }
                     }
 
                     Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; Layout.topMargin: 12; Layout.bottomMargin: 12; color: Theme.borderDim }
 
                     RowLayout {
+                        Layout.fillWidth: true
                         spacing: 8
                         AppIcon { name: "clock"; size: 16; color: Theme.info }
                         Text {
@@ -369,19 +403,27 @@ Item {
                             }
                             onTextChanged: focusTimePulse.running = true
                         }
-                        Text { text: "odak süresi"; color: Theme.textDimmed; font.pixelSize: 12 }
+                        Text {
+                            text: "odak süresi"; color: Theme.textDimmed; font.pixelSize: 12
+                            Layout.fillWidth: true; Layout.minimumWidth: 0
+                            elide: Text.ElideRight
+                        }
                     }
 
                     Item { Layout.fillWidth: true }
                 }
             }
 
+            // ── BOZULMA PANELİ (satır 2, sağ kolon — satır 2/3/4'ü kaplayıp
+            // sol kolonun toplam yüksekliğiyle alt kenardan da eşleşir) ──
             DistractionListPanel {
                 id: distractionPanel
-                Layout.fillWidth: true
+                Layout.row: 2; Layout.column: 1
+                Layout.rowSpan: 3
+                Layout.alignment: Qt.AlignRight
+                Layout.fillWidth: false; Layout.preferredWidth: 360
                 Layout.fillHeight: true
             }
-        }
     }
 
     // ── POPUP'LAR ─────────────────────────────────────────────────────
@@ -401,5 +443,16 @@ Item {
     SubjectManagerDialog {
         id: subjectManagerDialog
         onSubjectsChanged: subjectCombo.model = subjectBridge.getSubjects()
+    }
+
+    Toast {
+        id: achievementToast
+        anchors.fill: parent
+        variant: "success"
+    }
+
+    ConfettiOverlay {
+        id: confettiOverlay
+        anchors.fill: parent
     }
 }

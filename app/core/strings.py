@@ -42,6 +42,7 @@ class Timer:
     REMAINING_TEMPLATE = "{minutes}dk {seconds}sn kaldı"
     PRESET_PLACEHOLDER = "Dakika (ör: 25)"
     ADD_BUTTON = "Ekle"
+    DURATION_PLACEHOLDER = "Süre"
 
 
 class Distraction:
@@ -68,6 +69,8 @@ class Analytics:
     TOP_CATEGORY_LABEL = "EN SIK KATEGORİ"
     HOURLY_CHART_TITLE = "Saate Göre Bozulma (0–23)"
     HOURLY_TOOLTIP_TEMPLATE = "{hour}:00 — {count} bozulma"
+    SUBJECT_BREAKDOWN_TITLE = "Konuya Göre Odak Süresi"
+    QUALITY_TREND_TITLE = "Odak Kalitesi Trendi"
 
 
 class FocusStats:
@@ -85,6 +88,46 @@ class FocusStats:
     CHART_TITLE = "Geçmiş Dönemler"
     HEATMAP_TITLE = "Yıllık Odak Haritası"
     HEATMAP_TOOLTIP_TEMPLATE = "{date}: {duration}"
+
+
+class Settlement:
+    SECTION_TITLE = "Yerleşimin"
+    STAGE_HUT = "Kulübe"
+    STAGE_HOUSE = "Ev"
+    STAGE_FARM = "Çiftlik"
+    STAGE_VILLAGE = "Köy"
+    STAGE_TOWN = "Kasaba"
+    STAGE_CITY = "Şehir"
+    PROGRESS_TEMPLATE = "Bir sonraki aşamaya ({nextStage}) {hours} saat kaldı"
+    MAX_STAGE_TEXT = "En üst seviyedesin: {stageName} kuruldu!"
+
+
+class Digest:
+    # Python-only — bridge tarafında son metne birleştiriliyor, QML'e mirror gerekmez.
+    TEMPLATE = "Bu {periodLabel} {total} odaklandın. En verimli günün: {bestLabel} ({bestTotal})."
+    NO_DATA_TEMPLATE = "Bu {periodLabel} henüz odaklanma kaydın yok."
+    PERIOD_LABELS = {"day": "gün", "week": "hafta", "month": "ay", "year": "yıl"}
+
+
+class Settings:
+    TITLE = "Ayarlar"
+    ACCENT_SECTION_TITLE = "Vurgu Rengi"
+    BIOME_SECTION_TITLE = "Yerleşim Teması"
+
+
+class Goals:
+    SECTION_TITLE = "Odak Hedefi"
+    DAILY_LABEL = "Günlük Hedef (dakika)"
+    WEEKLY_LABEL = "Haftalık Hedef (dakika)"
+    PROGRESS_TITLE = "Hedef İlerlemesi"
+    PROGRESS_TEMPLATE = "{current} / {goal} dk"
+    MET_TEXT = "Hedefe ulaşıldı"
+
+
+class Achievements:
+    TITLE = "Başarılar"
+    UNLOCKED_LABEL = "Açıldı"
+    LOCKED_LABEL = "Kilitli"
 
 
 class History:

@@ -48,6 +48,11 @@ class Database:
             id      INTEGER PRIMARY KEY AUTOINCREMENT,
             minutes INTEGER NOT NULL UNIQUE
         );
+
+        CREATE TABLE IF NOT EXISTS unlocked_achievements (
+            key         TEXT PRIMARY KEY,
+            unlocked_at TEXT NOT NULL
+        );
     """
 
     def __new__(cls):

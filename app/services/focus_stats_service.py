@@ -12,6 +12,20 @@ from app.core.models.models import Session
 
 DEFAULT_BUCKET_COUNTS = {"day": 7, "week": 8, "month": 6, "year": 5}
 
+TURKISH_MONTHS = [
+    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+]
+
+SETTLEMENT_STAGES = [
+    {"key": "hut",     "min_hours": 0},
+    {"key": "house",   "min_hours": 5},
+    {"key": "farm",    "min_hours": 20},
+    {"key": "village", "min_hours": 50},
+    {"key": "town",    "min_hours": 120},
+    {"key": "city",    "min_hours": 300},
+]
+
 
 class FocusStatsService:
 
@@ -109,6 +123,34 @@ class FocusStatsService:
             buckets.append({"label": self._bucket_label(period, start), "seconds": sec})
         return buckets
 
+    def shift_reference_date(self, period: str, ref: date, offset: int) -> date:
+        """`ref`'in içinde bulunduğu dönem bucket'ından `offset` kadar ötekinin başlangıç
+        tarihini döner (offset=-1 bir önceki dönem, +1 bir sonraki) — istatistik sayfasının
+        geçmiş dönemler arasında gezinme toolbar'ı için."""
+        start, _ = self._bucket_bounds(period, ref, offset)
+        return start
+
+    def is_current_period(self, period: str, ref: date, today: Optional[date] = None) -> bool:
+        """`ref`'in bulunduğu dönem bucket'ı bugünü içeriyor mu (toolbar'da "ileri" okunun
+        devre dışı bırakılması için — gelecek döneme gidilemez)."""
+        today = today or datetime.now().date()
+        start, end_excl = self._bucket_bounds(period, ref, 0)
+        return start <= today < end_excl
+
+    def period_range_label(self, period: str, ref: date) -> str:
+        """Görüntülenen dönemin tarih aralığı etiketi (ör. hafta için '01.07 - 07.07.2026')."""
+        start, end_excl = self._bucket_bounds(period, ref, 0)
+        end_incl = end_excl - timedelta(days=1)
+        if period == "day":
+            return start.strftime("%d.%m.%Y")
+        if period == "week":
+            return f"{start.strftime('%d.%m')} - {end_incl.strftime('%d.%m.%Y')}"
+        if period == "month":
+            return f"{TURKISH_MONTHS[start.month - 1]} {start.year}"
+        if period == "year":
+            return str(start.year)
+        raise ValueError(f"Bilinmeyen periyot: {period}")
+
     def current_streak(self, sessions: List[Session], today: Optional[date] = None) -> int:
         """Bugünden geriye ardışık, en az bir seansın (süre>0) olduğu gün sayısı.
         Bugün henüz hiç seans yoksa dünden başlanır (gün bitmeden seri kırılmış sayılmaz)."""
@@ -143,3 +185,44 @@ class FocusStatsService:
             }
             for i in range(days)
         ]
+
+    def total_focus_seconds(self, sessions: List[Session]) -> int:
+        """Tüm geçmiş boyunca toplam odaklanma süresi (sn) — dönemden bağımsız, hiç sıfırlanmaz."""
+        return sum(s.duration_seconds for s in sessions)
+
+    def settlement_stage(self, sessions: List[Session]) -> Dict:
+        """Kümülatif toplam odak saatine göre 'yerleşim' aşamasını döner.
+        stage_key SETTLEMENT_STAGES'teki sabit anahtar — yerelleştirme Bridge katmanında yapılır."""
+        total_sec = self.total_focus_seconds(sessions)
+        total_hours = total_sec / 3600
+
+        stage_index = 0
+        for i, stage in enumerate(SETTLEMENT_STAGES):
+            if total_hours >= stage["min_hours"]:
+                stage_index = i
+            else:
+                break
+
+        stage = SETTLEMENT_STAGES[stage_index]
+        is_max = stage_index == len(SETTLEMENT_STAGES) - 1
+        next_stage = None if is_max else SETTLEMENT_STAGES[stage_index + 1]
+
+        if is_max:
+            next_stage_key = None
+            hours_to_next = None
+            progress_to_next = 1.0
+        else:
+            span = next_stage["min_hours"] - stage["min_hours"]
+            progress_to_next = 0.0 if span <= 0 else min(1.0, (total_hours - stage["min_hours"]) / span)
+            next_stage_key = next_stage["key"]
+            hours_to_next = round(max(0.0, next_stage["min_hours"] - total_hours), 1)
+
+        return {
+            "stage_index": stage_index,
+            "stage_key": stage["key"],
+            "total_hours": round(total_hours, 1),
+            "total_seconds": total_sec,
+            "next_stage_key": next_stage_key,
+            "hours_to_next": hours_to_next,
+            "progress_to_next": round(progress_to_next, 4),
+        }

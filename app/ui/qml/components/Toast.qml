@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// Hata bildirimi overlay. show(message) ile tetiklenir, 3.5 sn sonra otomatik kapanır.
+// Bildirim overlay. show(message) ile tetiklenir, 3.5 sn sonra otomatik kapanır.
+// variant: "danger" (hata, varsayılan) | "success" (başarı kutlaması vb.)
 Item {
     id: root
     width:  parent ? parent.width  : 0
@@ -10,6 +11,11 @@ Item {
     z: 999
 
     property string toastMessage: ""
+    property string variant: "danger"
+    readonly property color accentColor: variant === "success" ? Theme.success : Theme.danger
+    readonly property color bgColor: variant === "success" ? Theme.surface2 : Theme.dangerBg
+    readonly property color textColor: variant === "success" ? Theme.textPrimary : Theme.dangerMuted
+    readonly property string iconName: variant === "success" ? "check-circle" : "warning"
 
     function show(msg) {
         toastMessage      = msg
@@ -27,23 +33,23 @@ Item {
         anchors.bottomMargin: 28
         width: 400; height: 52
         radius: 10; opacity: 0
-        color: Theme.dangerBg
-        border.color: Theme.danger; border.width: 1
+        color: root.bgColor
+        border.color: root.accentColor; border.width: 1
 
         Rectangle {
             anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-            width: 4; radius: 2; color: Theme.danger
+            width: 4; radius: 2; color: root.accentColor
         }
 
         RowLayout {
             anchors { fill: parent; leftMargin: 18; rightMargin: 12 }
             spacing: 10
 
-            AppIcon { name: "warning"; size: 16; color: Theme.dangerMuted }
+            AppIcon { name: root.iconName; size: 16; color: root.accentColor }
 
             Text {
                 text: root.toastMessage
-                color: Theme.dangerMuted; font.pixelSize: 13
+                color: root.textColor; font.pixelSize: 13
                 Layout.fillWidth: true; elide: Text.ElideRight
             }
 

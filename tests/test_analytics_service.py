@@ -148,5 +148,62 @@ class TestSessionStats(unittest.TestCase):
         self.assertEqual(result["distractions_per_hour"], 0.0)
 
 
+def _s(subject: str, day: int, duration_sec: int) -> Session:
+    start = datetime(2024, 1, day, 10, 0, 0)
+    return Session(subject=subject, started_at=start, ended_at=start + timedelta(seconds=duration_sec), id=1)
+
+
+class TestTimePerSubject(unittest.TestCase):
+
+    def setUp(self):
+        self.svc = AnalyticsService()
+
+    def test_empty_returns_empty_dict(self):
+        self.assertEqual(self.svc.time_per_subject([]), {})
+
+    def test_single_subject_sums_duration(self):
+        sessions = [_s("Matematik", 1, 3600), _s("Matematik", 2, 1800)]
+        result = self.svc.time_per_subject(sessions)
+        self.assertEqual(result["Matematik"], 5400)
+
+    def test_multiple_subjects_separated(self):
+        sessions = [_s("Matematik", 1, 3600), _s("Fizik", 1, 1800)]
+        result = self.svc.time_per_subject(sessions)
+        self.assertEqual(result["Matematik"], 3600)
+        self.assertEqual(result["Fizik"], 1800)
+
+
+class TestFocusScoreTrend(unittest.TestCase):
+
+    def setUp(self):
+        self.svc = AnalyticsService()
+
+    def test_empty_returns_empty_list(self):
+        self.assertEqual(self.svc.focus_score_trend([], "day"), [])
+
+    def test_single_session_single_bucket(self):
+        session = _s("Test", 1, 3600)  # total_distractions=0 -> focus_score kusursuz
+        pairs = [(session, [])]
+        result = self.svc.focus_score_trend(pairs, "day")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["avgScore"], 100.0)
+
+    def test_averages_scores_within_same_day_bucket(self):
+        s1 = _s("Test", 1, 3600); s1.total_distractions = 0   # focus_score 100
+        s2 = _s("Test", 1, 3600); s2.total_distractions = 10  # focus_score 0 (100-10*10 clamped)
+        result = self.svc.focus_score_trend([(s1, []), (s2, [])], "day")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["avgScore"], 50.0)
+
+    def test_count_limits_bucket_count(self):
+        pairs = [(_s("Test", d, 3600), []) for d in range(1, 11)]  # 10 farklı gün
+        result = self.svc.focus_score_trend(pairs, "day", count=3)
+        self.assertEqual(len(result), 3)
+
+    def test_unknown_period_raises(self):
+        with self.assertRaises(ValueError):
+            self.svc.focus_score_trend([(_s("Test", 1, 60), [])], "decade")
+
+
 if __name__ == "__main__":
     unittest.main()

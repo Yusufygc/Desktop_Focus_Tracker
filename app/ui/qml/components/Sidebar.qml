@@ -114,6 +114,49 @@ Item {
             }
         }
 
+        // ── Ayarlar satırı ────────────────────────────────────────
+        Item {
+            id: settingsRow
+            Layout.fillWidth: true
+            height: 44
+
+            property bool hovered: false
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 10
+                color: settingsRow.hovered ? Theme.surface4 : "transparent"
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
+
+            RowLayout {
+                anchors { fill: parent; leftMargin: 16; rightMargin: 12 }
+                spacing: 12
+
+                AppIcon { name: "settings-gear"; size: 20; color: Theme.textSecondary }
+                Text {
+                    text: Strings.settingsTitle
+                    color: Theme.textSecondary
+                    font.pixelSize: 13
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onEntered: settingsRow.hovered = true
+                onExited:  settingsRow.hovered = false
+                onClicked: settingsDialog.open()
+            }
+        }
+
         Item { Layout.preferredHeight: 8 }
+    }
+
+    SettingsDialog {
+        id: settingsDialog
     }
 }

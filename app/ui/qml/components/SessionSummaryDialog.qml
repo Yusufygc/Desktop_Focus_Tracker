@@ -16,6 +16,15 @@ FTDialog {
 
     property var pendingStats: ({})
 
+    // FTDialog'un varsayılan Enter davranışını (root.confirmed()) override eder —
+    // bu dialog kendi summaryConfirmed(notes) sinyalini kullanıyor. Not alanı (TextEdit,
+    // çok satırlı) Enter'ı kendi içinde yeni satır için tüketir, bu yüzden bu handler
+    // sadece odak not alanında değilken tetiklenir (satır ekleme davranışı bozulmaz).
+    function _save() {
+        root.summaryConfirmed(summaryNote.text)
+        summaryNote.text = ""
+        root.close()
+    }
     function fmtDur(sec) {
         var h = Math.floor(sec / 3600)
         var m = Math.floor((sec % 3600) / 60)
@@ -26,6 +35,10 @@ FTDialog {
 
     contentItem: Column {
         spacing: 0
+
+        // Popup Item tabanlı olmadığı için Keys buraya (contentItem'a) taşındı.
+        Keys.onReturnPressed: root._save()
+        Keys.onEnterPressed:  root._save()
 
         Row {
             spacing: 8; bottomPadding: 20
@@ -93,11 +106,7 @@ FTDialog {
 
         FTButton {
             width: parent.width; height: 44; label: Strings.summarySaveButton; variant: "primary"
-            onClicked: {
-                root.summaryConfirmed(summaryNote.text)
-                summaryNote.text = ""
-                root.close()
-            }
+            onClicked: root._save()
         }
     }
 }

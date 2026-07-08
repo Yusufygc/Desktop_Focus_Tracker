@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 Window {
     id: miniRoot
-    width: 280
+    width: 340
     height: 90
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"

@@ -19,6 +19,7 @@ Popup {
     width: 400
     padding: 24
     modal: true
+    focus: true
     closePolicy: Popup.NoAutoClose
 
     Overlay.modal: Rectangle { color: Theme.overlayDim }
@@ -49,6 +50,10 @@ Popup {
     contentItem: ColumnLayout {
         spacing: 12
         // Hatalara sebep olan width ataması kaldırıldı, Layout yönergeleri eklendi.
+
+        // Popup Item tabanlı olmadığı için Keys buraya (contentItem'a) taşındı.
+        Keys.onReturnPressed: { root.close(); root.confirmed() }
+        Keys.onEnterPressed:  { root.close(); root.confirmed() }
 
         Item { Layout.preferredHeight: 4; Layout.fillWidth: true }
 
