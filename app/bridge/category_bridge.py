@@ -4,9 +4,10 @@ CategoryBridge — Kategori CRUD işlemlerini QML'e açar.
 
 import sqlite3
 
-from PySide6.QtCore import QObject, Signal, Slot
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtQml import QmlElement
 
+from app.bridge.base_bridge import BaseBridge
 from app.services.category_service import CategoryService
 from app.core.logger import logger
 from app.core.strings import Errors
@@ -16,10 +17,9 @@ QML_IMPORT_MAJOR_VERSION = 1
 
 
 @QmlElement
-class CategoryBridge(QObject):
+class CategoryBridge(BaseBridge):
     categoryAdded = Signal()
     categoryDeleted = Signal()
-    errorOccurred = Signal(str)
 
     def __init__(self, category_svc: CategoryService, parent=None):
         super().__init__(parent)

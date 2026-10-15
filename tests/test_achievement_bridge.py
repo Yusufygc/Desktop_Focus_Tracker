@@ -8,6 +8,8 @@ import unittest
 from unittest.mock import Mock
 
 from app.bridge.achievement_bridge import AchievementBridge
+from app.services.achievement_service import AchievementService
+from app.services.focus_stats_service import FocusStatsService
 
 
 class TestAchievementBridge(unittest.TestCase):
@@ -70,6 +72,14 @@ class TestAchievementBridge(unittest.TestCase):
 
         self.assertEqual(result, [])
         self.assertEqual(len(received), 1)
+
+    def test_di_with_achievement_service(self):
+        mock_svc = Mock(spec=AchievementService)
+        mock_stats = Mock(spec=FocusStatsService)
+        mock_svc.get_all_with_status.return_value = [{"key": "custom", "unlocked": True}]
+        bridge = AchievementBridge(self.session_svc, mock_svc, mock_stats)
+        result = bridge.getAllAchievements()
+        self.assertEqual(result, [{"key": "custom", "unlocked": True}])
 
 
 if __name__ == "__main__":

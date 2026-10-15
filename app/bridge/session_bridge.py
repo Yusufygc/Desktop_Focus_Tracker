@@ -28,6 +28,7 @@ class SessionBridge(QObject):
     pomodoroStateChanged = Signal(str)
     pomodoroBreakEnded   = Signal()
     isActiveChanged      = Signal()
+    isPausedChanged      = Signal()
 
     def __init__(self, session_svc: SessionService, distraction_svc: DistractionService, parent=None):
         super().__init__(parent)
@@ -118,6 +119,7 @@ class SessionBridge(QObject):
             self.pomodoroStateChanged.emit(self._pomodoro_state)
         self._timer.start(1000)
         self.isActiveChanged.emit()
+        self.isPausedChanged.emit()
         self.sessionStarted.emit()
 
     @Slot(str, str, result=str)
@@ -165,6 +167,7 @@ class SessionBridge(QObject):
         self._pomodoro_state = "IDLE"
         self.pomodoroStateChanged.emit(self._pomodoro_state)
         self.isActiveChanged.emit()
+        self.isPausedChanged.emit()
         self.sessionFinished.emit()
 
         return {
@@ -182,6 +185,7 @@ class SessionBridge(QObject):
             self._pomodoro_state = "IDLE"
             self._session_svc.finish(notes="[Uygulama kapatıldı]")
             self.isActiveChanged.emit()
+            self.isPausedChanged.emit()
 
     def _tick(self):
         # Mola sayacı (seans duraklatılmışken)
@@ -223,6 +227,7 @@ class SessionBridge(QObject):
             self._session_svc.pause()
             self._timer.stop()
             self.sessionPaused.emit()
+            self.isPausedChanged.emit()
 
     @Slot()
     def resumeSession(self):
@@ -233,8 +238,9 @@ class SessionBridge(QObject):
                 self.pomodoroStateChanged.emit(self._pomodoro_state)
             self._timer.start(1000)
             self.sessionResumed.emit()
+            self.isPausedChanged.emit()
 
-    @Property(bool, notify=sessionPaused)
+    @Property(bool, notify=isPausedChanged)
     def isPaused(self) -> bool:
         if self._session_svc.has_active:
             return self._session_svc.active_session.is_paused

@@ -7,7 +7,7 @@ eklenmez — testler kendi verisini kendi ekler.
 
 import sqlite3
 
-from app.core.database import db, Database
+from app.core.database import db, Database, configure_sqlite_connection
 
 
 def use_test_db() -> sqlite3.Connection:
@@ -15,8 +15,7 @@ def use_test_db() -> sqlite3.Connection:
     buna yönlendirir. Testin önceki bağlantısını geri yüklemek için `restore_db`'ye
     verilmek üzere eski bağlantıyı döner."""
     conn = sqlite3.connect(":memory:", check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
+    configure_sqlite_connection(conn)
     conn.executescript(Database.SCHEMA_SQL)
 
     old_connection = db._connection

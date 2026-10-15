@@ -17,6 +17,7 @@ class TestAnalyticsBridge(unittest.TestCase):
     def setUp(self):
         self.session_svc = Mock()
         self.distraction_svc = Mock()
+        self.distraction_svc.get_for_session.return_value = []
         self.subject_svc = Mock()
         self.subject_svc.get_color_map.return_value = {}
         self.bridge = AnalyticsBridge(self.session_svc, self.distraction_svc, self.subject_svc)

@@ -233,6 +233,17 @@ class AppTheme(QObject):
     def settlementBiomes(self):
         return _BIOME_LABELS
 
+    @Slot(str, result=str)
+    def color(self, token: str) -> str:
+        """Dinamik renk token erişim slotu: Theme.color('primary')"""
+        if token == "primary":
+            preset = _ACCENT_PRESETS.get(self._accent_preset)
+            return preset["primary"] if preset else self._palette.get("primary", "")
+        if token == "accent":
+            preset = _ACCENT_PRESETS.get(self._accent_preset)
+            return preset["accent"] if preset else self._palette.get("accent", "")
+        return self._palette.get(token, "")
+
     # ── Birincil renkler ─────────────────────────────────────
     @Property(str, notify=themeChanged)
     def primary(self):

@@ -5,10 +5,10 @@ import "components"
 
 ApplicationWindow {
     id: root
-    width: 1180
-    height: 720
-    minimumWidth: 980
-    minimumHeight: 580
+    width: AppConfig.windowDefaultWidth
+    height: AppConfig.windowDefaultHeight
+    minimumWidth: AppConfig.windowMinWidth
+    minimumHeight: AppConfig.windowMinHeight
     visible: true
     title: Strings.appName
 
@@ -28,14 +28,62 @@ ApplicationWindow {
         Qt.quit()
     }
 
+    function _getScreenBounds(win) {
+        var scr = (win && win.screen) ? win.screen : null
+        var sx = (scr && scr.virtualX !== undefined) ? scr.virtualX : (Screen.virtualX !== undefined ? Screen.virtualX : 0)
+        var sy = (scr && scr.virtualY !== undefined) ? scr.virtualY : (Screen.virtualY !== undefined ? Screen.virtualY : 0)
+        var sw = (scr && scr.width !== undefined && scr.width > 0) ? scr.width : (Screen.width || 1920)
+        var sh = (scr && scr.desktopAvailableHeight !== undefined && scr.desktopAvailableHeight > 0) ? scr.desktopAvailableHeight : (scr && scr.height || Screen.desktopAvailableHeight || Screen.height || 1080)
+        return { x: sx, y: sy, width: sw, height: sh }
+    }
+
+    function _switchToMini() {
+        if (root.screen) {
+            miniWindow.screen = root.screen
+        }
+        var b = _getScreenBounds(root)
+        var nx = root.x + Math.round((root.width - miniWindow.width) / 2)
+        var ny = root.y + Math.round((root.height - miniWindow.height) / 2)
+        if (nx < b.x) nx = b.x
+        if (nx + miniWindow.width > b.x + b.width) nx = b.x + b.width - miniWindow.width
+        if (ny < b.y) ny = b.y
+        if (ny + miniWindow.height > b.y + b.height) ny = b.y + b.height - miniWindow.height
+        miniWindow.x = nx
+        miniWindow.y = ny
+        root.hide()
+        miniWindow.show()
+    }
+
+    function _restoreFromMini() {
+        if (miniWindow.screen) {
+            root.screen = miniWindow.screen
+        }
+        var b = _getScreenBounds(miniWindow)
+        var nx = miniWindow.x + Math.round((miniWindow.width - root.width) / 2)
+        var ny = miniWindow.y + Math.round((miniWindow.height - root.height) / 2)
+        if (nx < b.x) nx = b.x
+        if (nx + root.width > b.x + b.width) nx = b.x + b.width - root.width
+        if (ny < b.y) ny = b.y
+        if (ny + root.height > b.y + b.height) ny = b.y + b.height - root.height
+        root.x = nx
+        root.y = ny
+        miniWindow.hide()
+        root.show()
+    }
+
     RowLayout {
         anchors.fill: parent
         spacing: 0
 
         Sidebar {
             id: sidebar
-            Layout.preferredWidth: 220
+            objectName: "sidebar"
+            Layout.preferredWidth: sidebar.collapsed ? 68 : 220
             Layout.fillHeight: true
+            clip: true
+            Behavior on Layout.preferredWidth {
+                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
             onTabChanged: function(index) { contentStack.currentIndex = index }
         }
 
@@ -47,10 +95,7 @@ ApplicationWindow {
 
             TrackerPage  { 
                 id: trackerPage 
-                onMiniModeRequested: {
-                    root.hide()
-                    miniWindow.show()
-                }
+                onMiniModeRequested: root._switchToMini()
             }
             AnalyticsPage {
                 id: analyticsPage
@@ -79,15 +124,13 @@ ApplicationWindow {
     MiniWindow {
         id: miniWindow
         onMaximizeRequested: {
-            miniWindow.hide()
-            root.show()
+            root._restoreFromMini()
         }
         onStartRequested: {
             sessionBridge.startSession(trackerPage.currentSubjectText)
         }
         onFinishRequested: {
-            miniWindow.hide()
-            root.show()
+            root._restoreFromMini()
             trackerPage.triggerFinish()
         }
     }

@@ -240,126 +240,136 @@ GlassCard {
                 }
             }
 
-            Canvas {
-                id: arc
+            Item {
+                id: dialWrapper
                 anchors.centerIn: parent
-                width: 240; height: 240
+                width: 240
+                height: 240
+                readonly property real availH: dialArea.height - (durationPicker.visible ? 36 : 8)
+                readonly property real maxDim: Math.min(dialArea.width - 16, availH)
+                scale: maxDim > 0 ? Math.max(0.65, Math.min(1.0, maxDim / 240)) : 1.0
+                Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
-                onPaint: {
-                    var ctx = getContext("2d")
-                    ctx.clearRect(0, 0, width, height)
+                Canvas {
+                    id: arc
+                    anchors.fill: parent
 
-                    if (sessionBridge.isPomodoroMode) {
-                        var state = sessionBridge.pomodoroState
-                        var progress = timerCard.animatedProgress
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
 
-                        ctx.beginPath()
-                        ctx.arc(120, 120, 90, 0, Math.PI * 2)
-                        ctx.strokeStyle = Theme.surface3
-                        ctx.lineWidth = 16
-                        ctx.stroke()
+                        if (sessionBridge.isPomodoroMode) {
+                            var state = sessionBridge.pomodoroState
+                            var progress = timerCard.animatedProgress
 
-                        if (progress > 0) {
-                            var startA = -Math.PI / 2
                             ctx.beginPath()
-                            ctx.arc(120, 120, 90, startA, startA + 2 * Math.PI * progress)
-                            var grad = ctx.createLinearGradient(0, 0, width, height)
-                            if (state === "FOCUS") {
+                            ctx.arc(120, 120, 90, 0, Math.PI * 2)
+                            ctx.strokeStyle = Theme.surface3
+                            ctx.lineWidth = 16
+                            ctx.stroke()
+
+                            if (progress > 0) {
+                                var startA = -Math.PI / 2
+                                ctx.beginPath()
+                                ctx.arc(120, 120, 90, startA, startA + 2 * Math.PI * progress)
+                                var grad = ctx.createLinearGradient(0, 0, width, height)
+                                if (state === "FOCUS") {
+                                    grad.addColorStop(0, Theme.primary)
+                                    grad.addColorStop(1, Theme.infoAlt)
+                                } else {
+                                    grad.addColorStop(0, Theme.success)
+                                    grad.addColorStop(1, Theme.info)
+                                }
+                                ctx.strokeStyle = grad
+                                ctx.lineWidth   = 16
+                                ctx.lineCap     = "round"
+                                ctx.stroke()
+                            }
+                        } else if (timerCard.plannedMinutes > 0) {
+                            var progress = timerCard.animatedProgress
+                            var startA   = -Math.PI / 2
+
+                            ctx.beginPath()
+                            ctx.arc(120, 120, 90, 0, Math.PI * 2)
+                            ctx.strokeStyle = Theme.surface3
+                            ctx.lineWidth = 16
+                            ctx.stroke()
+
+                            if (progress > 0) {
+                                ctx.beginPath()
+                                ctx.arc(120, 120, 90, startA, startA + 2 * Math.PI * progress)
+                                var grad = ctx.createLinearGradient(0, 0, width, height)
                                 grad.addColorStop(0, Theme.primary)
                                 grad.addColorStop(1, Theme.infoAlt)
-                            } else {
-                                grad.addColorStop(0, Theme.success)
-                                grad.addColorStop(1, Theme.info)
+                                ctx.strokeStyle = grad
+                                ctx.lineWidth   = 16
+                                ctx.lineCap     = "round"
+                                ctx.stroke()
                             }
-                            ctx.strokeStyle = grad
-                            ctx.lineWidth   = 16
-                            ctx.lineCap     = "round"
-                            ctx.stroke()
-                        }
-                    } else if (timerCard.plannedMinutes > 0) {
-                        var progress = timerCard.animatedProgress
-                        var startA   = -Math.PI / 2
-
-                        ctx.beginPath()
-                        ctx.arc(120, 120, 90, 0, Math.PI * 2)
-                        ctx.strokeStyle = Theme.surface3
-                        ctx.lineWidth = 16
-                        ctx.stroke()
-
-                        if (progress > 0) {
-                            ctx.beginPath()
-                            ctx.arc(120, 120, 90, startA, startA + 2 * Math.PI * progress)
-                            var grad = ctx.createLinearGradient(0, 0, width, height)
-                            grad.addColorStop(0, Theme.primary)
-                            grad.addColorStop(1, Theme.infoAlt)
-                            ctx.strokeStyle = grad
-                            ctx.lineWidth   = 16
-                            ctx.lineCap     = "round"
-                            ctx.stroke()
-                        }
-                    } else {
-                        ctx.beginPath()
-                        ctx.arc(120, 120, 90, 0, Math.PI * 2)
-                        ctx.strokeStyle  = Theme.primary
-                        ctx.lineWidth    = 56
-                        ctx.globalAlpha  = 0.22
-                        ctx.stroke()
-                    }
-                }
-            }
-
-            ColumnLayout {
-                anchors.centerIn: parent
-                spacing: 2
-
-                Text {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: Strings.timerLabel; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 3
-                }
-                Text {
-                    id: timerLabel
-                    Layout.alignment: Qt.AlignHCenter
-                    text: {
-                        if (sessionBridge.isPomodoroMode) {
-                            var target = sessionBridge.pomodoroTarget
-                            var rem = 0
-                            if (sessionBridge.pomodoroState === "FOCUS") {
-                                rem = target - (timerCard.elapsed % target)
-                            } else if (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK") {
-                                rem = target - sessionBridge.pomodoroBreakElapsed
-                            }
-                            if (rem < 0) rem = 0
-                            var m = Math.floor(rem / 60)
-                            var s = rem % 60
-                            return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s)
                         } else {
-                            return timerLabel.text // koru
+                            ctx.beginPath()
+                            ctx.arc(120, 120, 90, 0, Math.PI * 2)
+                            ctx.strokeStyle  = Theme.primary
+                            ctx.lineWidth    = 56
+                            ctx.globalAlpha  = 0.22
+                            ctx.stroke()
                         }
                     }
-                    color: (sessionBridge.isPomodoroMode && (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK")) ? Theme.success :
-                           ((!sessionBridge.isPomodoroMode && timerCard.plannedMinutes > 0 && timerCard.elapsed >= timerCard.plannedMinutes * 60)
-                           ? Theme.dangerMuted : Theme.primary)
-                    font.pixelSize: 44; font.weight: Font.Bold; font.family: "Consolas"
                 }
-                RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    visible: !sessionBridge.isPomodoroMode && timerCard.plannedMinutes > 0
-                    spacing: 4
 
-                    readonly property int rem: timerCard.plannedMinutes * 60 - timerCard.elapsed
-
-                    AppIcon { name: "check"; size: 11; color: Theme.textMuted; visible: parent.rem <= 0 }
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 2
 
                     Text {
-                        color: Theme.textMuted; font.pixelSize: 11
+                        Layout.alignment: Qt.AlignHCenter
+                        text: Strings.timerLabel; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 3
+                    }
+                    Text {
+                        id: timerLabel
+                        Layout.alignment: Qt.AlignHCenter
                         text: {
-                            var rem = timerCard.plannedMinutes * 60 - timerCard.elapsed
-                            if (rem <= 0) return Strings.timerTimeUp
-                            var m = Math.floor(rem / 60)
-                            var s = rem % 60
-                            return Strings.timerRemainingTemplate
-                                .replace("{minutes}", m)
-                                .replace("{seconds}", s < 10 ? "0" + s : s)
+                            if (sessionBridge.isPomodoroMode) {
+                                var target = sessionBridge.pomodoroTarget
+                                var rem = 0
+                                if (sessionBridge.pomodoroState === "FOCUS") {
+                                    rem = target - (timerCard.elapsed % target)
+                                } else if (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK") {
+                                    rem = target - sessionBridge.pomodoroBreakElapsed
+                                }
+                                if (rem < 0) rem = 0
+                                var m = Math.floor(rem / 60)
+                                var s = rem % 60
+                                return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s)
+                            } else {
+                                return timerLabel.text // koru
+                            }
+                        }
+                        color: (sessionBridge.isPomodoroMode && (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK")) ? Theme.success :
+                               ((!sessionBridge.isPomodoroMode && timerCard.plannedMinutes > 0 && timerCard.elapsed >= timerCard.plannedMinutes * 60)
+                               ? Theme.dangerMuted : Theme.primary)
+                        font.pixelSize: 44; font.weight: Font.Bold; font.family: "Consolas"
+                    }
+                    RowLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        visible: !sessionBridge.isPomodoroMode && timerCard.plannedMinutes > 0
+                        spacing: 4
+
+                        readonly property int rem: timerCard.plannedMinutes * 60 - timerCard.elapsed
+
+                        AppIcon { name: "check"; size: 11; color: Theme.textMuted; visible: parent.rem <= 0 }
+
+                        Text {
+                            color: Theme.textMuted; font.pixelSize: 11
+                            text: {
+                                var rem = timerCard.plannedMinutes * 60 - timerCard.elapsed
+                                if (rem <= 0) return Strings.timerTimeUp
+                                var m = Math.floor(rem / 60)
+                                var s = rem % 60
+                                return Strings.timerRemainingTemplate
+                                    .replace("{minutes}", m)
+                                    .replace("{seconds}", s < 10 ? "0" + s : s)
+                            }
                         }
                     }
                 }

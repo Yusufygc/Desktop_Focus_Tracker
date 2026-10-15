@@ -208,9 +208,12 @@ Item {
                 }
             }
 
-            // ── Stat kartları (toplam / karşılaştırma / seri) ────────
-            RowLayout {
-                Layout.fillWidth: true; spacing: 12
+            // ── Stat kartları (toplam / karşılaştırma / seri - Duyarlı Grid) ─
+            GridLayout {
+                Layout.fillWidth: true
+                columns: root.width < 680 ? 1 : 3
+                rowSpacing: 12
+                columnSpacing: 12
                 StatCard {
                     Layout.fillWidth: true
                     value: root._fmtDuration(Math.round(root.animCurrentSec))

@@ -18,7 +18,7 @@ def setup_logger():
     if sys.stdout is not None:
         try:
             sys.stdout.reconfigure(encoding='utf-8')
-        except Exception:
+        except (AttributeError, ValueError, OSError):
             pass
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)

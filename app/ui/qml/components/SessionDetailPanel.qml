@@ -73,9 +73,12 @@ GlassCard {
                 }
             }
 
-            // İstatistik kartları — AnalyticsPage'deki StatCard ile aynı görsel dil
-            RowLayout {
-                Layout.fillWidth: true; spacing: 10
+            // İstatistik kartları — AnalyticsPage'deki StatCard ile aynı görsel dil (Duyarlı Grid)
+            GridLayout {
+                Layout.fillWidth: true
+                columns: root.width < 450 ? 1 : 3
+                rowSpacing: 10
+                columnSpacing: 10
                 StatCard {
                     Layout.fillWidth: true
                     value: root._fmtDur(root.sessionData.durationSec || 0)

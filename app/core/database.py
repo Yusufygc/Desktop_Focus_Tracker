@@ -8,6 +8,24 @@ import threading
 from config import DB_PATH
 
 
+def _tr_casefold(s: str) -> str:
+    if not isinstance(s, str):
+        return ""
+    return s.replace("\u0130", "i").replace("I", "\u0131").casefold()
+
+
+def turkish_nocase_collation(a: str, b: str) -> int:
+    fa, fb = _tr_casefold(a), _tr_casefold(b)
+    return (fa > fb) - (fa < fb)
+
+
+def configure_sqlite_connection(conn: sqlite3.Connection) -> None:
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.create_collation("NOCASE", turkish_nocase_collation)
+    conn.create_collation("TURKISH_NOCASE", turkish_nocase_collation)
+
+
 class Database:
     _instance = None
 
@@ -60,20 +78,22 @@ class Database:
             cls._instance = super().__new__(cls)
             cls._instance._connection = None
             cls._instance._owner_thread = None
+            cls._instance._local = threading.local()
         return cls._instance
 
     def connect(self) -> None:
-        # check_same_thread=False: PySide6/QML tarafında bağlantı Qt ana thread'inde
-        # kurulur ama bazı Qt callback'leri farklı bir thread id ile gelebilir.
-        # sqlite3'ün kendi thread-guard'ını kapatıyoruz; onun yerine `conn` erişimini
-        # kurulum thread'ine kilitleyen kendi guard'ımızı kullanıyoruz (aşağıda).
         self._connection = sqlite3.connect(DB_PATH, check_same_thread=False)
-        self._connection.row_factory = sqlite3.Row  # sütun adıyla erişim için
-        self._connection.execute("PRAGMA foreign_keys = ON")
+        configure_sqlite_connection(self._connection)
         self._owner_thread = threading.current_thread()
         self._create_tables()
 
     def close(self) -> None:
+        if hasattr(self, "_local") and hasattr(self._local, "conn") and self._local.conn:
+            try:
+                self._local.conn.close()
+            except sqlite3.Error:
+                pass
+            self._local.conn = None
         if self._connection:
             self._connection.close()
             self._connection = None
@@ -82,13 +102,18 @@ class Database:
     @property
     def conn(self) -> sqlite3.Connection:
         owner = getattr(self, "_owner_thread", None)
-        if owner is not None and threading.current_thread() is not owner:
-            raise RuntimeError(
-                f"Database.conn '{owner.name}' thread'i dışından çağrıldı "
-                f"(çağıran: '{threading.current_thread().name}'). Tüm DB erişimi "
-                "ana thread üzerinden yapılmalı."
-            )
-        return self._connection
+        cur_thread = threading.current_thread()
+        # Ana thread veya henüz owner atanmamış durumlar
+        if owner is None or cur_thread is owner:
+            return self._connection
+
+        # Arka plan iş parçacığı (QThread / Worker thread) erişimi:
+        # Ana UI thread'ini kilitlemek yerine iş parçacığına özel izole bağlantı oluştur.
+        if not hasattr(self._local, "conn") or self._local.conn is None:
+            thread_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+            configure_sqlite_connection(thread_conn)
+            self._local.conn = thread_conn
+        return self._local.conn
 
     def _create_tables(self) -> None:
         self._connection.executescript(self.SCHEMA_SQL)

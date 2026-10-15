@@ -41,9 +41,12 @@ Item {
             Text { text: Strings.analyticsTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
             Text { text: Strings.analyticsSubtitle; color: Theme.textSecondary; font.pixelSize: 13 }
 
-            // ── Özet istatistik kartları ─────────────────────────────
-            RowLayout {
-                Layout.fillWidth: true; spacing: 12
+            // ── Özet istatistik kartları (Duyarlı Grid) ──────────────
+            GridLayout {
+                Layout.fillWidth: true
+                columns: root.width < 760 ? 2 : 4
+                rowSpacing: 12
+                columnSpacing: 12
                 StatCard { Layout.fillWidth: true; value: String(root.summaryStats.total     || 0); label: Strings.analyticsTotalLabel;      accentColor: Theme.dangerMuted; icon: "lightning" }
                 StatCard { Layout.fillWidth: true; value: String(root.summaryStats.dailyAvg  || 0); label: Strings.analyticsDailyAvgLabel;    accentColor: Theme.accentWarm; icon: "trend-up" }
                 StatCard { Layout.fillWidth: true; value: root.summaryStats.peakHour         || "-"; label: Strings.analyticsPeakHourLabel;   accentColor: Theme.info; icon: "clock" }

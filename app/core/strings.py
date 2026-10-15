@@ -21,6 +21,8 @@ class Common:
     EMPTY_CHART = "Henüz veri yok"
     THEME_TOGGLE_LIGHT_LABEL = "Açık temaya geç"
     THEME_TOGGLE_DARK_LABEL = "Koyu temaya geç"
+    SIDEBAR_COLLAPSE_TOOLTIP = "Menüyü Daralt"
+    SIDEBAR_EXPAND_TOOLTIP = "Menüyü Genişlet"
 
 
 class Tracker:

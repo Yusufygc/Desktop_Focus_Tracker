@@ -9,6 +9,7 @@ from datetime import date
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtQml import QmlElement
 
+from app.bridge.base_bridge import BaseBridge
 from app.services.session_service import SessionService
 from app.services.focus_stats_service import FocusStatsService
 from app.core.logger import logger
@@ -18,12 +19,11 @@ QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
 
 
+from app.core.formatters import format_duration
+
+
 def _format_duration(total_sec: int) -> str:
-    h, rem = divmod(max(0, int(total_sec)), 3600)
-    m = rem // 60
-    if h > 0:
-        return f"{h}sa {m}dk"
-    return f"{m}dk"
+    return format_duration(total_sec, compact=True)
 
 
 _STAGE_NAME_MAP = {
@@ -37,21 +37,34 @@ _STAGE_NAME_MAP = {
 
 
 @QmlElement
-class FocusStatsBridge(QObject):
+class FocusStatsBridge(BaseBridge):
 
-    errorOccurred = Signal(str)
-
-    def __init__(self, session_svc: SessionService, goal_settings, parent=None):
+    def __init__(self, session_svc: SessionService, goal_settings, focus_stats_service: FocusStatsService = None, parent=None):
         super().__init__(parent)
         self._session_svc = session_svc
         self._goal_settings = goal_settings
-        self._stats = FocusStatsService()
+        self._stats = focus_stats_service or FocusStatsService()
+        self._cached_sessions = None
+        self._cached_at = 0.0
+
+    def _get_sessions(self, force_refresh: bool = False) -> list:
+        import time
+        now = time.time()
+        if force_refresh or self._cached_sessions is None or (now - self._cached_at > 3.0):
+            self._cached_sessions = self._session_svc.get_all_sessions()
+            self._cached_at = now
+        return self._cached_sessions
+
+    @Slot()
+    def invalidateCache(self):
+        self._cached_sessions = None
+        self._cached_at = 0.0
 
     @Slot(str, str, result="QVariantMap")
     def getPeriodReport(self, period: str, reference_date_iso: str) -> dict:
         try:
             ref = date.fromisoformat(reference_date_iso) if reference_date_iso else date.today()
-            sessions = self._session_svc.get_all_sessions()
+            sessions = self._get_sessions()
             totals = self._stats.period_totals(sessions, period, reference_date=ref)
             buckets = self._stats.period_buckets(sessions, period, reference_date=ref)
             return {
@@ -65,6 +78,7 @@ class FocusStatsBridge(QObject):
                 "isCurrentPeriod": self._stats.is_current_period(period, ref),
             }
         except (sqlite3.Error, ValueError) as e:
+            self._cached_sessions = None
             logger.error(f"Dönem raporu alınırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return {
@@ -91,10 +105,11 @@ class FocusStatsBridge(QObject):
     @Slot(result="QVariantMap")
     def getStreak(self) -> dict:
         try:
-            sessions = self._session_svc.get_all_sessions()
+            sessions = self._get_sessions()
             days = self._stats.current_streak(sessions)
             return {"days": days}
         except sqlite3.Error as e:
+            self._cached_sessions = None
             logger.error(f"Seri hesaplanırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return {"days": 0}
@@ -102,9 +117,10 @@ class FocusStatsBridge(QObject):
     @Slot(result="QVariantList")
     def getHeatmapData(self) -> list:
         try:
-            sessions = self._session_svc.get_all_sessions()
+            sessions = self._get_sessions()
             return self._stats.daily_heatmap(sessions)
         except sqlite3.Error as e:
+            self._cached_sessions = None
             logger.error(f"Isı haritası alınırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return []
@@ -112,7 +128,7 @@ class FocusStatsBridge(QObject):
     @Slot(result="QVariantMap")
     def getSettlementProgress(self) -> dict:
         try:
-            sessions = self._session_svc.get_all_sessions()
+            sessions = self._get_sessions()
             data = self._stats.settlement_stage(sessions)
             next_key = data["next_stage_key"]
             return {
@@ -128,6 +144,7 @@ class FocusStatsBridge(QObject):
                 "isMaxStage": next_key is None,
             }
         except sqlite3.Error as e:
+            self._cached_sessions = None
             logger.error(f"Yerleşim ilerlemesi alınırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return {
@@ -156,7 +173,7 @@ class FocusStatsBridge(QObject):
             if goal_minutes <= 0:
                 return empty
 
-            sessions = self._session_svc.get_all_sessions()
+            sessions = self._get_sessions()
             current_sec = self._stats.period_totals(sessions, period)["current_total_sec"]
             goal_sec = goal_minutes * 60
             return {
@@ -166,6 +183,7 @@ class FocusStatsBridge(QObject):
                 "isMet": current_sec >= goal_sec,
             }
         except (sqlite3.Error, ValueError) as e:
+            self._cached_sessions = None
             logger.error(f"Hedef ilerlemesi alınırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return empty

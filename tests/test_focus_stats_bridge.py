@@ -186,6 +186,20 @@ class TestFocusStatsBridge(unittest.TestCase):
         self.assertEqual(result["goalMinutes"], 0)
         self.assertEqual(len(received), 1)
 
+    def test_sessions_caching_prevents_multiple_db_scans(self):
+        self.session_svc.get_all_sessions.return_value = []
+        self.bridge.getPeriodReport("day", "")
+        self.bridge.getStreak()
+        self.bridge.getHeatmapData()
+        self.bridge.getSettlementProgress()
+        # 4 çağrı yapıldı ama DB sadece 1 kez sorgulanmalı
+        self.assertEqual(self.session_svc.get_all_sessions.call_count, 1)
+
+        # Invalidate edilince tekrar sorgulanmalı
+        self.bridge.invalidateCache()
+        self.bridge.getStreak()
+        self.assertEqual(self.session_svc.get_all_sessions.call_count, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

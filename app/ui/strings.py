@@ -4,7 +4,7 @@ Theme (app/ui/theme.py) ile aynı desen: context property olarak `Strings`
 adıyla açılır, düz @Property(str, constant=True) getter'lar, import gerekmez.
 """
 
-from PySide6.QtCore import QObject, Property
+from PySide6.QtCore import QObject, Property, Slot
 
 from app.core.strings import (
     App, Common, Tracker, Timer, Distraction, Analytics,
@@ -14,6 +14,14 @@ from app.core.strings import (
 
 
 class AppStrings(QObject):
+
+    @Slot(str, result=str)
+    def t(self, key: str) -> str:
+        """Dinamik metin erişim slotu: Strings.t('appName')"""
+        val = getattr(self, key, None)
+        if callable(val):
+            return str(val())
+        return str(val) if val is not None else key
 
     # ── Genel ─────────────────────────────────────────────────
     @Property(str, constant=True)
@@ -49,6 +57,12 @@ class AppStrings(QObject):
 
     @Property(str, constant=True)
     def themeToggleDarkLabel(self):     return Common.THEME_TOGGLE_DARK_LABEL
+
+    @Property(str, constant=True)
+    def sidebarCollapseTooltip(self):   return Common.SIDEBAR_COLLAPSE_TOOLTIP
+
+    @Property(str, constant=True)
+    def sidebarExpandTooltip(self):     return Common.SIDEBAR_EXPAND_TOOLTIP
 
     # ── Odak Seansı (Tracker) ────────────────────────────────
     @Property(str, constant=True)

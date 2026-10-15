@@ -4,9 +4,12 @@ AchievementBridge — başarı sistemini QML'e açar.
 
 import sqlite3
 
+from typing import Optional, Union
+
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtQml import QmlElement
 
+from app.bridge.base_bridge import BaseBridge
 from app.services.session_service import SessionService
 from app.services.focus_stats_service import FocusStatsService
 from app.services.achievement_service import AchievementService, ACHIEVEMENT_DEFINITIONS
@@ -21,15 +24,22 @@ _NAME_BY_KEY = {d["key"]: d["name"] for d in ACHIEVEMENT_DEFINITIONS}
 
 
 @QmlElement
-class AchievementBridge(QObject):
+class AchievementBridge(BaseBridge):
 
-    errorOccurred = Signal(str)
-
-    def __init__(self, session_svc: SessionService, achievement_repo: AchievementRepository, parent=None):
+    def __init__(
+        self,
+        session_svc: SessionService,
+        achievement_service: Union[AchievementService, AchievementRepository],
+        focus_stats_service: Optional[FocusStatsService] = None,
+        parent=None,
+    ):
         super().__init__(parent)
         self._session_svc = session_svc
-        self._stats = FocusStatsService()
-        self._achievements = AchievementService(achievement_repo)
+        if isinstance(achievement_service, AchievementService):
+            self._achievements = achievement_service
+        else:
+            self._achievements = AchievementService(achievement_service)
+        self._stats = focus_stats_service or FocusStatsService()
 
     @Slot(result="QVariantList")
     def checkAndGetNewUnlocks(self) -> list:

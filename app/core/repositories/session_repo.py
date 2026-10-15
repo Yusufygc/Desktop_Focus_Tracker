@@ -58,7 +58,6 @@ class SessionRepository(BaseRepository):
     def delete(self, session_id: int) -> None:
         logger.debug(f"DB Silme: Session ID {session_id}")
         self.db.conn.execute("DELETE FROM sessions WHERE id=?", (session_id,))
-        self.db.conn.execute("DELETE FROM distractions WHERE session_id=?", (session_id,))
         self.db.conn.commit()
 
     def update_pause(self, session_id: int, total_paused_sec: int, last_paused_at: Optional[datetime]) -> None:

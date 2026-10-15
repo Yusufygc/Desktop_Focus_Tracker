@@ -2,13 +2,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// Etiketli sidebar nav satırı: ikon + metin, tüm satır genişliğinde
-// aktif/hover zemin. Discoverability için ikon-only rail yerine kullanılır.
+// Etiketli veya daraltılmış simge-rayı sidebar nav satırı:
+// Açıkken ikon + metin, daraltıldığında sadece ortalanmış ikon ve tooltip gösterir.
 Item {
     id: root
     property string icon: ""
     property string label: ""
     property bool active: false
+    property bool collapsed: false
     signal clicked()
 
     Layout.fillWidth: true
@@ -33,21 +34,32 @@ Item {
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     }
 
-    RowLayout {
-        anchors { fill: parent; leftMargin: 16; rightMargin: 12 }
-        spacing: 12
+    Item {
+        anchors.fill: parent
 
         AppIcon {
+            id: navIcon
+            anchors.verticalCenter: parent.verticalCenter
+            x: root.collapsed ? Math.round((parent.width - width) / 2) : 14
+            Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             name: root.icon
             size: 20
             color: active ? Theme.accent : Theme.textSecondary
         }
+
         Text {
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: navIcon.right
+            anchors.leftMargin: 12
+            anchors.right: parent.right
+            anchors.rightMargin: 8
+            visible: !root.collapsed
+            opacity: root.collapsed ? 0 : 1
+            Behavior on opacity { NumberAnimation { duration: 150 } }
             text: root.label
             color: active ? Theme.textPrimary : Theme.textSecondary
             font.pixelSize: 14
             font.weight: active ? Font.DemiBold : Font.Normal
-            Layout.fillWidth: true
             elide: Text.ElideRight
         }
     }
@@ -59,5 +71,12 @@ Item {
         onExited:  root.hovered = false
         onClicked: root.clicked()
         cursorShape: Qt.PointingHandCursor
+    }
+
+    ToolTip {
+        visible: root.hovered && root.collapsed
+        text: root.label
+        delay: 200
+        timeout: 3000
     }
 }

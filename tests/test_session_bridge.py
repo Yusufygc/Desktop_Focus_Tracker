@@ -87,6 +87,47 @@ class TestSessionBridge(unittest.TestCase):
         self.assertEqual(len(received), 1)
         self.assertEqual(result["subject"], "Kimya")
 
+    def test_pause_and_resume_session_emits_isPausedChanged(self):
+        from datetime import datetime
+        session = Session(subject="Tarih", id=3, last_paused_at=None)
+        self.session_svc.has_active = True
+        self.session_svc.active_session = session
+
+        paused_changed = []
+        self.bridge.isPausedChanged.connect(lambda: paused_changed.append(True))
+
+        # Pause
+        self.bridge.pauseSession()
+        self.session_svc.pause.assert_called_once()
+        self.assertEqual(len(paused_changed), 1)
+
+        # Mock service updating paused state
+        session.last_paused_at = datetime.now()
+        self.assertTrue(self.bridge.isPaused)
+
+        # Resume
+        self.bridge.resumeSession()
+        self.session_svc.resume.assert_called_once()
+        self.assertEqual(len(paused_changed), 2)
+
+        session.last_paused_at = None
+        self.assertFalse(self.bridge.isPaused)
+
+    def test_start_and_finish_session_emits_isPausedChanged(self):
+        paused_changed = []
+        self.bridge.isPausedChanged.connect(lambda: paused_changed.append(True))
+
+        self.bridge.startSession("Biyoloji")
+        self.assertEqual(len(paused_changed), 1)
+
+        session = Session(subject="Biyoloji", id=4)
+        self.session_svc.has_active = True
+        self.session_svc.active_session = session
+        self.distraction_svc.get_for_session.return_value = []
+
+        self.bridge.finishSession("not")
+        self.assertEqual(len(paused_changed), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,6 +9,10 @@ Item {
     property int todaySessionCount: 0
     property int todayFocusSec: 0
     property string currentSubjectText: root._resolveSubjectName(subjectCombo.editText || "")
+    readonly property bool isNarrow: root.width < 760
+    readonly property int pageMargin: root.height < 650 ? 16 : 20
+    readonly property int rowGap: root.height < 650 ? 8 : 12
+    readonly property real widePanelHeight: Math.max(root.height < 650 ? 180 : 220, root.height - (pageMargin * 2) - 30 - 54 - 46 - 42 - (rowGap * 4))
 
     signal miniModeRequested()
 
@@ -55,12 +59,7 @@ Item {
         root.todayFocusSec = totalSec
     }
 
-    function _fmtTodayFocus(sec) {
-        var h = Math.floor(sec / 3600)
-        var m = Math.floor((sec % 3600) / 60)
-        if (h > 0) return h + "sa " + m + "dk"
-        return m + "dk"
-    }
+
 
     Connections {
         target: sessionBridge
@@ -135,295 +134,285 @@ Item {
         summaryDialog.open()
     }
 
-    // ── ANA LAYOUT ────────────────────────────────────────────────────
-    // GridLayout: sol/sağ panel öğeleri artık aynı grid'in doğrudan çocukları.
-    // Her satırın yüksekliği o satırdaki iki kolonun içeriğinden max alınarak
-    // hesaplanıyor — bu yüzden aynı satırdaki öğeler piksel bazında hizalı
-    // (önceki ColumnLayout ikilisiyle "ayna tutmaya" çalışmak yerine).
-    GridLayout {
-        anchors { fill: parent; margins: 24 }
-        columns: 2
-        rowSpacing: 14
-        columnSpacing: 20
+    // ── ANA LAYOUT (Duyarlı ve Kaydırılabilir) ────────────────────────
+    ScrollView {
+        id: trackerScroll
+        anchors.fill: parent
+        contentWidth: availableWidth
+        contentHeight: scrollContent.height
+        clip: true
 
-            // Başlık + durum noktası (satır 0, sadece sol kolon)
-            RowLayout {
-                id: titleRow
-                Layout.row: 0; Layout.column: 0
-                spacing: 10
-                Text { 
-                    text: {
-                        if (!sessionBridge.isPomodoroMode) return Strings.trackerTitle
-                        if (!sessionBridge.isActive) return Strings.trackerPomodoroMode
-                        var s = sessionBridge.pomodoroState
-                        if (s === "FOCUS") return Strings.trackerPomodoroFocus
-                        if (s === "SHORT_BREAK") return Strings.trackerPomodoroShortBreak
-                        if (s === "LONG_BREAK") return Strings.trackerPomodoroLongBreak
-                        return Strings.trackerPomodoroMode
-                    }
-                    color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold 
-                }
-                Rectangle {
-                    id: statusDot; property bool active: false
-                    width: 8; height: 8; radius: 4
-                    color: active ? Theme.success : Theme.borderDim
-                    opacity: active ? 1.0 : 0.3
-                    Behavior on color { ColorAnimation { duration: 300 } }
-                    SequentialAnimation on opacity {
-                        running: statusDot.active; loops: Animation.Infinite
-                        NumberAnimation { to: 0.4; duration: 800 }
-                        NumberAnimation { to: 1.0; duration: 800 }
-                    }
-                }
-            }
-
-            // ── KONU SEÇİMİ (satır 1, sol) ────────────────────────────
-            GlassCard {
-                Layout.row: 1; Layout.column: 0
-                Layout.fillWidth: true; Layout.minimumWidth: 360; height: 64; radius: 12
-                RowLayout {
-                    anchors { fill: parent; leftMargin: 16; rightMargin: 12; topMargin: 8; bottomMargin: 8 }
-                    spacing: 8
-                    AppIcon { name: "book"; size: 18; color: Theme.textPrimary }
-                    ComboBox {
-                        id: subjectCombo
-                        Layout.fillWidth: true; editable: true
-                        textRole: "name"
-                        valueRole: "name"
-                        model: subjectBridge ? subjectBridge.getSubjects() : []
-                        background: Rectangle { color: "transparent" }
-                        contentItem: TextInput {
-                            leftPadding: 4; text: subjectCombo.editText
-                            color: Theme.textPrimary; font.pixelSize: 14
-                            verticalAlignment: TextInput.AlignVCenter
-                            onAccepted: {
-                                var txt = text.trim()
-                                if (txt.length === 0) return
-                                var existingMatch = root._resolveSubjectName(txt)
-                                if (existingMatch !== txt) {
-                                    // Sadece harf durumu farklı bir konuyla eşleşiyor — yeni eklemek
-                                    // yerine kayıtlı (orijinal harf durumlu) ada geç.
-                                    subjectCombo.editText = existingMatch
-                                    return
-                                }
-                                if (subjectCombo.find(txt) === -1) {
-                                    // SubjectManagerDialog'daki renk paleti ile aynı —
-                                    // Hızlı ekleme de her konuya farklı renk atasın diye döngüsel seçim.
-                                    var palette = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4", "#E91E63", "#3F51B5", "#009688", "#795548", "#607D8B", "#FFC107"]
-                                    var color = palette[subjectCombo.count % palette.length]
-                                    subjectBridge.addSubject(txt, color)
-                                    subjectCombo.model = subjectBridge.getSubjects()
-                                    subjectCombo.editText = txt
-                                }
-                            }
-                        }
-                        indicator: Item {
-                            x: subjectCombo.width - width
-                            y: 0
-                            width: 36; height: subjectCombo.height
-
-                            AppIcon {
-                                anchors.centerIn: parent
-                                name: "chevron-down"; size: 14; color: Theme.textSecondary
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: subjectCombo.popup.visible ? subjectCombo.popup.close() : subjectCombo.popup.open()
-                            }
-                        }
-                        delegate: ItemDelegate {
-                            width: subjectCombo.width
-                            contentItem: RowLayout {
-                                spacing: 8
-                                Rectangle {
-                                    width: 12; height: 12; radius: 6
-                                    color: modelData.color || Theme.primary
-                                }
-                                Text { text: modelData.name; color: Theme.textPrimary; font.pixelSize: 14; Layout.fillWidth: true; elide: Text.ElideRight }
-                            }
-                            background: Rectangle {
-                                color: subjectCombo.highlightedIndex === index ? Theme.surface2 : "transparent"
-                            }
-                        }
-                        popup: Popup {
-                            y: subjectCombo.height; width: subjectCombo.width
-                            implicitHeight: contentItem.implicitHeight + 2; padding: 1
-                            background: Rectangle { color: Theme.surface1; border.color: Theme.borderActive; border.width: 1; radius: 8 }
-                            contentItem: ListView {
-                                clip: true; implicitHeight: contentHeight
-                                model: subjectCombo.popup.visible ? subjectCombo.delegateModel : null
-                                currentIndex: subjectCombo.highlightedIndex
-                                ScrollIndicator.vertical: ScrollIndicator {}
-                            }
-                        }
-                    }
-                    AppIcon {
-                        name: "settings-gear"; size: 16; color: Theme.textMuted
-                        MouseArea {
-                            anchors.fill: parent; anchors.margins: -10
-                            cursorShape: Qt.PointingHandCursor; hoverEnabled: true
-                            onClicked: subjectManagerDialog.open()
-                        }
-                    }
-                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; Layout.topMargin: 4; Layout.bottomMargin: 4; color: Theme.borderDim }
-                    FTButton {
-                        Layout.preferredWidth: 40; height: 36
-                        icon: "clock"
-                        variant: sessionBridge.isPomodoroMode ? "primary" : "ghost"
-                        enabled: !sessionBridge.isActive
-                        toolTipText: "Katı Pomodoro Modu\n(25dk Odak + 5dk Mola)"
-                        onClicked: sessionBridge.isPomodoroMode = !sessionBridge.isPomodoroMode
-                    }
-                    FTButton {
-                        Layout.preferredWidth: 40; height: 36
-                        icon: "trend-down"
-                        variant: "ghost"
-                        toolTipText: "Mini Moda Geç"
-                        onClicked: root.miniModeRequested()
-                    }
-                }
-            }
-
-            // ── TIMER KARTI (satır 2, sol) ────────────────────────────
-            TimerCard {
-                id: timerCard
-                Layout.row: 2; Layout.column: 0
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumHeight: 280
-            }
-
-            // ── ODAK BOZULDU BUTONU (satır 3, sol) ────────────────────
-            Rectangle {
-                id: distractionBtn
-                Layout.row: 3; Layout.column: 0
-                Layout.fillWidth: true; height: 80; radius: 14
-                property bool isBtnActive: false
-                opacity: isBtnActive ? 1.0 : 0.35
+        ScrollBar.vertical: ScrollBar {
+            id: vBar
+            policy: ScrollBar.AsNeeded
+            width: 8
+            contentItem: Rectangle {
+                implicitWidth: 6
+                implicitHeight: 40
+                radius: 3
+                color: vBar.pressed ? Theme.primary : (vBar.hovered ? Theme.borderActive : Theme.border)
+                opacity: vBar.active ? 0.8 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
-                color: Theme.danger
-                border.color: Theme.dangerBorder; border.width: 1
-
-                Rectangle {
-                    anchors.fill: parent; radius: parent.radius; color: "#000000"
-                    opacity: btnMouse.containsMouse && distractionBtn.isBtnActive ? 0.12 : 0.0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
-                }
-                Column {
-                    anchors.centerIn: parent; spacing: 4
-                    AppIcon { anchors.horizontalCenter: parent.horizontalCenter; name: "lightning"; size: 24; color: Theme.onDanger }
-                    Text { anchors.horizontalCenter: parent.horizontalCenter; text: Strings.trackerDistractionButton; color: Theme.onDanger; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 2 }
-                }
-                MouseArea {
-                    id: btnMouse; anchors.fill: parent; hoverEnabled: true
-                    enabled: distractionBtn.isBtnActive; cursorShape: Qt.PointingHandCursor
-                    onClicked: distractionDialog.open()
-                }
             }
+        }
 
-            // ── BAŞLAT / DURAKLAT / BİTİR (satır 4, sol) ──────────────
-            RowLayout {
-                Layout.row: 4; Layout.column: 0
-                Layout.fillWidth: true; spacing: 10
-                FTButton { 
-                    id: startBtn; Layout.fillWidth: true; height: 44; 
-                    label: Strings.trackerStartButton; icon: "play"; variant: "primary";
-                    onClicked: sessionBridge.startSession(root.currentSubjectText)
-                }
-                FTButton { 
-                    id: pauseBtn; Layout.fillWidth: true; height: 44; visible: false;
-                    label: "Duraklat"; icon: "pause"; variant: "ghost"; 
-                    onClicked: {
-                        if (sessionBridge.isPaused) sessionBridge.resumeSession()
-                        else sessionBridge.pauseSession()
-                    }
-                }
-                FTButton {
-                    id: finishBtn; Layout.fillWidth: true; height: 44;
-                    label: Strings.trackerFinishButton; icon: "stop"; variant: "ghost"; enabled: false;
-                    onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() }
-                }
-            }
+        Item {
+            id: scrollContent
+            width: trackerScroll.availableWidth
+            height: mainGrid.y + mainGrid.implicitHeight + root.pageMargin
 
-            // ── SAĞ PANEL (satır 1, sağ kolon) ────────────────────────
-            // Bugün özeti — mevcut analyticsBridge verisiyle, ek backend gerekmez.
-            // GridLayout'ta aynı satırda (row:1) olduğu için "Programlama"
-            // kartıyla otomatik hizalanıyor — ayrı spacer/height-mirror gerekmez.
-            GlassCard {
-                Layout.row: 1; Layout.column: 1
-                Layout.alignment: Qt.AlignRight
-                Layout.fillWidth: false; Layout.preferredWidth: 360; height: 60; radius: 12
-                clip: true
+            GridLayout {
+                id: mainGrid
+                x: root.pageMargin
+                y: root.pageMargin
+                width: parent.width - (2 * root.pageMargin)
+                columns: root.isNarrow ? 1 : 2
+                rowSpacing: root.rowGap
+                columnSpacing: 16
+
+                // Başlık + durum noktası
                 RowLayout {
-                    anchors { fill: parent; leftMargin: 16; rightMargin: 16 }
-                    spacing: 20
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        AppIcon { name: "target"; size: 16; color: Theme.accentWarm }
-                        Text {
-                            text: root.todaySessionCount + " seans"
-                            color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold
-
-                            NumberAnimation on scale {
-                                id: sessionCountPulse
-                                running: false
-                                from: 1.2; to: 1.0
-                                duration: 300
-                                easing.type: Easing.OutBack
-                            }
-                            onTextChanged: sessionCountPulse.running = true
+                    id: titleRow
+                    Layout.row: 0
+                    Layout.column: 0
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Text { 
+                        text: {
+                            if (!sessionBridge.isPomodoroMode) return Strings.trackerTitle
+                            if (!sessionBridge.isActive) return Strings.trackerPomodoroMode
+                            var s = sessionBridge.pomodoroState
+                            if (s === "FOCUS") return Strings.trackerPomodoroFocus
+                            if (s === "SHORT_BREAK") return Strings.trackerPomodoroShortBreak
+                            if (s === "LONG_BREAK") return Strings.trackerPomodoroLongBreak
+                            return Strings.trackerPomodoroMode
                         }
-                        Text {
-                            text: "bugün"; color: Theme.textDimmed; font.pixelSize: 12
-                            Layout.fillWidth: true; Layout.minimumWidth: 0
-                            elide: Text.ElideRight
+                        color: Theme.textPrimary; font.pixelSize: root.height < 650 ? 18 : 22; font.weight: Font.Bold 
+                    }
+                    Rectangle {
+                        id: statusDot; property bool active: false
+                        width: 8; height: 8; radius: 4
+                        color: active ? Theme.success : Theme.borderDim
+                        opacity: active ? 1.0 : 0.3
+                        Behavior on color { ColorAnimation { duration: 300 } }
+                        SequentialAnimation on opacity {
+                            running: statusDot.active; loops: Animation.Infinite
+                            NumberAnimation { to: 0.4; duration: 800 }
+                            NumberAnimation { to: 1.0; duration: 800 }
                         }
                     }
+                }
 
-                    Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; Layout.topMargin: 12; Layout.bottomMargin: 12; color: Theme.borderDim }
-
+                // ── KONU SEÇİMİ ──────────────────────────────────────────
+                GlassCard {
+                    id: subjectCard
+                    Layout.row: 1
+                    Layout.column: 0
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: root.isNarrow ? 220 : 300
+                    height: root.height < 650 ? 54 : 64
+                    radius: 12
                     RowLayout {
-                        Layout.fillWidth: true
+                        anchors { fill: parent; leftMargin: 16; rightMargin: 12; topMargin: 6; bottomMargin: 6 }
                         spacing: 8
-                        AppIcon { name: "clock"; size: 16; color: Theme.info }
-                        Text {
-                            text: root._fmtTodayFocus(root.todayFocusSec)
-                            color: Theme.textPrimary; font.pixelSize: 13; font.weight: Font.DemiBold
-
-                            NumberAnimation on scale {
-                                id: focusTimePulse
-                                running: false
-                                from: 1.2; to: 1.0
-                                duration: 300
-                                easing.type: Easing.OutBack
+                        AppIcon { name: "book"; size: 18; color: Theme.textPrimary }
+                        ComboBox {
+                            id: subjectCombo
+                            Layout.fillWidth: true; editable: true
+                            textRole: "name"
+                            valueRole: "name"
+                            model: subjectBridge ? subjectBridge.getSubjects() : []
+                            background: Rectangle { color: "transparent" }
+                            contentItem: TextInput {
+                                leftPadding: 4; text: subjectCombo.editText
+                                color: Theme.textPrimary; font.pixelSize: 14
+                                verticalAlignment: TextInput.AlignVCenter
+                                onAccepted: {
+                                    var txt = text.trim()
+                                    if (txt.length === 0) return
+                                    var existingMatch = root._resolveSubjectName(txt)
+                                    if (existingMatch !== txt) {
+                                        subjectCombo.editText = existingMatch
+                                        return
+                                    }
+                                    if (subjectCombo.find(txt) === -1) {
+                                        var palette = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4", "#E91E63", "#3F51B5", "#009688", "#795548", "#607D8B", "#FFC107"]
+                                        var color = palette[subjectCombo.count % palette.length]
+                                        subjectBridge.addSubject(txt, color)
+                                        subjectCombo.model = subjectBridge.getSubjects()
+                                        subjectCombo.editText = txt
+                                    }
+                                }
                             }
-                            onTextChanged: focusTimePulse.running = true
+                            indicator: Item {
+                                x: subjectCombo.width - width
+                                y: 0
+                                width: 36; height: subjectCombo.height
+
+                                AppIcon {
+                                    anchors.centerIn: parent
+                                    name: "chevron-down"; size: 14; color: Theme.textSecondary
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: subjectCombo.popup.visible ? subjectCombo.popup.close() : subjectCombo.popup.open()
+                                }
+                            }
+                            delegate: ItemDelegate {
+                                width: subjectCombo.width
+                                contentItem: RowLayout {
+                                    spacing: 8
+                                    Rectangle {
+                                        width: 12; height: 12; radius: 6
+                                        color: modelData.color || Theme.primary
+                                    }
+                                    Text { text: modelData.name; color: Theme.textPrimary; font.pixelSize: 14; Layout.fillWidth: true; elide: Text.ElideRight }
+                                }
+                                background: Rectangle {
+                                    color: subjectCombo.highlightedIndex === index ? Theme.surface2 : "transparent"
+                                }
+                            }
+                            popup: Popup {
+                                y: subjectCombo.height; width: subjectCombo.width
+                                implicitHeight: contentItem.implicitHeight + 2; padding: 1
+                                background: Rectangle { color: Theme.surface1; border.color: Theme.borderActive; border.width: 1; radius: 8 }
+                                contentItem: ListView {
+                                    clip: true; implicitHeight: contentHeight
+                                    model: subjectCombo.popup.visible ? subjectCombo.delegateModel : null
+                                    currentIndex: subjectCombo.highlightedIndex
+                                    ScrollIndicator.vertical: ScrollIndicator {}
+                                }
+                            }
                         }
-                        Text {
-                            text: "odak süresi"; color: Theme.textDimmed; font.pixelSize: 12
-                            Layout.fillWidth: true; Layout.minimumWidth: 0
-                            elide: Text.ElideRight
+                        AppIcon {
+                            name: "settings-gear"; size: 16; color: Theme.textMuted
+                            MouseArea {
+                                anchors.fill: parent; anchors.margins: -10
+                                cursorShape: Qt.PointingHandCursor; hoverEnabled: true
+                                onClicked: subjectManagerDialog.open()
+                            }
+                        }
+                        Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; Layout.topMargin: 4; Layout.bottomMargin: 4; color: Theme.borderDim }
+                        FTButton {
+                            Layout.preferredWidth: 40; height: 36
+                            icon: "clock"
+                            variant: sessionBridge.isPomodoroMode ? "primary" : "ghost"
+                            enabled: !sessionBridge.isActive
+                            toolTipText: "Katı Pomodoro Modu\n(25dk Odak + 5dk Mola)"
+                            onClicked: sessionBridge.isPomodoroMode = !sessionBridge.isPomodoroMode
+                        }
+                        FTButton {
+                            Layout.preferredWidth: 40; height: 36
+                            icon: "trend-down"
+                            variant: "ghost"
+                            toolTipText: "Mini Moda Geç"
+                            onClicked: root.miniModeRequested()
                         }
                     }
+                }
 
-                    Item { Layout.fillWidth: true }
+                // ── SAĞ PANEL (Günün Özeti) ──────────────────────────────
+                TodaySummaryCard {
+                    id: todaySummaryCard
+                    Layout.row: root.isNarrow ? 2 : 1
+                    Layout.column: root.isNarrow ? 0 : 1
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: root.isNarrow ? -1 : 360
+                    Layout.alignment: root.isNarrow ? Qt.AlignLeft : Qt.AlignRight
+                    height: root.height < 650 ? 54 : 60
+                    sessionCount: root.todaySessionCount
+                    focusSec: root.todayFocusSec
+                }
+
+                // ── TIMER KARTI ──────────────────────────────────────────
+                TimerCard {
+                    id: timerCard
+                    Layout.row: root.isNarrow ? 3 : 2
+                    Layout.column: 0
+                    Layout.fillWidth: true
+                    Layout.fillHeight: false
+                    Layout.minimumHeight: root.height < 650 ? 170 : 220
+                    Layout.preferredHeight: root.isNarrow ? (root.height < 650 ? 200 : 280) : root.widePanelHeight
+                }
+
+                // ── ODAK BOZULDU BUTONU ──────────────────────────────────
+                Rectangle {
+                    id: distractionBtn
+                    Layout.row: root.isNarrow ? 4 : 3
+                    Layout.column: 0
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: root.height < 650 ? 46 : 56
+                    Layout.minimumHeight: 42
+                    height: Layout.preferredHeight
+                    radius: 12
+                    property bool isBtnActive: false
+                    opacity: isBtnActive ? 1.0 : 0.35
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                    color: Theme.danger
+                    border.color: Theme.dangerBorder; border.width: 1
+
+                    Rectangle {
+                        anchors.fill: parent; radius: parent.radius; color: "#000000"
+                        opacity: btnMouse.containsMouse && distractionBtn.isBtnActive ? 0.12 : 0.0
+                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                    }
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 8
+                        AppIcon { name: "lightning"; size: root.height < 650 ? 18 : 22; color: Theme.onDanger }
+                        Text { text: Strings.trackerDistractionButton; color: Theme.onDanger; font.pixelSize: root.height < 650 ? 12 : 13; font.weight: Font.Bold; font.letterSpacing: 1.5 }
+                    }
+                    MouseArea {
+                        id: btnMouse; anchors.fill: parent; hoverEnabled: true
+                        enabled: distractionBtn.isBtnActive; cursorShape: Qt.PointingHandCursor
+                        onClicked: distractionDialog.open()
+                    }
+                }
+
+                // ── BAŞLAT / DURAKLAT / BİTİR ────────────────────────────
+                RowLayout {
+                    id: actionButtonsRow
+                    Layout.row: root.isNarrow ? 5 : 4
+                    Layout.column: 0
+                    Layout.fillWidth: true
+                    spacing: 10
+                    FTButton { 
+                        id: startBtn; Layout.fillWidth: true; height: 42; 
+                        label: Strings.trackerStartButton; icon: "play"; variant: "primary";
+                        onClicked: sessionBridge.startSession(root.currentSubjectText)
+                    }
+                    FTButton { 
+                        id: pauseBtn; Layout.fillWidth: true; height: 42; visible: false;
+                        label: "Duraklat"; icon: "pause"; variant: "ghost"; 
+                        onClicked: {
+                            if (sessionBridge.isPaused) sessionBridge.resumeSession()
+                            else sessionBridge.pauseSession()
+                        }
+                    }
+                    FTButton {
+                        id: finishBtn; Layout.fillWidth: true; height: 42;
+                        label: Strings.trackerFinishButton; icon: "stop"; variant: "ghost"; enabled: false;
+                        onClicked: { summaryDialog.pendingStats = sessionBridge.peekStats(); summaryDialog.open() }
+                    }
+                }
+
+                // ── BOZULMA PANELİ ───────────────────────────────────────
+                DistractionListPanel {
+                    id: distractionPanel
+                    Layout.row: root.isNarrow ? 6 : 2
+                    Layout.column: root.isNarrow ? 0 : 1
+                    Layout.rowSpan: root.isNarrow ? 1 : 3
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: root.isNarrow ? -1 : 360
+                    Layout.preferredHeight: root.isNarrow ? (root.height < 650 ? 240 : 300) : (timerCard.Layout.preferredHeight + (root.height < 650 ? 46 : 56) + 42 + (root.rowGap * 2))
+                    Layout.minimumHeight: root.isNarrow ? 200 : -1
+                    Layout.fillHeight: false
+                    Layout.alignment: root.isNarrow ? Qt.AlignLeft : Qt.AlignRight
                 }
             }
-
-            // ── BOZULMA PANELİ (satır 2, sağ kolon — satır 2/3/4'ü kaplayıp
-            // sol kolonun toplam yüksekliğiyle alt kenardan da eşleşir) ──
-            DistractionListPanel {
-                id: distractionPanel
-                Layout.row: 2; Layout.column: 1
-                Layout.rowSpan: 3
-                Layout.alignment: Qt.AlignRight
-                Layout.fillWidth: false; Layout.preferredWidth: 360
-                Layout.fillHeight: true
-            }
+        }
     }
 
     // ── POPUP'LAR ─────────────────────────────────────────────────────

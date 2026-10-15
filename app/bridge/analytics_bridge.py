@@ -22,12 +22,11 @@ QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
 
 
+from app.core.formatters import format_duration
+
+
 def _format_duration(total_sec: int) -> str:
-    h, rem = divmod(max(0, int(total_sec)), 3600)
-    m = rem // 60
-    if h > 0:
-        return f"{h}sa {m}dk"
-    return f"{m}dk"
+    return format_duration(total_sec, compact=True)
 
 @QmlElement
 class AnalyticsBridge(QObject):

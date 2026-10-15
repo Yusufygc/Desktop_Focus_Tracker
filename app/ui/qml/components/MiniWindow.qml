@@ -4,10 +4,27 @@ import QtQuick.Layouts
 
 Window {
     id: miniRoot
-    width: 340
-    height: 90
+    readonly property int fixedWidth: AppConfig.miniWindowWidth
+    readonly property int fixedHeight: AppConfig.miniWindowHeight
+    width: fixedWidth
+    height: fixedHeight
+    minimumWidth: fixedWidth
+    maximumWidth: fixedWidth
+    minimumHeight: fixedHeight
+    maximumHeight: fixedHeight
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
+
+    onScreenChanged: {
+        width = fixedWidth
+        height = fixedHeight
+    }
+    onWidthChanged: {
+        if (width !== fixedWidth) width = fixedWidth
+    }
+    onHeightChanged: {
+        if (height !== fixedHeight) height = fixedHeight
+    }
 
     signal maximizeRequested()
     signal startRequested()
@@ -23,23 +40,25 @@ Window {
         MouseArea {
             id: dragArea
             anchors.fill: parent
-            property point clickPos: "1,1"
-            onPressed: (mouse) => { clickPos = Qt.point(mouse.x, mouse.y) }
-            onPositionChanged: (mouse) => {
-                var delta = Qt.point(mouse.x - clickPos.x, mouse.y - clickPos.y)
-                miniRoot.x += delta.x
-                miniRoot.y += delta.y
+            onPressed: (mouse) => {
+                if (mouse.button === Qt.LeftButton) {
+                    miniRoot.startSystemMove()
+                }
             }
         }
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            anchors.topMargin: 12
+            anchors.bottomMargin: 12
             spacing: 12
 
             // Zamanlayıcı
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
                 spacing: 2
                 Text {
                     text: {
@@ -90,10 +109,13 @@ Window {
             // Butonlar
             RowLayout {
                 spacing: 6
+                Layout.alignment: Qt.AlignVCenter
 
                 // Başlat Butonu
                 FTButton {
-                    Layout.preferredWidth: 36; height: 36
+                    Layout.preferredWidth: 36
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignVCenter
                     icon: "play"
                     variant: "ghost"
                     visible: !sessionBridge.isActive
@@ -103,7 +125,9 @@ Window {
 
                 // Duraklat / Devam Et Butonu
                 FTButton {
-                    Layout.preferredWidth: 36; height: 36
+                    Layout.preferredWidth: 36
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignVCenter
                     icon: sessionBridge.isPaused ? "play" : "pause"
                     variant: "ghost"
                     visible: sessionBridge.isActive
@@ -116,7 +140,9 @@ Window {
 
                 // Bitir Butonu
                 FTButton {
-                    Layout.preferredWidth: 36; height: 36
+                    Layout.preferredWidth: 36
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignVCenter
                     icon: "stop"
                     variant: "danger"
                     visible: sessionBridge.isActive
@@ -126,7 +152,9 @@ Window {
 
                 // Büyüt Butonu
                 FTButton {
-                    Layout.preferredWidth: 50; height: 36
+                    Layout.preferredWidth: 54
+                    Layout.preferredHeight: 36
+                    Layout.alignment: Qt.AlignVCenter
                     label: "Büyüt"
                     variant: "primary"
                     toolTipText: "Ana Pencereye Dön"
