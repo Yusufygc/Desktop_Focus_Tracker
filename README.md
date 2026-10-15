@@ -1,5 +1,7 @@
 # FocusTracker
 
+![Version](https://img.shields.io/badge/Version-1.0.0-orange)
+
 FocusTracker, Pomodoro tekniği ve derin odaklanma (deep work) pratiklerini temel alarak tasarlanmış, **modern ve şık bir arayüze** sahip bir masaüstü zaman yönetimi uygulamasıdır. PySide6 (Python) ve QML (Qt Quick) teknolojileri kullanılarak performans ve görsellik ön planda tutularak geliştirilmiştir.
 
 Uygulama temel olarak şu felsefeye dayanır: *Sadece ne kadar çalıştığınızı değil, nasıl çalıştığınızı (ne kadar bölündüğünüzü) de ölçmek.*
@@ -59,23 +61,24 @@ Eğer projeyi kaynak kodundan çalıştırmak veya üzerinde geliştirme yapmak 
    python main.py
    ```
 
-### B) Tek Tıkla Kurulum (.exe Oluşturma)
+### B) Kurulum Dosyası Hazırlama (Tek Komutla Prod Derleme)
 
-Eğer projeyi bitmiş bir Windows kurulum dosyası (Installer) haline getirmek istiyorsanız:
+Projeyi kararlı exe ve Inno Setup kurulum sihirbazı (`FocusTracker-Setup-X.Y.Z.exe`) haline getirmek için:
 
-1. **PyInstaller ile Derleme:**
+1. **Bağımlılıkları Yükleyin:**
    ```bash
-   pyinstaller focustracker.spec
+   pip install -r requirements-build.txt
    ```
-   Bu işlem, PySide6 kütüphanelerini ve uygulamanızı toplayarak `dist/FocusTracker` adında bağımsız bir klasör oluşturacaktır.
-
-2. **Inno Setup ile Kurulum Sihirbazı (Installer) Hazırlama:**
-   - Sisteminizde [Inno Setup 6](https://jrsoftware.org/isinfo.php) yüklü olmalıdır.
-   - Komut satırından derlemek için (ISCC Path ayarlıysa):
-     ```bash
-     iscc installer.iss
-     ```
-   - İşlem bittiğinde `Output/` klasörü içerisinde `FocusTracker_Setup.exe` oluşacaktır. Bu dosyayı arkadaşlarınızla paylaşabilir veya kendi sisteminize bir profesyonel uygulama gibi (Masaüstü kısayolu, Başlat menüsü eklemeleri vb.) kurabilirsiniz.
+2. **Tek Komutla Kurulum Dosyası Derleyin:**
+   Sisteminizde [Inno Setup 6](https://jrsoftware.org/isinfo.php) kurulu olmalıdır.
+   ```bash
+   python build_installer.py
+   ```
+   Bu komut:
+   - PyInstaller ile deterministik ve kararlı (`--onedir`, `--debug=noarchive`, sabit zaman damgası) `dist/FocusTracker/FocusTracker.exe` üretir.
+   - Exe SHA-256 özetini `packaging/launcher.sha256` onay kapısıyla karşılaştırır.
+   - Inno Setup ile `dist/installer/FocusTracker-Setup-X.Y.Z.exe` ve `.sha256` dosyasını derler.
+   - Derleme sonrası kurulum ve kaldırma testini otomatik çalıştırır.
 
 ---
 

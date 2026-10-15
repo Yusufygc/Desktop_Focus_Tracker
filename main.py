@@ -10,7 +10,7 @@ os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 
 from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, QTimer
 
 import app.bridge.session_bridge     # noqa: F401 — @QmlElement kaydı
 import app.bridge.analytics_bridge   # noqa: F401 — @QmlElement kaydı
@@ -75,6 +75,12 @@ def main():
         logger.error("HATA: QML yüklenemedi.")
         db.close()
         sys.exit(1)
+
+    # Güncelleme kurulumu başlatıldığında uygulamayı kapat
+    container.update_bridge.quitRequested.connect(app.quit)
+
+    # UI çizildikten 3 sn sonra sessiz güncelleme denetimi (testlerde çalışmaz)
+    QTimer.singleShot(3000, container.update_bridge.startupCheck)
 
     def cleanup():
         nonlocal engine

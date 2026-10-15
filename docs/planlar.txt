@@ -1,0 +1,11 @@
+odak seansı sayfasında kategori seçiminde drop list açılıyor ama çok küçük bir buton 
+butonu yada tıklama alanını büyütelim
+
+analiz sayfasında Kategoriye göre bozulma yazısını kaldıralım.
+ve odak bozan kategorileri yatay chart ile saate göre bozulma grafiği altında gösterelim.
+
+odak seansı sayfasında timer alanını büyültüp içinde planlı timer seçenekleri ekleyelim 20dk,30dk bunlar crud olsun.
+
+odak bozuldu butonunu timer altına getirelim. sayfanın sağ kısmını bu seansın bozulmaları kısmına ayıralım
+
+odak bozulma aralıklarına göre analiz mekanizması 10 dk de bir 15 dk de bir odağınız bozuluyor gibi böylece süreç içerisinde odağımızı nasıl düzeltiyoruz görelim.

@@ -1,0 +1,57 @@
+# Yayın: `vX.Y.Z` etiketi itilince testleri koşar, uygulamayı (onedir) ve Inno kurulum dosyasını derler, GitHub Release olarak yayınlar.
+# Etiket `python tools/release.py X.Y.Z` ile oluşturulur. Kurulu uygulamalar açılışta bu Release'i görüp güncelleme teklif eder
+# (app/services/update_service.py: `FocusTracker-Setup-X.Y.Z.exe` + `.sha256`). Ayrıntı: docs/wiki/surum-yayinlama.md
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write                          # yalnızca Release oluşturmak için
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build.txt
+      - name: Etiket sürümle uyumlu mu
+        env:
+          TAG: ${{ github.ref_name }}                                   # betiğe doğrudan değil, ortam değişkeniyle (komut enjeksiyonu olmasın)
+        run: python tools/release.py --check-tag "$env:TAG"
+      - name: Bağımlılıklar
+        run: python -m pip install -r requirements.txt -r requirements-build.txt pytest
+      - name: Testler
+        run: python -m unittest discover -s tests -v
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+      - name: Uygulamayı ve kurulum dosyasını derle
+        run: python build_installer.py                                 # CI ortamında (CI=true) Akıllı Uygulama Denetimi denemesi atlanır
+      - name: GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          $tag = $env:TAG
+          $flags = @()
+          if ($tag.Contains("-")) { $flags += "--prerelease" }          # v1.1.0-rc1: ön sürüm, güncelleme denetimi yok sayar
+          gh release create $tag (Get-ChildItem dist/installer/*).FullName --title "FocusTracker $($tag.TrimStart('v'))" --generate-notes --verify-tag @flags

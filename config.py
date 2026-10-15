@@ -35,9 +35,11 @@ def _migrate_from_old_location() -> None:
 
 _migrate_from_old_location()
 
+from app.version import RELEASE_REPO, __version__
+
 # Sabitler
 APP_NAME = "FocusTracker"
-APP_VERSION = "1.0.0"
+APP_VERSION = __version__
 WINDOW_MIN_WIDTH = 840
 WINDOW_MIN_HEIGHT = 560
 WINDOW_DEFAULT_WIDTH = 1180

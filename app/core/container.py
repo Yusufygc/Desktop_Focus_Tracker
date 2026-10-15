@@ -34,6 +34,7 @@ from app.bridge.subject_bridge import SubjectBridge
 from app.bridge.timer_bridge import TimerBridge
 from app.bridge.focus_stats_bridge import FocusStatsBridge
 from app.bridge.achievement_bridge import AchievementBridge
+from app.bridge.update_bridge import UpdateBridge
 
 
 class AppContainer:
@@ -74,6 +75,7 @@ class AppContainer:
         self.timer_bridge = TimerBridge(self.timer_svc)
         self.focus_stats_bridge = FocusStatsBridge(self.session_svc, self.goal_settings, self.focus_stats_svc, self.subject_svc)
         self.achievement_bridge = AchievementBridge(self.session_svc, self.achievement_svc, self.focus_stats_svc)
+        self.update_bridge = UpdateBridge()
 
     def register_context_properties(self, engine: QQmlApplicationEngine, app_icon_url: str) -> None:
         """Tüm köprü ve adaptörleri QML motorunun rootContext'ine bağlar."""
@@ -86,6 +88,7 @@ class AppContainer:
         ctx.setContextProperty("timerBridge", self.timer_bridge)
         ctx.setContextProperty("focusStatsBridge", self.focus_stats_bridge)
         ctx.setContextProperty("achievementBridge", self.achievement_bridge)
+        ctx.setContextProperty("updateBridge", self.update_bridge)
         ctx.setContextProperty("sessionStore", self.session_store)
         ctx.setContextProperty("Theme", self.theme)
         ctx.setContextProperty("Strings", self.strings)

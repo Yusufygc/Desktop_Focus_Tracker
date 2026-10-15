@@ -2,7 +2,6 @@
 # FocusTracker .gitignore
 # ========================
 
-/docs
 # --- Python ---
 __pycache__/
 *.py[cod]
