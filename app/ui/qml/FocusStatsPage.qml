@@ -100,7 +100,7 @@ Item {
             // ── Yerleşim (dönemden bağımsız, tüm-zamanlar kümülatif) ──
             GlassCard {
                 Layout.fillWidth: true
-                Layout.preferredHeight: root.viewMode3D ? 400 : 290
+                Layout.preferredHeight: root.viewMode3D ? 425 : 315
                 height: Layout.preferredHeight
                 Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 property bool hovered: false
@@ -191,26 +191,29 @@ Item {
                         }
                     }
 
-                    // ── 3D Hibrit Ada Görünümü ────────────────────────
-                    HybridIslandView {
-                        id: island3D
+                    // ── Görünüm Alanı (3D Ada veya 2D Köy) ────────────
+                    Item {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 275
-                        visible: root.viewMode3D
-                        stageData: root.settlement
-                        unlockedAchievementKeys: root.unlockedAchievementKeys
-                        trees: root.islandTrees
-                        biome: Theme.settlementBiome
-                    }
+                        Layout.preferredHeight: root.viewMode3D ? 290 : 180
+                        Behavior on Layout.preferredHeight { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
-                    // ── 2D Klasik Yerleşim Görünümü ──────────────────
-                    SettlementView {
-                        id: settlement2D
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 170
-                        visible: !root.viewMode3D
-                        stageData: root.settlement
-                        unlockedAchievementKeys: root.unlockedAchievementKeys
+                        HybridIslandView {
+                            id: island3D
+                            anchors.fill: parent
+                            visible: root.viewMode3D
+                            stageData: root.settlement
+                            unlockedAchievementKeys: root.unlockedAchievementKeys
+                            trees: root.islandTrees
+                            biome: Theme.settlementBiome
+                        }
+
+                        SettlementView {
+                            id: settlement2D
+                            anchors.fill: parent
+                            visible: !root.viewMode3D
+                            stageData: root.settlement
+                            unlockedAchievementKeys: root.unlockedAchievementKeys
+                        }
                     }
 
                     Text {

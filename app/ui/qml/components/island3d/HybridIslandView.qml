@@ -12,12 +12,28 @@ Item {
     property string biome: "default"
 
     property bool autoRotate: true
-    property real yaw: 25.0
-    property real pitch: -28.0
-    property real zoomLevel: 22.0
+    property real yaw: 35.0
+    property real pitch: -32.0
+    property real zoomLevel: 13.5
 
     implicitHeight: 280
     clip: true
+
+    // ── GÖKYÜZÜ / ATMOSFER ARKA PLANI ──────────────────────────────────
+    Rectangle {
+        anchors.fill: parent
+        radius: 12
+        gradient: Gradient {
+            GradientStop {
+                position: 0.0
+                color: root.biome === "night" ? "#060714" : (root.biome === "autumn" ? "#220e06" : (root.biome === "winter" ? "#0f172a" : "#0b0f19"))
+            }
+            GradientStop {
+                position: 1.0
+                color: root.biome === "night" ? "#1e1b4b" : (root.biome === "autumn" ? "#3b1103" : (root.biome === "winter" ? "#1e293b" : "#172554"))
+            }
+        }
+    }
 
     // ── 3D SAHNE VE RENDER ─────────────────────────────────────────────
     View3D {
@@ -33,7 +49,10 @@ Item {
 
         PerspectiveCamera {
             id: cam
-            position: Qt.vector3d(0, 14, root.zoomLevel)
+            fieldOfView: 40
+            clipNear: 0.5
+            clipFar: 100.0
+            position: Qt.vector3d(0, 8.5, root.zoomLevel)
             eulerRotation: Qt.vector3d(root.pitch, 0, 0)
         }
 
@@ -41,15 +60,16 @@ Item {
             id: sunLight
             castsShadow: true
             shadowMapQuality: Light.ShadowMapQualityHigh
-            eulerRotation: Qt.vector3d(-45, 35, 0)
-            color: root.biome === "night" ? "#818cf8" : (root.biome === "autumn" ? "#fef3c7" : "#ffffff")
-            ambientColor: root.biome === "night" ? "#1e1b4b" : "#475569"
+            eulerRotation: Qt.vector3d(-45, 30, 0)
+            color: root.biome === "night" ? "#a5b4fc" : (root.biome === "autumn" ? "#fef3c7" : "#fffbeb")
+            ambientColor: root.biome === "night" ? "#312e81" : "#64748b"
         }
 
-        // Ana Ada Grubu (Yaw rotasyonu ile döner)
+        // Ana Ada Grubu (0.01 scale ile 100-birimlik Qt primitive'lerini 1-metreye indirger)
         Node {
             id: islandRoot
             eulerRotation.y: root.yaw
+            scale: Qt.vector3d(0.01, 0.01, 0.01)
 
             // Yüzen Ada Kaidesi
             IslandBase {
@@ -58,6 +78,7 @@ Item {
 
             // Merkez Gelişen Medeniyet Binaları
             SettlementCenter3D {
+                position: Qt.vector3d(0, 0.15, 0)
                 stageIndex: root.stageData.stageIndex !== undefined ? root.stageData.stageIndex : 0
                 biome: root.biome
             }
@@ -65,14 +86,14 @@ Item {
             // Başarı Binası 1: Deniz Feneri (Maraton Başarımı)
             Lighthouse3D {
                 isUnlocked: root.unlockedAchievementKeys.indexOf("marathon") !== -1
-                position: Qt.vector3d(4.2, 0, 0.4)
+                position: Qt.vector3d(3.8, 0.15, 0.4)
                 eulerRotation.y: -75
             }
 
             // Başarı Binası 2: Zafer Anıtı (100 Seans Başarımı)
             Monument3D {
                 isUnlocked: root.unlockedAchievementKeys.indexOf("sessions_100") !== -1
-                position: Qt.vector3d(-3.8, 0, -1.8)
+                position: Qt.vector3d(-3.6, 0.15, -1.5)
                 eulerRotation.y: 45
             }
 
@@ -82,7 +103,7 @@ Item {
 
                 Node {
                     id: treeItemNode
-                    position: Qt.vector3d(modelData.x, 0, modelData.z)
+                    position: Qt.vector3d(modelData.x, 0.15, modelData.z)
 
                     PineTree3D {
                         visible: modelData.treeType === "pine"
@@ -136,15 +157,15 @@ Item {
                 var dx = mouse.x - lastX
                 var dy = mouse.y - lastY
                 root.yaw = (root.yaw + dx * 0.45) % 360.0
-                root.pitch = Math.max(-50.0, Math.min(-12.0, root.pitch + dy * 0.25))
+                root.pitch = Math.max(-50.0, Math.min(-15.0, root.pitch + dy * 0.25))
                 lastX = mouse.x
                 lastY = mouse.y
             }
         }
 
         onWheel: (wheel) => {
-            var delta = wheel.angleDelta.y * 0.015
-            root.zoomLevel = Math.max(14.0, Math.min(32.0, root.zoomLevel - delta))
+            var delta = wheel.angleDelta.y * 0.012
+            root.zoomLevel = Math.max(8.0, Math.min(22.0, root.zoomLevel - delta))
         }
 
         onDoubleClicked: {
@@ -155,9 +176,9 @@ Item {
     // ── AÇI SIFIRLAMA ANİMASYONU ───────────────────────────────────────
     ParallelAnimation {
         id: resetAnimation
-        NumberAnimation { target: root; property: "yaw"; to: 25.0; duration: 400; easing.type: Easing.OutCubic }
-        NumberAnimation { target: root; property: "pitch"; to: -28.0; duration: 400; easing.type: Easing.OutCubic }
-        NumberAnimation { target: root; property: "zoomLevel"; to: 22.0; duration: 400; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "yaw"; to: 35.0; duration: 400; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "pitch"; to: -32.0; duration: 400; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "zoomLevel"; to: 13.5; duration: 400; easing.type: Easing.OutCubic }
     }
 
     // ── BİLGİ VE KONTROL HUD PANELİ (ALT KENAR) ────────────────────────
@@ -170,7 +191,7 @@ Item {
         }
         height: 38
         radius: 10
-        color: Qt.rgba(0.08, 0.1, 0.15, 0.75)
+        color: Qt.rgba(0.08, 0.1, 0.15, 0.8)
         border.color: Qt.rgba(1, 1, 1, 0.12)
         border.width: 1
 
