@@ -5,7 +5,7 @@ SessionService constructor'dan enjekte edilir (Mock).
 
 import sqlite3
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 from app.bridge.focus_stats_bridge import FocusStatsBridge
@@ -200,6 +200,27 @@ class TestFocusStatsBridge(unittest.TestCase):
         self.bridge.getStreak()
         self.assertEqual(self.session_svc.get_all_sessions.call_count, 2)
 
+    def test_get_island_trees_returns_tree_list(self):
+        now = datetime.now()
+        self.session_svc.get_all_sessions.return_value = [
+            Session(subject="Matematik", started_at=now, ended_at=now + timedelta(seconds=1800))
+        ]
+        trees = self.bridge.getIslandTrees()
+        self.assertIsInstance(trees, list)
+        self.assertEqual(len(trees), 1)
+        self.assertEqual(trees[0]["subject"], "Matematik")
+        self.assertIn("treeType", trees[0])
+
+    def test_get_island_trees_db_error_emits_errorOccurred_and_returns_fallback(self):
+        self.session_svc.get_all_sessions.side_effect = sqlite3.OperationalError("DB hatası")
+        received = []
+        self.bridge.errorOccurred.connect(lambda msg: received.append(msg))
+
+        trees = self.bridge.getIslandTrees()
+        self.assertGreaterEqual(len(trees), 3)  # Fallback starter trees
+        self.assertEqual(len(received), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
+

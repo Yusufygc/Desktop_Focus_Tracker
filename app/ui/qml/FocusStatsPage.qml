@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "components"
+import "components/island3d"
 
 Item {
     id: root
@@ -17,6 +18,8 @@ Item {
     property var unlockedAchievementKeys: []
     property var goalProgress: ({ goalMinutes: 0, currentSec: 0, progressFraction: 0, isMet: false })
     property bool _settlementLoaded: false
+    property bool viewMode3D: true
+    property var islandTrees: []
 
     function reload() {
         streak      = focusStatsBridge.getStreak()
@@ -27,6 +30,7 @@ Item {
         }
         root._settlementLoaded = true
         settlement = newSettlement
+        islandTrees = focusStatsBridge.getIslandTrees()
         var allAchievements = achievementBridge.getAllAchievements()
         unlockedAchievementKeys = allAchievements
             .filter(function(a) { return a.unlocked })
@@ -96,7 +100,9 @@ Item {
             // ── Yerleşim (dönemden bağımsız, tüm-zamanlar kümülatif) ──
             GlassCard {
                 Layout.fillWidth: true
-                height: 300
+                Layout.preferredHeight: root.viewMode3D ? 400 : 290
+                height: Layout.preferredHeight
+                Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 property bool hovered: false
                 glowColor: Theme.accentWarm
                 glowOpacity: hovered ? 0.6 : 0.0
@@ -118,6 +124,55 @@ Item {
                             color: Theme.textSecondary; font.pixelSize: 13; font.weight: Font.Medium
                             Layout.fillWidth: true
                         }
+
+                        // ── 2D / 3D Görünüm Seçici Hap Buton ─────────────
+                        Rectangle {
+                            width: 116; height: 26; radius: 13
+                            color: Theme.surface2
+                            border.color: Theme.borderDim; border.width: 1
+
+                            RowLayout {
+                                anchors.fill: parent
+                                spacing: 0
+
+                                Rectangle {
+                                    Layout.fillWidth: true; Layout.fillHeight: true; radius: 12
+                                    color: !root.viewMode3D ? Theme.primary : "transparent"
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "2D Köy"
+                                        font.pixelSize: 11
+                                        font.weight: !root.viewMode3D ? Font.Bold : Font.Normal
+                                        color: !root.viewMode3D ? Theme.onSolid : Theme.textSecondary
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.viewMode3D = false
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true; Layout.fillHeight: true; radius: 12
+                                    color: root.viewMode3D ? Theme.primary : "transparent"
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "3D Ada"
+                                        font.pixelSize: 11
+                                        font.weight: root.viewMode3D ? Font.Bold : Font.Normal
+                                        color: root.viewMode3D ? Theme.onSolid : Theme.textSecondary
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.viewMode3D = true
+                                    }
+                                }
+                            }
+                        }
+
                         Text {
                             text: root.settlement.stageName
                             color: Theme.accentWarm; font.pixelSize: 20; font.weight: Font.Bold
@@ -136,9 +191,24 @@ Item {
                         }
                     }
 
+                    // ── 3D Hibrit Ada Görünümü ────────────────────────
+                    HybridIslandView {
+                        id: island3D
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 275
+                        visible: root.viewMode3D
+                        stageData: root.settlement
+                        unlockedAchievementKeys: root.unlockedAchievementKeys
+                        trees: root.islandTrees
+                        biome: Theme.settlementBiome
+                    }
+
+                    // ── 2D Klasik Yerleşim Görünümü ──────────────────
                     SettlementView {
+                        id: settlement2D
                         Layout.fillWidth: true
                         Layout.preferredHeight: 170
+                        visible: !root.viewMode3D
                         stageData: root.settlement
                         unlockedAchievementKeys: root.unlockedAchievementKeys
                     }

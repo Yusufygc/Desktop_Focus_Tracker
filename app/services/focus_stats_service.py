@@ -6,6 +6,7 @@ AnalyticsService'ten ayrı tutuluyor: farklı domain (süre bazlı, bozulma-say�
 
 from collections import defaultdict
 from datetime import date, datetime, timedelta
+import math
 from typing import Dict, List, Optional
 
 from app.core.models.models import Session
@@ -226,3 +227,101 @@ class FocusStatsService:
             "hours_to_next": hours_to_next,
             "progress_to_next": round(progress_to_next, 4),
         }
+
+    def island_trees(
+        self,
+        sessions: List[Session],
+        color_map: Optional[Dict[str, str]] = None,
+        max_trees: int = 16,
+    ) -> List[Dict]:
+        """Hibrit 3D ada için seans bazlı ağaç / bitki verilerini üretir.
+        Her seans konusunun rengine göre boyanmış bir ağaç oluşturur.
+        Yüksek bozulmalı (>=3) seanslar kuruyan kütük (stump) olarak simgelenir."""
+        colors = color_map or {}
+        if not sessions:
+            # Başlangıç adası için 3 varsayılan fidan/ağaç
+            return [
+                {
+                    "id": -1,
+                    "subject": "Genel Odak",
+                    "color": "#22c55e",
+                    "treeType": "pine",
+                    "heightScale": 1.0,
+                    "x": -3.4,
+                    "z": 0.6,
+                    "durationMin": 25,
+                    "durationLabel": "25dk",
+                    "distractions": 0,
+                    "isStump": False,
+                    "dateStr": "Bugün",
+                },
+                {
+                    "id": -2,
+                    "subject": "Çalışma",
+                    "color": "#16a34a",
+                    "treeType": "oak",
+                    "heightScale": 0.9,
+                    "x": 3.2,
+                    "z": -1.4,
+                    "durationMin": 20,
+                    "durationLabel": "20dk",
+                    "distractions": 0,
+                    "isStump": False,
+                    "dateStr": "Bugün",
+                },
+                {
+                    "id": -3,
+                    "subject": "Odaklanma",
+                    "color": "#059669",
+                    "treeType": "pine",
+                    "heightScale": 1.1,
+                    "x": 0.9,
+                    "z": 3.5,
+                    "durationMin": 30,
+                    "durationLabel": "30dk",
+                    "distractions": 0,
+                    "isStump": False,
+                    "dateStr": "Bugün",
+                },
+            ]
+
+        # En son seanslardan başlayarak max_trees kadar al
+        recent_sessions = list(reversed(sessions))[:max_trees]
+        count = len(recent_sessions)
+        trees = []
+
+        for i, s in enumerate(recent_sessions):
+            duration_min = max(1, round(s.duration_seconds / 60))
+            is_stump = s.total_distractions >= 3
+            if is_stump:
+                tree_type = "stump"
+            elif s.duration_seconds >= 1800:
+                tree_type = "pine"
+            else:
+                tree_type = "oak"
+
+            color = colors.get(s.subject, "#22c55e")
+            height_scale = round(min(1.4, max(0.8, s.duration_seconds / 1800.0)), 2)
+
+            # Adanın çim kaidesi üzerinde dairesel dağılım
+            angle_rad = (i * 2.0 * math.pi / max(1, count))
+            radius = 3.2 + ((i * 7 + 3) % 10) * 0.1
+            x = round(math.cos(angle_rad) * radius, 2)
+            z = round(math.sin(angle_rad) * radius, 2)
+
+            trees.append({
+                "id": s.id,
+                "subject": s.subject,
+                "color": color,
+                "treeType": tree_type,
+                "heightScale": height_scale,
+                "x": x,
+                "z": z,
+                "durationMin": duration_min,
+                "durationLabel": f"{duration_min}dk",
+                "distractions": s.total_distractions,
+                "isStump": is_stump,
+                "dateStr": s.started_at.strftime("%d.%m %H:%M"),
+            })
+
+        return trees

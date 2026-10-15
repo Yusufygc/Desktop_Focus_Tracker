@@ -72,7 +72,7 @@ class AppContainer:
         self.category_bridge = CategoryBridge(self.category_svc)
         self.subject_bridge = SubjectBridge(self.subject_svc)
         self.timer_bridge = TimerBridge(self.timer_svc)
-        self.focus_stats_bridge = FocusStatsBridge(self.session_svc, self.goal_settings, self.focus_stats_svc)
+        self.focus_stats_bridge = FocusStatsBridge(self.session_svc, self.goal_settings, self.focus_stats_svc, self.subject_svc)
         self.achievement_bridge = AchievementBridge(self.session_svc, self.achievement_svc, self.focus_stats_svc)
 
     def register_context_properties(self, engine: QQmlApplicationEngine, app_icon_url: str) -> None:

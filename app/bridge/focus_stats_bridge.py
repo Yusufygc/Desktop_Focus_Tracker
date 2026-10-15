@@ -39,11 +39,12 @@ _STAGE_NAME_MAP = {
 @QmlElement
 class FocusStatsBridge(BaseBridge):
 
-    def __init__(self, session_svc: SessionService, goal_settings, focus_stats_service: FocusStatsService = None, parent=None):
+    def __init__(self, session_svc: SessionService, goal_settings, focus_stats_service: FocusStatsService = None, subject_svc=None, parent=None):
         super().__init__(parent)
         self._session_svc = session_svc
         self._goal_settings = goal_settings
         self._stats = focus_stats_service or FocusStatsService()
+        self._subject_svc = subject_svc
         self._cached_sessions = None
         self._cached_at = 0.0
 
@@ -187,3 +188,16 @@ class FocusStatsBridge(BaseBridge):
             logger.error(f"Hedef ilerlemesi alınırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return empty
+
+    @Slot(result="QVariantList")
+    def getIslandTrees(self) -> list:
+        try:
+            sessions = self._get_sessions()
+            color_map = self._subject_svc.get_color_map() if self._subject_svc else {}
+            return self._stats.island_trees(sessions, color_map)
+        except sqlite3.Error as e:
+            self._cached_sessions = None
+            logger.error(f"Ada ağaçları alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return self._stats.island_trees([])
+

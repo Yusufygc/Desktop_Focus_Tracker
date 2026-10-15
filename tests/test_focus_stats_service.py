@@ -9,9 +9,9 @@ from app.core.models.models import Session
 from app.services.focus_stats_service import FocusStatsService
 
 
-def _s(day_offset: int, duration_sec: int, ref: date) -> Session:
+def _s(day_offset: int, duration_sec: int, ref: date, subject: str = "Test", distractions: int = 0) -> Session:
     start = datetime.combine(ref + timedelta(days=day_offset), datetime.min.time()) + timedelta(hours=10)
-    return Session(subject="Test", started_at=start, ended_at=start + timedelta(seconds=duration_sec))
+    return Session(subject=subject, started_at=start, ended_at=start + timedelta(seconds=duration_sec), total_distractions=distractions)
 
 
 class TestPeriodTotals(unittest.TestCase):
@@ -241,5 +241,41 @@ class TestSettlementStage(unittest.TestCase):
         self.assertEqual(self.svc.total_focus_seconds(sessions), 300)
 
 
+class TestIslandTrees(unittest.TestCase):
+    def setUp(self):
+        self.svc = FocusStatsService()
+        self.ref = date(2026, 7, 7)
+
+    def test_empty_sessions_returns_starter_trees(self):
+        trees = self.svc.island_trees([])
+        self.assertGreaterEqual(len(trees), 3)
+        for t in trees:
+            self.assertIn("treeType", t)
+            self.assertIn("x", t)
+            self.assertIn("z", t)
+            self.assertIn("color", t)
+
+    def test_sessions_converted_to_trees_with_subject_colors(self):
+        s1 = _s(0, 2400, self.ref, subject="Matematik", distractions=0)
+        s2 = _s(0, 900, self.ref, subject="Biyoloji", distractions=4)
+        color_map = {"Matematik": "#3b82f6", "Biyoloji": "#10b981"}
+
+        trees = self.svc.island_trees([s1, s2], color_map)
+
+        self.assertEqual(len(trees), 2)
+        # s2 is latest (reversed), distractions >= 3 -> stump
+        self.assertEqual(trees[0]["subject"], "Biyoloji")
+        self.assertEqual(trees[0]["color"], "#10b981")
+        self.assertEqual(trees[0]["treeType"], "stump")
+        self.assertTrue(trees[0]["isStump"])
+
+        # s1 duration >= 1800 -> pine
+        self.assertEqual(trees[1]["subject"], "Matematik")
+        self.assertEqual(trees[1]["color"], "#3b82f6")
+        self.assertEqual(trees[1]["treeType"], "pine")
+        self.assertFalse(trees[1]["isStump"])
+
+
 if __name__ == "__main__":
     unittest.main()
+

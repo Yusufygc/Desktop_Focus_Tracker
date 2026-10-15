@@ -66,6 +66,7 @@ def main():
     engine = QQmlApplicationEngine()
     engine.addImportPath(QML_DIR)
     engine.addImportPath(os.path.join(QML_DIR, "components"))
+    engine.addImportPath(os.path.join(QML_DIR, "components", "island3d"))
     container.register_context_properties(engine, app_icon_url)
 
     engine.load(QUrl.fromLocalFile(os.path.join(QML_DIR, "Main.qml")))
