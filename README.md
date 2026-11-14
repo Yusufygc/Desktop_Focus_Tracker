@@ -1,6 +1,6 @@
 # FocusTracker
 
-![Version](https://img.shields.io/badge/Version-1.0.0-orange)
+![Version](https://img.shields.io/badge/Version-1.1.0-orange)
 
 FocusTracker, Pomodoro tekniği ve derin odaklanma (deep work) pratiklerini temel alarak tasarlanmış, **modern ve şık bir arayüze** sahip bir masaüstü zaman yönetimi uygulamasıdır. PySide6 (Python) ve QML (Qt Quick) teknolojileri kullanılarak performans ve görsellik ön planda tutularak geliştirilmiştir.
 
