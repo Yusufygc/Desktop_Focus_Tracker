@@ -52,6 +52,12 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           $tag = $env:TAG
-          $flags = @()
-          if ($tag.Contains("-")) { $flags += "--prerelease" }          # v1.1.0-rc1: ön sürüm, güncelleme denetimi yok sayar
-          gh release create $tag (Get-ChildItem dist/installer/*).FullName --title "FocusTracker $($tag.TrimStart('v'))" --generate-notes --verify-tag @flags
+          $files = (Get-ChildItem dist/installer/*).FullName
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $files --clobber
+          } else {
+            $flags = @()
+            if ($tag.Contains("-")) { $flags += "--prerelease" }          # v1.1.0-rc1: ön sürüm, güncelleme denetimi yok sayar
+            gh release create $tag $files --title "FocusTracker $($tag.TrimStart('v'))" --generate-notes --verify-tag @flags
+          }
