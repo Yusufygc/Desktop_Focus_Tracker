@@ -67,3 +67,16 @@ class SessionRepository(BaseRepository):
             (total_paused_sec, dt_str, session_id)
         )
         self.db.conn.commit()
+
+    def close_orphaned_sessions(self) -> int:
+        """Uygulama çökmesi veya beklenmeyen kapanma nedeniyle bitirilmemiş kalan
+        seansları temizler. Seanslar last_paused_at veya started_at zamanında kapatılır,
+        böylece kapalı geçen günler boyunca saatlerce sahte süre birikmez."""
+        cur = self.db.conn.execute(
+            "UPDATE sessions SET ended_at = COALESCE(last_paused_at, started_at) WHERE ended_at IS NULL"
+        )
+        self.db.conn.commit()
+        rowcount = getattr(cur, "rowcount", 0)
+        if isinstance(rowcount, int) and rowcount > 0:
+            logger.info(f"Beklenmeyen kapanma sonrası {rowcount} yarım kalmış seans kapatıldı.")
+        return rowcount if isinstance(rowcount, int) else 0

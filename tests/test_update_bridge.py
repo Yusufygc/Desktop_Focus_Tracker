@@ -97,6 +97,14 @@ class TestUpdateBridge(unittest.TestCase):
             self.bridge.cancelOrDismiss()
             self.assertFalse(self.bridge._retry_timer.isActive())
             self.assertEqual(self.bridge.status, "idle")
+            self.assertFalse(self.bridge.dialogOpen)
+
+    def test_dialog_open_property_and_slots(self):
+        self.assertFalse(self.bridge.dialogOpen)
+        self.bridge.openDialog()
+        self.assertTrue(self.bridge.dialogOpen)
+        self.bridge.closeDialog()
+        self.assertFalse(self.bridge.dialogOpen)
 
 
 if __name__ == "__main__":

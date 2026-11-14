@@ -74,6 +74,7 @@ class UpdateBridge(QObject):
     downloadProgressChanged = Signal(int)
     errorMessageChanged = Signal(str)
     autoCheckEnabledChanged = Signal(bool)
+    dialogOpenChanged = Signal(bool)
     quitRequested = Signal()
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -84,6 +85,7 @@ class UpdateBridge(QObject):
         self._download_progress: int = 0
         self._error_message: str = ""
         self._downloaded_installer: Optional[Path] = None
+        self._dialog_open: bool = False
 
         self._check_worker: Optional[CheckWorker] = None
         self._download_worker: Optional[DownloadWorker] = None
@@ -145,13 +147,33 @@ class UpdateBridge(QObject):
     def autoCheckEnabled(self) -> bool:
         return self._preferences.check_enabled
 
+    @Property(bool, notify=dialogOpenChanged)
+    def dialogOpen(self) -> bool:
+        return self._dialog_open
+
+    @dialogOpen.setter
+    def dialogOpen(self, value: bool) -> None:
+        if self._dialog_open != value:
+            self._dialog_open = value
+            self.dialogOpenChanged.emit(value)
+
     # ── QML Slots ──
+
+    @Slot()
+    def openDialog(self) -> None:
+        self.dialogOpen = True
+
+    @Slot()
+    def closeDialog(self) -> None:
+        self.cancelOrDismiss()
 
     @Slot()
     def checkForUpdate(self) -> None:
         """Kullanıcının manuel denetimi (her zaman sonucu gösterir)."""
         if self._status in ("checking", "downloading"):
+            self.dialogOpen = True
             return
+        self.dialogOpen = True
         self._set_status("checking")
         self._error_message = ""
         self.errorMessageChanged.emit("")
@@ -189,12 +211,14 @@ class UpdateBridge(QObject):
     @Slot()
     def cancelOrDismiss(self) -> None:
         self._retry_timer.stop()
+        self.dialogOpen = False
         self._set_status("idle")
 
     @Slot(str)
     def skipVersion(self, version: str) -> None:
         self._preferences.skipped_version = version
         save_preferences(self._preferences)
+        self.dialogOpen = False
         self._set_status("idle")
 
     @Slot(bool)
@@ -223,6 +247,7 @@ class UpdateBridge(QObject):
 
     def _on_check_finished(self, info: Optional[UpdateInfo], error: str) -> None:
         self._check_worker = None
+        self.dialogOpen = True
         if error:
             self._error_message = error
             self.errorMessageChanged.emit(error)
@@ -242,6 +267,7 @@ class UpdateBridge(QObject):
         self._update_info = info
         self.updateAvailableChanged.emit(True)
         self._set_status("available")
+        self.dialogOpen = True
 
     def _on_download_progress(self, percent: int) -> None:
         self._download_progress = percent

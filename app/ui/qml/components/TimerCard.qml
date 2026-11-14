@@ -10,6 +10,7 @@ GlassCard {
     property int plannedMinutes: 0
     property bool addPresetMode: false
     property var presets: []
+    property string displayTime: "00:00:00"
 
     // Ark ilerlemesi saniyede bir sıçramak yerine akıcı ilerlesin diye
     // ham oran burada yumuşatılıyor (arc.onPaint bunu okuyor, ham oranı değil).
@@ -39,7 +40,7 @@ GlassCard {
 
     function updateTime(timeStr) {
         if (!sessionBridge.isPomodoroMode) {
-            timerLabel.text = timeStr
+            displayTime = timeStr
         }
         elapsed++
         animatedProgress = _computeRawProgress()
@@ -59,7 +60,7 @@ GlassCard {
 
     function reset() {
         if (!sessionBridge.isPomodoroMode) {
-            timerLabel.text = "00:00:00"
+            displayTime = "00:00:00"
         }
         elapsed           = 0
         plannedMinutes    = 0
@@ -247,7 +248,7 @@ GlassCard {
                 height: 240
                 readonly property real availH: dialArea.height - (durationPicker.visible ? 36 : 8)
                 readonly property real maxDim: Math.min(dialArea.width - 16, availH)
-                scale: maxDim > 0 ? Math.max(0.65, Math.min(1.0, maxDim / 240)) : 1.0
+                scale: maxDim > 0 ? Math.max(0.65, Math.min(1.35, maxDim / 240)) : 1.0
                 Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
                 Canvas {
@@ -329,7 +330,7 @@ GlassCard {
                         id: timerLabel
                         Layout.alignment: Qt.AlignHCenter
                         text: {
-                            if (sessionBridge.isPomodoroMode) {
+                            if (sessionBridge && sessionBridge.isPomodoroMode) {
                                 var target = sessionBridge.pomodoroTarget
                                 var rem = 0
                                 if (sessionBridge.pomodoroState === "FOCUS") {
@@ -342,10 +343,10 @@ GlassCard {
                                 var s = rem % 60
                                 return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s)
                             } else {
-                                return timerLabel.text // koru
+                                return timerCard.displayTime
                             }
                         }
-                        color: (sessionBridge.isPomodoroMode && (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK")) ? Theme.success :
+                        color: (sessionBridge && sessionBridge.isPomodoroMode && (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK")) ? Theme.success :
                                ((!sessionBridge.isPomodoroMode && timerCard.plannedMinutes > 0 && timerCard.elapsed >= timerCard.plannedMinutes * 60)
                                ? Theme.dangerMuted : Theme.primary)
                         font.pixelSize: 44; font.weight: Font.Bold; font.family: "Consolas"

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick3D
+import ".."
 
 Item {
     id: root
@@ -65,11 +66,11 @@ Item {
             ambientColor: root.biome === "night" ? "#312e81" : "#64748b"
         }
 
-        // Ana Ada Grubu (0.01 scale ile 100-birimlik Qt primitive'lerini 1-metreye indirger)
+        // Ana Ada Grubu (1 birim = 1 metre SI koordinat sistemi)
         Node {
             id: islandRoot
             eulerRotation.y: root.yaw
-            scale: Qt.vector3d(0.01, 0.01, 0.01)
+            scale: Qt.vector3d(1.0, 1.0, 1.0)
 
             // Yüzen Ada Kaidesi
             IslandBase {
@@ -224,10 +225,10 @@ Item {
                 Rectangle {
                     width: 28; height: 28; radius: 6
                     color: btnRotateMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent"
-                    Text {
+                    AppIcon {
                         anchors.centerIn: parent
-                        text: root.autoRotate ? "⏸" : "▶"
-                        font.pixelSize: 11
+                        name: root.autoRotate ? "pause" : "play"
+                        size: 14
                         color: "#e2e8f0"
                     }
                     MouseArea {
@@ -245,10 +246,11 @@ Item {
                 Rectangle {
                     width: 28; height: 28; radius: 6
                     color: btnResetMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.15) : "transparent"
-                    Text {
+                    AppIcon {
                         anchors.centerIn: parent
-                        text: "🎯"
-                        font.pixelSize: 12
+                        name: "target"
+                        size: 14
+                        color: "#e2e8f0"
                     }
                     MouseArea {
                         id: btnResetMouse

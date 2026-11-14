@@ -133,6 +133,51 @@ Popup {
             }
         }
 
+        // ── Uygulama Güncellemeleri ────────────────────────────
+        Column {
+            width: parent.width
+            spacing: 10
+
+            Text { text: "Uygulama Güncellemeleri"; color: Theme.textSecondary; font.pixelSize: 12; font.weight: Font.Medium }
+
+            RowLayout {
+                width: parent.width
+                Text {
+                    text: "Açılışta otomatik denetle"
+                    color: Theme.textPrimary
+                    font.pixelSize: 13
+                    Layout.fillWidth: true
+                }
+                CheckBox {
+                    checked: updateBridge ? updateBridge.autoCheckEnabled : true
+                    onToggled: if (updateBridge) updateBridge.setAutoCheckEnabled(checked)
+                }
+            }
+
+            RowLayout {
+                width: parent.width
+                spacing: 8
+
+                Text {
+                    text: "Mevcut: v" + (updateBridge ? updateBridge.currentVersion : "")
+                    color: Theme.textDimmed
+                    font.pixelSize: 12
+                    Layout.fillWidth: true
+                }
+
+                FTButton {
+                    Layout.preferredWidth: 130
+                    height: 32
+                    label: (updateBridge && updateBridge.isChecking) ? "Denetleniyor..." : "Şimdi Denetle"
+                    variant: "ghost"
+                    enabled: updateBridge ? !updateBridge.isChecking : true
+                    onClicked: {
+                        if (updateBridge) updateBridge.checkForUpdate()
+                    }
+                }
+            }
+        }
+
         FTButton { width: parent.width; height: 40; label: Strings.commonClose; variant: "ghost"; onClicked: root.close() }
     }
 }

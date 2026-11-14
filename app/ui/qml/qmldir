@@ -13,3 +13,4 @@ FTButton 1.0 components/FTButton.qml
 FTDialog 1.0 components/FTDialog.qml
 StatCard 1.0 components/StatCard.qml
 AppIcon 1.0 components/AppIcon.qml
+UpdateDialog 1.0 components/UpdateDialog.qml

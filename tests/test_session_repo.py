@@ -108,5 +108,24 @@ class TestSessionRepo(unittest.TestCase):
         self.assertIsNone(sessions[0].last_paused_at)
 
 
+
+    def test_close_orphaned_sessions_closes_unended(self):
+        s1 = self.repo.insert(Session(subject="Yarim Kalan"))
+        s2 = self.repo.insert(Session(subject="Duraklatilip Kalan"))
+        paused_at = datetime(2026, 1, 1, 10, 0, 0)
+        self.repo.update_pause(s2, 60, paused_at)
+
+        closed_count = self.repo.close_orphaned_sessions()
+        self.assertEqual(closed_count, 2)
+
+        session1 = self.repo.get_by_id(s1)
+        self.assertIsNotNone(session1.ended_at)
+        self.assertEqual(session1.ended_at, session1.started_at)
+
+        session2 = self.repo.get_by_id(s2)
+        self.assertIsNotNone(session2.ended_at)
+        self.assertEqual(session2.ended_at, paused_at)
+
+
 if __name__ == "__main__":
     unittest.main()

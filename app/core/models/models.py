@@ -26,7 +26,11 @@ class Session:
         curr_pause = 0
         if self.last_paused_at and self.ended_at is None:
             curr_pause = int((datetime.now() - self.last_paused_at).total_seconds())
-        return max(0, base_dur - self.total_paused_sec - curr_pause)
+        dur = max(0, base_dur - self.total_paused_sec - curr_pause)
+        # Güvenlik koruması: Kapatılmamış bir odak seansı 24 saatten (86400 sn) uzun olamaz.
+        if self.ended_at is None and dur > 86400:
+            return 0
+        return dur
 
     @property
     def is_paused(self) -> bool:

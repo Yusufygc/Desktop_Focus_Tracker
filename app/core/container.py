@@ -51,6 +51,9 @@ class AppContainer:
         self.timer_preset_repo = TimerPresetRepository(db)
         self.achievement_repo = AchievementRepository(db)
 
+        # Beklenmeyen kapanmalardan kalan yarım kalmış seansları güvenle sonlandır
+        self.session_repo.close_orphaned_sessions()
+
         # 2. Services
         self.session_svc = SessionService(self.session_repo)
         self.distraction_svc = DistractionService(self.distraction_repo)
