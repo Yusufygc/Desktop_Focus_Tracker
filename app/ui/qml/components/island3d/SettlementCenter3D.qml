@@ -31,13 +31,57 @@ Node {
         baseColor: "#f59e0b"; metalness: 0.25; roughness: 0.35; emissiveFactor: Qt.vector3d(0.25, 0.16, 0.02)
     }
 
+    // ── Dikişsiz prosedürel yüzey dokuları (biome renkleriyle çarpılır) ──
+    Texture {
+        id: stoneTex
+        source: "maps/stone_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+    Texture {
+        id: roofTex
+        source: "maps/roof_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+    Texture {
+        id: woodTex
+        source: "maps/wood_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+    Texture {
+        id: plasterTex
+        source: "maps/plaster_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+    Texture {
+        id: thatchTex
+        source: "maps/thatch_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+
     // ── AŞAMA 0: KULÜBE — log, roof, stone, wood ─────────────────────
     Model {
         visible: root.stageIndex === 0
         source: "meshes/hut.mesh"
         castsShadows: true; receivesShadows: true
-        materials: [ Mat { baseColor: root.cLog }, Mat { baseColor: root.cThatch; roughness: 1.0 },
-                     Mat { baseColor: root.cStone }, Mat { baseColor: root.cWood } ]
+        materials: [ Mat { baseColor: root.cLog; baseColorMap: woodTex },
+                     Mat { baseColor: root.cThatch; baseColorMap: thatchTex; roughness: 1.0 },
+                     Mat { baseColor: root.cStone; baseColorMap: stoneTex },
+                     Mat { baseColor: root.cWood; baseColorMap: woodTex } ]
     }
 
     // ── AŞAMA 1: EV — stone, plaster, roof, wood, glass ───────────────
@@ -45,8 +89,11 @@ Node {
         visible: root.stageIndex === 1
         source: "meshes/house.mesh"
         castsShadows: true; receivesShadows: true
-        materials: [ Mat { baseColor: root.cStone }, Mat { baseColor: root.cPlaster },
-                     Mat { baseColor: root.cRoof }, Mat { baseColor: root.cWood }, GlassMat {} ]
+        materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
+                     Mat { baseColor: root.cPlaster; baseColorMap: plasterTex },
+                     Mat { baseColor: root.cRoof; baseColorMap: roofTex },
+                     Mat { baseColor: root.cWood; baseColorMap: woodTex },
+                     GlassMat {} ]
     }
 
     // ── AŞAMA 2: ÇİFTLİK — barn, roof, wood, stone, plaster, trim, hay ─
@@ -55,10 +102,13 @@ Node {
         Model {
             source: "meshes/farm.mesh"
             castsShadows: true; receivesShadows: true
-            materials: [ Mat { baseColor: root.biome === "winter" ? "#8b3a3a" : "#9b2c2c" },
-                         Mat { baseColor: "#4a3b33" }, Mat { baseColor: root.cWood },
-                         Mat { baseColor: root.cStone }, Mat { baseColor: root.cPlaster },
-                         Mat { baseColor: "#f5f5f4" }, Mat { baseColor: "#d4b257"; roughness: 1.0 } ]
+            materials: [ Mat { baseColor: root.biome === "winter" ? "#8b3a3a" : "#9b2c2c"; baseColorMap: woodTex },
+                         Mat { baseColor: "#4a3b33"; baseColorMap: roofTex },
+                         Mat { baseColor: root.cWood; baseColorMap: woodTex },
+                         Mat { baseColor: root.cStone; baseColorMap: stoneTex },
+                         Mat { baseColor: root.cPlaster; baseColorMap: plasterTex },
+                         Mat { baseColor: "#f5f5f4"; baseColorMap: woodTex },
+                         Mat { baseColor: "#d4b257"; baseColorMap: thatchTex; roughness: 1.0 } ]
         }
         // Dönen yel değirmeni kanatları (kule önü)
         Node {
@@ -70,7 +120,8 @@ Node {
             Model {
                 source: "meshes/windmill_blades.mesh"
                 castsShadows: true
-                materials: [ Mat { baseColor: root.cWood }, Mat { baseColor: "#f3ead7"; roughness: 1.0 } ]
+                materials: [ Mat { baseColor: root.cWood; baseColorMap: woodTex },
+                             Mat { baseColor: "#f3ead7"; baseColorMap: plasterTex; roughness: 1.0 } ]
             }
         }
     }
@@ -80,9 +131,11 @@ Node {
         visible: root.stageIndex === 3
         source: "meshes/village.mesh"
         castsShadows: true; receivesShadows: true
-        materials: [ Mat { baseColor: root.cStone }, Mat { baseColor: root.cPlaster },
-                     Mat { baseColor: root.cRoof }, Mat { baseColor: root.cRoof2 },
-                     Mat { baseColor: root.cWood }, GlassMat {},
+        materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
+                     Mat { baseColor: root.cPlaster; baseColorMap: plasterTex },
+                     Mat { baseColor: root.cRoof; baseColorMap: roofTex },
+                     Mat { baseColor: root.cRoof2; baseColorMap: roofTex },
+                     Mat { baseColor: root.cWood; baseColorMap: woodTex }, GlassMat {},
                      PrincipledMaterial { baseColor: root.biome === "winter" ? "#cfe8f5" : "#2b7bb9"; roughness: 0.1 } ]
     }
 
@@ -91,9 +144,11 @@ Node {
         visible: root.stageIndex === 4
         source: "meshes/town.mesh"
         castsShadows: true; receivesShadows: true
-        materials: [ Mat { baseColor: root.cStone }, Mat { baseColor: root.cPlaster },
-                     Mat { baseColor: root.cRoof }, Mat { baseColor: root.cRoof2 },
-                     Mat { baseColor: root.cWood }, GlassMat {},
+        materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
+                     Mat { baseColor: root.cPlaster; baseColorMap: plasterTex },
+                     Mat { baseColor: root.cRoof; baseColorMap: roofTex },
+                     Mat { baseColor: root.cRoof2; baseColorMap: roofTex },
+                     Mat { baseColor: root.cWood; baseColorMap: woodTex }, GlassMat {},
                      GoldMat {} ]
     }
 
@@ -102,9 +157,11 @@ Node {
         visible: root.stageIndex >= 5
         source: "meshes/castle.mesh"
         castsShadows: true; receivesShadows: true
-        materials: [ Mat { baseColor: root.cStone }, Mat { baseColor: root.cStoneDark },
-                     Mat { baseColor: root.cRoof2 }, Mat { baseColor: root.cWood },
+        materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
+                     Mat { baseColor: root.cStoneDark; baseColorMap: stoneTex },
+                     Mat { baseColor: root.cRoof2; baseColorMap: roofTex },
+                     Mat { baseColor: root.cWood; baseColorMap: woodTex },
                      GoldMat {},
-                     Mat { baseColor: "#2563eb"; roughness: 0.9 } ]
+                     Mat { baseColor: "#2563eb"; baseColorMap: plasterTex; roughness: 0.9 } ]
     }
 }

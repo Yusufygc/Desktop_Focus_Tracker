@@ -35,43 +35,33 @@ ApplicationWindow {
     }
 
     function _getScreenBounds(win) {
-        var scr = (win && win.screen) ? win.screen : null
-        var sx = (scr && scr.virtualX !== undefined) ? scr.virtualX : (Screen.virtualX !== undefined ? Screen.virtualX : 0)
-        var sy = (scr && scr.virtualY !== undefined) ? scr.virtualY : (Screen.virtualY !== undefined ? Screen.virtualY : 0)
-        var sw = (scr && scr.width !== undefined && scr.width > 0) ? scr.width : (Screen.width || 1920)
-        var sh = (scr && scr.height !== undefined && scr.height > 0) ? scr.height : (Screen.height || 1080)
-        return { x: sx, y: sy, width: sw, height: sh }
+        var availW = (Screen.desktopAvailableWidth && Screen.desktopAvailableWidth > 0)
+            ? Screen.desktopAvailableWidth : (Screen.width || 1920)
+        var availH = (Screen.desktopAvailableHeight && Screen.desktopAvailableHeight > 0)
+            ? Screen.desktopAvailableHeight : (Screen.height || 1080)
+        var vx = Screen.virtualX || 0
+        var vy = Screen.virtualY || 0
+        return { x: vx, y: vy, width: availW, height: availH }
     }
 
     function _clampToScreen() {
         var primary = (Qt.application.screens && Qt.application.screens.length > 0) ? Qt.application.screens[0] : null
-        if (!primary) return
-
-        if (_isVirtualScreen(root.screen)) {
+        if (primary && _isVirtualScreen(root.screen)) {
             root.screen = primary
-        }
-
-        var pw = primary.width || 1920
-        var ph = (primary.desktopAvailableHeight && primary.desktopAvailableHeight > 0) ? primary.desktopAvailableHeight : (primary.height || 1080)
-        var px = primary.virtualX !== undefined ? primary.virtualX : 0
-        var py = primary.virtualY !== undefined ? primary.virtualY : 0
-
-        // Eğer pencere sanal ekranın 1200px gibi aşırı yüksekliğini kapmışsa veya taştıysa
-        if (root.height > ph || root.width > pw || root.y < py) {
-            root.width = Math.min(AppConfig.windowDefaultWidth, pw)
-            root.height = Math.min(AppConfig.windowDefaultHeight, ph)
-            root.x = px + Math.max(0, Math.round((pw - root.width) / 2))
-            root.y = py + Math.max(0, Math.round((ph - root.height) / 2))
-            return
         }
 
         if (root.visibility === Window.Maximized || root.visibility === Window.FullScreen) return
 
         var b = _getScreenBounds(root)
+        var maxW = Math.max(AppConfig.windowMinWidth, b.width - 24)
+        var maxH = Math.max(AppConfig.windowMinHeight, b.height - 48)
+        if (root.width > maxW) root.width = Math.min(AppConfig.windowDefaultWidth, maxW)
+        if (root.height > maxH) root.height = Math.min(AppConfig.windowDefaultHeight, maxH)
+
         if (root.x < b.x || root.x + root.width > b.x + b.width ||
-            root.y < b.y || root.y + root.height > b.y + b.height) {
+            root.y < b.y + 24 || root.y + root.height + 38 > b.y + b.height) {
             root.x = b.x + Math.max(0, Math.round((b.width - root.width) / 2))
-            root.y = b.y + Math.max(0, Math.round((b.height - root.height) / 2))
+            root.y = b.y + Math.max(24, Math.round((b.height - root.height) / 2))
         }
     }
 
@@ -142,6 +132,17 @@ ApplicationWindow {
             TrackerPage  { 
                 id: trackerPage 
                 onMiniModeRequested: root._switchToMini()
+                onZenModeRequested:  zenOverlay.openZen()
+                onTargetCompletedRequested: {
+                    if (zenOverlay.visible) {
+                        zenOverlay.closeZen()
+                    }
+                    if (miniWindow.visible) {
+                        root._restoreFromMini()
+                    }
+                    root.raise()
+                    root.requestActivate()
+                }
             }
             AnalyticsPage {
                 id: analyticsPage
@@ -197,6 +198,20 @@ ApplicationWindow {
 
     UpdateDialog {
         id: updateDialog
+    }
+
+    ZenTimerOverlay {
+        id: zenOverlay
+        anchors.fill: parent
+        z: 50
+        timeText: trackerPage.currentClockText
+        phaseLabel: trackerPage.currentPhaseLabel
+        subtitleText: trackerPage.currentSubtitleText
+        subjectName: trackerPage.currentSubjectText
+        onStartRequested: sessionBridge.startSession(trackerPage.currentSubjectText)
+        onDistractionRequested: trackerPage.openDistractionDialog()
+        onFinishRequested: trackerPage.triggerFinish()
+        onCustomizeRequested: trackerPage.openCustomizeDialog()
     }
 
     AppTrayIcon {

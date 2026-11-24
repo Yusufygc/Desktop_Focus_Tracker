@@ -1,6 +1,6 @@
 # 3D ada kaynak modelleri
 
-Bu `.glb` dosyaları `tools/build_island_assets.py` tarafından prosedürel olarak üretilir (harici kaynak / lisans yok). Uygulama, `balsam` ile dönüştürülmüş `app/ui/qml/components/island3d/meshes/*.mesh` dosyalarını kullanır.
+Bu `.glb` dosyaları `tools/build_island_assets.py` tarafından prosedürel olarak üretilir (harici kaynak / lisans yok). Uygulama, `balsam` ile dönüştürülmüş `app/ui/qml/components/island3d/meshes/*.mesh` dosyalarını ve `app/ui/qml/components/island3d/maps/*.png` dikişsiz yüzey dokularını kullanır.
 
 Subset (malzeme) sırası:
 

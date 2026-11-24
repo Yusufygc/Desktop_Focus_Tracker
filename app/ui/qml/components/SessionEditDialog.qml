@@ -60,34 +60,27 @@ Popup {
         Column {
             spacing: 6; width: parent.width
             Text { text: Strings.sessionEditSubjectLabel; color: Theme.textMuted; font.pixelSize: 12 }
-            Rectangle {
-                width: parent.width; height: 40; radius: 8; color: Theme.surface3
-                border.color: editSubjectField.activeFocus ? Theme.primary : Theme.border; border.width: 1
-                TextInput {
-                    id: editSubjectField
-                    anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.textPrimary; font.pixelSize: 13
-                }
+            FTTextArea {
+                id: editSubjectField
+                width: parent.width
+                minHeight: 40
+                maxHeight: 72
+                singleLineSubmit: true
+                placeholderText: Strings.sessionEditSubjectLabel
+                onSubmitted: root._save()
             }
         }
 
         Column {
             spacing: 6; width: parent.width
             Text { text: Strings.sessionEditNotesLabel; color: Theme.textMuted; font.pixelSize: 12 }
-            Rectangle {
-                width: parent.width; height: 80; radius: 8; color: Theme.surface3
-                border.color: editNoteField.activeFocus ? Theme.primary : Theme.border; border.width: 1
-                clip: true
-                ScrollView {
-                    anchors { fill: parent; margins: 12 }
-                    clip: true
-                    TextEdit {
-                        id: editNoteField
-                        width: parent.width
-                        color: Theme.textPrimary; font.pixelSize: 13; wrapMode: TextEdit.Wrap
-                    }
-                }
+            FTTextArea {
+                id: editNoteField
+                width: parent.width
+                minHeight: 80
+                maxHeight: 130
+                singleLineSubmit: false
+                placeholderText: Strings.summaryNotePlaceholder
             }
         }
 

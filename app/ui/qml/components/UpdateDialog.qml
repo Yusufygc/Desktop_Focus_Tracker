@@ -184,7 +184,7 @@ Popup {
             Text {
                 text: "%" + (updateBridge ? updateBridge.downloadProgress : 0)
                 color: Theme.textDimmed
-                font.pixelSize: 11
+                font.pixelSize: 12
                 Layout.alignment: Qt.AlignRight
             }
         }

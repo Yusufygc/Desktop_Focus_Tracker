@@ -3,9 +3,12 @@ SessionBridge — Seans yaşam döngüsü (start, finish, distraction, timer) i�
 CRUD işlemleri (kategori, konu, timer preset) ayrı bridge'lere delegated.
 """
 
-from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer
+import os
+
+from PySide6.QtCore import QObject, Property, Signal, Slot, QTimer, QSettings
 from PySide6.QtQml import QmlElement
 
+from config import BASE_DIR
 from app.services.session_service import SessionService
 from app.services.distraction_service import DistractionService
 from app.services.analytics_service import AnalyticsService
@@ -14,6 +17,12 @@ from app.core.strings import Errors
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
+
+_DEFAULT_SETTINGS_PATH = os.path.join(BASE_DIR, "settings.ini")
+_PLANNED_MINUTES_KEY = "timer/plannedMinutes"
+_POMODORO_FOCUS_KEY = "pomodoro/focusMinutes"
+_POMODORO_SHORT_KEY = "pomodoro/shortBreakMinutes"
+_POMODORO_LONG_KEY = "pomodoro/longBreakMinutes"
 
 
 @QmlElement
@@ -27,29 +36,105 @@ class SessionBridge(QObject):
     errorOccurred    = Signal(str)
     pomodoroStateChanged = Signal(str)
     pomodoroBreakEnded   = Signal()
+    plannedMinutesChanged  = Signal()
+    pomodoroSettingsChanged = Signal()
+    targetCompleted        = Signal()
     isActiveChanged      = Signal()
     isPausedChanged      = Signal()
 
-    def __init__(self, session_svc: SessionService, distraction_svc: DistractionService, parent=None):
+    def __init__(
+        self,
+        session_svc: SessionService,
+        distraction_svc: DistractionService,
+        settings_path: str | None = None,
+        parent=None,
+    ):
         super().__init__(parent)
         self._session_svc     = session_svc
         self._distraction_svc = distraction_svc
         self._analytics       = AnalyticsService()
         self._elapsed         = 0
 
+        self._settings = QSettings(settings_path or _DEFAULT_SETTINGS_PATH, QSettings.Format.IniFormat)
+        self._planned_minutes = max(0, min(180, self._settings.value(_PLANNED_MINUTES_KEY, 25, type=int)))
+        self._focus_minutes = max(1, min(180, self._settings.value(_POMODORO_FOCUS_KEY, 25, type=int)))
+        self._short_break_minutes = max(1, min(60, self._settings.value(_POMODORO_SHORT_KEY, 5, type=int)))
+        self._long_break_minutes = max(1, min(90, self._settings.value(_POMODORO_LONG_KEY, 15, type=int)))
+
         self._is_pomodoro_mode = False
         self._pomodoro_state = "IDLE"  # IDLE, FOCUS, SHORT_BREAK, LONG_BREAK
         self._pomodoro_cycles = 0
         self._pomodoro_break_elapsed = 0
-        
-        # Test için kolaylık (production: 25*60, 5*60, 15*60)
-        self._focus_duration = 25 * 60
-        self._short_break = 5 * 60
-        self._long_break = 15 * 60
+
+        self._focus_duration = self._focus_minutes * 60
+        self._short_break = self._short_break_minutes * 60
+        self._long_break = self._long_break_minutes * 60
 
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
         logger.debug("SessionBridge başlatıldı (seans + timer + distraction).")
+
+    @Property(int, notify=plannedMinutesChanged)
+    def plannedMinutes(self) -> int:
+        return self._planned_minutes
+
+    @Slot(int)
+    def setPlannedMinutes(self, minutes: int):
+        clamped = max(0, min(180, int(minutes)))
+        if clamped == self._planned_minutes:
+            return
+        self._planned_minutes = clamped
+        self._settings.setValue(_PLANNED_MINUTES_KEY, clamped)
+        self._settings.sync()
+        self.plannedMinutesChanged.emit()
+
+    @Property(int, notify=pomodoroSettingsChanged)
+    def pomodoroFocusMinutes(self) -> int:
+        return self._focus_minutes
+
+    @Slot(int)
+    def setPomodoroFocusMinutes(self, minutes: int):
+        clamped = max(1, min(180, int(minutes)))
+        if clamped == self._focus_minutes:
+            return
+        self._focus_minutes = clamped
+        self._focus_duration = clamped * 60
+        self._settings.setValue(_POMODORO_FOCUS_KEY, clamped)
+        self._settings.sync()
+        self.pomodoroSettingsChanged.emit()
+        self.pomodoroStateChanged.emit(self._pomodoro_state)
+
+    @Property(int, notify=pomodoroSettingsChanged)
+    def pomodoroShortBreakMinutes(self) -> int:
+        return self._short_break_minutes
+
+    @Slot(int)
+    def setPomodoroShortBreakMinutes(self, minutes: int):
+        clamped = max(1, min(60, int(minutes)))
+        if clamped == self._short_break_minutes:
+            return
+        self._short_break_minutes = clamped
+        self._short_break = clamped * 60
+        self._settings.setValue(_POMODORO_SHORT_KEY, clamped)
+        self._settings.sync()
+        self.pomodoroSettingsChanged.emit()
+        self.pomodoroStateChanged.emit(self._pomodoro_state)
+
+    @Property(int, notify=pomodoroSettingsChanged)
+    def pomodoroLongBreakMinutes(self) -> int:
+        return self._long_break_minutes
+
+    @Slot(int)
+    def setPomodoroLongBreakMinutes(self, minutes: int):
+        clamped = max(1, min(90, int(minutes)))
+        if clamped == self._long_break_minutes:
+            return
+        self._long_break_minutes = clamped
+        self._long_break = clamped * 60
+        self._settings.setValue(_POMODORO_LONG_KEY, clamped)
+        self._settings.sync()
+        self.pomodoroSettingsChanged.emit()
+        self.pomodoroStateChanged.emit(self._pomodoro_state)
 
     @Property(bool, notify=pomodoroStateChanged)
     def isPomodoroMode(self):
@@ -63,7 +148,7 @@ class SessionBridge(QObject):
     @Property(str, notify=pomodoroStateChanged)
     def pomodoroState(self):
         return self._pomodoro_state
-        
+
     @Property(int, notify=pomodoroStateChanged)
     def pomodoroCycles(self):
         return self._pomodoro_cycles
@@ -71,12 +156,17 @@ class SessionBridge(QObject):
     @Property(int, notify=pomodoroStateChanged)
     def pomodoroBreakElapsed(self):
         return self._pomodoro_break_elapsed
-        
+
     @Property(int, notify=pomodoroStateChanged)
     def pomodoroTarget(self):
-        if self._pomodoro_state == "FOCUS": return self._focus_duration
-        if self._pomodoro_state == "SHORT_BREAK": return self._short_break
-        if self._pomodoro_state == "LONG_BREAK": return self._long_break
+        if self._pomodoro_state == "FOCUS":
+            return self._focus_duration
+        if self._pomodoro_state == "SHORT_BREAK":
+            return self._short_break
+        if self._pomodoro_state == "LONG_BREAK":
+            return self._long_break
+        if self._is_pomodoro_mode:
+            return self._focus_duration
         return 0
 
     @Property(int, notify=timerTick)
@@ -204,7 +294,14 @@ class SessionBridge(QObject):
         h, rem = divmod(self._elapsed, 3600)
         m, s   = divmod(rem, 60)
         self.timerTick.emit(f"{h:02d}:{m:02d}:{s:02d}")
-        
+
+        # Forest geri sayım hedef tamamlama kontrolü
+        if not self._is_pomodoro_mode and self._planned_minutes > 0:
+            if self._elapsed == self._planned_minutes * 60:
+                self.pauseSession()
+                self.targetCompleted.emit()
+                return
+
         # Pomodoro odak döngüsü kontrolü
         if self._is_pomodoro_mode and self._pomodoro_state == "FOCUS":
             # self._elapsed sürekli artar, her self._focus_duration geçişinde bir döngü biter

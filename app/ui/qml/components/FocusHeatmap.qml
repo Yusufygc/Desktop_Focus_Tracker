@@ -30,6 +30,56 @@ Item {
     implicitWidth: naturalWidth
     implicitHeight: 7 * (effCellSize + effCellGap)
 
+    property int focusedIndex: -1
+    activeFocusOnTab: root.chartData.length > 0
+    Accessible.role: Accessible.Chart
+    Accessible.name: Strings.focusStatsHeatmapTitle
+
+    function _showTipForIndex(idx) {
+        if (idx < 0 || idx >= root.chartData.length) {
+            tip.visible = false
+            return
+        }
+        var entry = root.chartData[idx]
+        var step = root.effCellSize + root.effCellGap
+        var col = Math.floor(idx / 7)
+        var row = idx % 7
+        var cx = root.xOffset + col * step
+        var cy = row * step
+        tip.text = Strings.focusStatsHeatmapTooltipTemplate
+            .replace("{date}", entry.date)
+            .replace("{duration}", root.formatDuration(entry.seconds))
+        tip.visible = true
+        tip.x = Math.max(0, Math.min(cx + 8, root.width - tip.width))
+        tip.y = Math.max(cy - 28, 0)
+    }
+
+    function _moveFocus(delta) {
+        if (root.chartData.length === 0) return
+        var base = root.focusedIndex >= 0 ? root.focusedIndex : root.chartData.length - 1
+        var next = Math.max(0, Math.min(root.chartData.length - 1, base + delta))
+        root.focusedIndex = next
+        _showTipForIndex(next)
+        canvas.requestPaint()
+    }
+
+    onActiveFocusChanged: {
+        if (activeFocus && root.chartData.length > 0) {
+            if (root.focusedIndex < 0 || root.focusedIndex >= root.chartData.length) {
+                root.focusedIndex = root.chartData.length - 1
+            }
+            _showTipForIndex(root.focusedIndex)
+        } else {
+            tip.visible = false
+        }
+        canvas.requestPaint()
+    }
+
+    Keys.onLeftPressed: _moveFocus(-7)
+    Keys.onRightPressed: _moveFocus(7)
+    Keys.onUpPressed: _moveFocus(-1)
+    Keys.onDownPressed: _moveFocus(1)
+
     property real progress: 0
     NumberAnimation {
         id: fadeAnim
@@ -77,6 +127,17 @@ Item {
                 else ctx.rect(root.xOffset + col * step, row * step, root.effCellSize, root.effCellSize)
                 ctx.fill()
             }
+            if (root.activeFocus && root.focusedIndex >= 0 && root.focusedIndex < root.chartData.length) {
+                var fCol = Math.floor(root.focusedIndex / 7)
+                var fRow = root.focusedIndex % 7
+                ctx.globalAlpha = 1.0
+                ctx.strokeStyle = Theme.accent
+                ctx.lineWidth = 2
+                ctx.beginPath()
+                if (ctx.roundRect) ctx.roundRect(root.xOffset + fCol * step, fRow * step, root.effCellSize, root.effCellSize, 2)
+                else ctx.rect(root.xOffset + fCol * step, fRow * step, root.effCellSize, root.effCellSize)
+                ctx.stroke()
+            }
         }
     }
 
@@ -94,13 +155,16 @@ Item {
                     .replace("{date}", entry.date)
                     .replace("{duration}", root.formatDuration(entry.seconds))
                 tip.visible = true
-                tip.x = Math.min(mouse.x + 8, root.width - tip.width)
+                tip.x = Math.max(0, Math.min(mouse.x + 8, root.width - tip.width))
                 tip.y = Math.max(mouse.y - 28, 0)
-            } else {
+            } else if (!root.activeFocus) {
                 tip.visible = false
             }
         }
-        onExited: tip.visible = false
+        onExited: {
+            if (root.activeFocus && root.focusedIndex >= 0) root._showTipForIndex(root.focusedIndex)
+            else tip.visible = false
+        }
     }
 
     Rectangle {
@@ -118,7 +182,7 @@ Item {
             id: tipText
             anchors.centerIn: parent
             color: Theme.textPrimary
-            font.pixelSize: 11
+            font.pixelSize: 12
         }
     }
 

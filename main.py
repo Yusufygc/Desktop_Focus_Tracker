@@ -77,22 +77,20 @@ def main():
         sys.exit(1)
 
     root_window = engine.rootObjects()[0]
-    # Çoklu monitör / sanal monitör (VDD) geometrisi taşmalarına karşı pencereyi
-    # her zaman birincil ekranda (LG vb.) güvenli varsayılan boyutla (1180x720) ortala
+    # Çoklu monitör / sanal monitör (VDD) veya pencere başlık çubuğu taşmalarına karşı
+    # pencereyi her zaman birincil ekranın kullanılabilir alanına sığdırıp ortala
     primary = app.primaryScreen()
     if primary and hasattr(root_window, "setScreen"):
         avail = primary.availableGeometry()
-        def_w, def_h = 1180, 720
-        curr_w = root_window.width()
-        curr_h = root_window.height()
-        if curr_w > avail.width() or curr_h > avail.height() or root_window.y() < avail.y():
-            root_window.setScreen(primary)
-            root_window.setWidth(def_w)
-            root_window.setHeight(def_h)
-            x = avail.x() + max(0, (avail.width() - def_w) // 2)
-            y = avail.y() + max(0, (avail.height() - def_h) // 2)
-            root_window.setX(x)
-            root_window.setY(y)
+        root_window.setScreen(primary)
+        def_w = min(root_window.width(), max(840, avail.width() - 24))
+        def_h = min(root_window.height(), max(560, avail.height() - 48))
+        root_window.setWidth(def_w)
+        root_window.setHeight(def_h)
+        new_x = avail.x() + max(0, (avail.width() - def_w) // 2)
+        new_y = avail.y() + max(24, (avail.height() - def_h) // 2)
+        root_window.setX(new_x)
+        root_window.setY(new_y)
 
     # Güncelleme kurulumu başlatıldığında uygulamayı kapat
     container.update_bridge.quitRequested.connect(app.quit)

@@ -1,39 +1,39 @@
 import QtQuick
 import QtQuick3D
 
-// Yüzen ada kaidesi — prosedürel low-poly mesh (tools/build_island_assets.py).
-// Subset sırası: grass, dirt, rock
+// Yüzen ada kaidesi — optimize edilmiş Tripo 3D model + balsam (.mesh + doku).
 Node {
     id: root
 
     property string biome: "default"
 
-    readonly property color grassColor: {
-        if (root.biome === "autumn") return "#b7791f"
-        if (root.biome === "winter") return "#e8eef5"
-        if (root.biome === "night")  return "#2f5d3a"
-        return "#5fa04e"
+    readonly property color biomeTint: {
+        if (root.biome === "autumn") return "#f6d5a8"
+        if (root.biome === "winter") return "#dbeafe"
+        if (root.biome === "night")  return "#7c8ea6"
+        return "#ffffff"
     }
-    readonly property color dirtColor: {
-        if (root.biome === "winter") return "#7b6a58"
-        if (root.biome === "night")  return "#3b2f2a"
-        return "#7a5536"
-    }
-    readonly property color rockColor: {
-        if (root.biome === "autumn") return "#6b5a4e"
-        if (root.biome === "winter") return "#8a94a3"
-        if (root.biome === "night")  return "#2a2f3a"
-        return "#6f6a64"
+
+    Texture {
+        id: islandTexture
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+        source: "imported/island/maps/textureData.jpg"
     }
 
     Model {
-        source: "meshes/island_base.mesh"
+        source: "imported/island/meshes/tripo_mesh_49c66679_ed96_4cd9_a2c1_ab3ec4e7364f_mesh.mesh"
+        position: Qt.vector3d(0, -1.95, 0)
+        scale: Qt.vector3d(11.0, 4.2, 11.0)
         receivesShadows: true
         castsShadows: true
         materials: [
-            PrincipledMaterial { baseColor: root.grassColor; roughness: 0.95 },
-            PrincipledMaterial { baseColor: root.dirtColor;  roughness: 1.0 },
-            PrincipledMaterial { baseColor: root.rockColor;  roughness: 0.9 }
+            PrincipledMaterial {
+                baseColorMap: islandTexture
+                baseColor: root.biomeTint
+                roughness: 0.9
+                alphaMode: PrincipledMaterial.Opaque
+            }
         ]
     }
 

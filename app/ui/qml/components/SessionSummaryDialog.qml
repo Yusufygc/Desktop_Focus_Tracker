@@ -82,24 +82,14 @@ FTDialog {
 
         Text { text: Strings.summaryNoteLabel; color: Theme.textMuted; font.pixelSize: 12; bottomPadding: 8; topPadding: 16 }
 
-        Rectangle {
-            width: parent.width; height: 72; radius: 8; color: Theme.surface3
-            border.color: summaryNote.activeFocus ? Theme.success : Theme.border; border.width: 1
-            clip: true
-            ScrollView {
-                anchors { fill: parent; margins: 12 }
-                clip: true
-                TextEdit {
-                    id: summaryNote
-                    width: parent.width
-                    color: Theme.textPrimary; font.pixelSize: 13; wrapMode: TextEdit.Wrap
-                }
-            }
-            Text {
-                anchors { left: parent.left; top: parent.top; margins: 12 }
-                text: Strings.summaryNotePlaceholder; color: Theme.textSubtle; font.pixelSize: 13
-                visible: summaryNote.text === ""
-            }
+        FTTextArea {
+            id: summaryNote
+            width: parent.width
+            minHeight: 72
+            maxHeight: 120
+            singleLineSubmit: false
+            activeBorderColor: Theme.success
+            placeholderText: Strings.summaryNotePlaceholder
         }
 
         Item { height: 16; width: 1 }

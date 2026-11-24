@@ -17,7 +17,7 @@ Item {
     property real pitch: -32.0
     property real zoomLevel: 13.5
 
-    implicitHeight: 280
+    implicitHeight: 440
     clip: true
 
     // ── GÖKYÜZÜ / ATMOSFER ARKA PLANI ──────────────────────────────────

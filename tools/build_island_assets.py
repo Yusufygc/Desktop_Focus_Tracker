@@ -35,6 +35,7 @@ import zlib
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GLB_DIR = os.path.join(ROOT, "assets", "island3d")
 MESH_DIR = os.path.join(ROOT, "app", "ui", "qml", "components", "island3d", "meshes")
+MAPS_DIR = os.path.join(ROOT, "app", "ui", "qml", "components", "island3d", "maps")
 
 # ── vektör yardımcıları ────────────────────────────────────────────
 
@@ -355,51 +356,70 @@ def pine_tree(mb, rng):
 
 @model("oak_tree", ["bark", "leaf"])
 def oak_tree(mb, rng):
-    t, c = frustum(0.12, 0.08, 0.75, 7, jitter=0.1, rng=rng)
+    t, c = frustum(0.13, 0.085, 0.78, 8, jitter=0.1, rng=rng)
     mb.solid("bark", t, c)
-    # Kök çıkıntıları
-    for i in range(4):
-        a = i * math.pi / 2 + 0.3
-        b = (math.cos(a) * 0.08, 0.0, math.sin(a) * 0.08)
-        t, c = frustum(0.06, 0.0, 0.22, 4, base=b, top_offset=(-math.cos(a) * 0.06, -math.sin(a) * 0.06))
+    # Kök çıkıntıları (5 kök)
+    for i in range(5):
+        a = i * (2 * math.pi / 5) + 0.25
+        b = (math.cos(a) * 0.09, 0.0, math.sin(a) * 0.09)
+        t, c = frustum(0.065, 0.0, 0.24, 5, base=b, top_offset=(-math.cos(a) * 0.07, -math.sin(a) * 0.07))
         mb.solid("bark", t, c)
-    # Dallar
-    for ang, tilt in ((0.4, 0.35), (2.6, 0.4), (4.4, 0.3)):
+    # 5 ana dal
+    for ang, tilt, by in ((0.4, 0.38, 0.60), (1.7, 0.34, 0.64), (2.8, 0.42, 0.58), (4.2, 0.36, 0.62), (5.3, 0.32, 0.66)):
         dx, dz = math.cos(ang) * tilt, math.sin(ang) * tilt
-        t, c = frustum(0.05, 0.03, 0.4, 5, base=(0, 0.6, 0), top_offset=(dx, dz))
+        t, c = frustum(0.052, 0.028, 0.42, 6, base=(0, by, 0), top_offset=(dx, dz))
         mb.solid("bark", t, c)
-    # Taç: farklı boyutlarda bozulmuş küreler
-    blobs = [((0, 1.18, 0), 0.5), ((0.32, 1.02, 0.12), 0.36), ((-0.3, 1.05, -0.15), 0.37),
-             ((0.05, 1.0, -0.33), 0.33), ((-0.1, 1.02, 0.32), 0.32), ((0.1, 1.45, 0.05), 0.3)]
+    # Gür çok katmanlı taç (10 organik küre kümesi)
+    blobs = [
+        ((0.0, 1.24, 0.0), 0.50),
+        ((0.34, 1.06, 0.14), 0.37),
+        ((-0.34, 1.08, -0.15), 0.38),
+        ((0.06, 1.02, -0.35), 0.35),
+        ((-0.12, 1.04, 0.34), 0.34),
+        ((0.26, 1.28, -0.24), 0.31),
+        ((-0.26, 1.26, 0.22), 0.30),
+        ((0.08, 1.50, 0.04), 0.32),
+        ((-0.14, 1.44, -0.08), 0.26),
+        ((0.30, 0.96, -0.18), 0.25),
+    ]
     for cen, r in blobs:
-        t, c = icosphere(cen, r, 1, 0.14, rng, squash=0.88)
+        t, c = icosphere(cen, r, 1, 0.14, rng, squash=0.86)
         mb.solid("leaf", t, c)
 
 
 @model("stump", ["bark", "wood", "leaf"])
 def stump(mb, rng):
-    t, c = frustum(0.2, 0.16, 0.26, 9, jitter=0.08, rng=rng, caps=(True, False))
+    t, c = frustum(0.22, 0.165, 0.27, 10, jitter=0.09, rng=rng, caps=(True, False))
     mb.solid("bark", t, c)
-    t, c = frustum(0.155, 0.155, 0.01, 9, base=(0, 0.255, 0), caps=(False, True))
+    t, c = frustum(0.16, 0.16, 0.012, 10, base=(0, 0.262, 0), caps=(False, True))
     mb.solid("wood", t, c)
-    t, c = frustum(0.09, 0.09, 0.012, 9, base=(0, 0.262, 0), caps=(False, True))
+    # İç içe büyüme halkaları
+    t, c = frustum(0.11, 0.11, 0.014, 10, base=(0, 0.265, 0), caps=(False, True))
     mb.solid("bark", t, c)
-    for i in range(4):
-        a = i * math.pi / 2 + 0.6
-        b = (math.cos(a) * 0.15, 0.0, math.sin(a) * 0.15)
-        t, c = frustum(0.07, 0.0, 0.14, 4, base=b, top_offset=(-math.cos(a) * 0.08, -math.sin(a) * 0.08))
+    t, c = frustum(0.055, 0.055, 0.016, 10, base=(0, 0.267, 0), caps=(False, True))
+    mb.solid("wood", t, c)
+    for i in range(5):
+        a = i * (2 * math.pi / 5) + 0.4
+        b = (math.cos(a) * 0.165, 0.0, math.sin(a) * 0.165)
+        t, c = frustum(0.075, 0.0, 0.16, 5, base=b, top_offset=(-math.cos(a) * 0.09, -math.sin(a) * 0.09))
         mb.solid("bark", t, c)
-    # Filiz
-    t, c = frustum(0.008, 0.006, 0.16, 4, base=(0.08, 0.26, 0.03))
-    mb.solid("wood", t, c)
-    for k in range(3):
-        t, c = icosphere((0.08 + 0.03 * math.cos(k * 2.1), 0.42, 0.03 + 0.03 * math.sin(k * 2.1)), 0.04, 0, 0.1, rng)
-        mb.solid("leaf", t, c)
+    # 2 küçük taze filiz
+    for bx, bz, h in ((0.09, 0.04, 0.18), (-0.06, -0.05, 0.13)):
+        t, c = frustum(0.009, 0.006, h, 4, base=(bx, 0.268, bz))
+        mb.solid("wood", t, c)
+        for k in range(3):
+            lx = bx + 0.032 * math.cos(k * 2.1)
+            lz = bz + 0.032 * math.sin(k * 2.1)
+            t, c = icosphere((lx, 0.268 + h, lz), 0.042, 0, 0.12, rng)
+            mb.solid("leaf", t, c)
 
 
 def _house(mb, rng, cx, cz, w, d, ground_h, upper_h, roof_h, rot=0.0, roof_slot="roof", timber=True):
-    """Taş zemin kat + sıvalı üst kat + ahşap karkas + beşik çatı + baca."""
+    """Taş kaide + zemin kat + sıvalı üst kat + ahşap karkas + beşik çatı + pervazlı pencere."""
     tmp = MeshBuilder(mb.slots)
+    plinth_h = min(0.11, ground_h * 0.22)
+    t, c = box(0, 0, 0, w * 1.04, plinth_h, d * 1.04)
+    tmp.solid("stone", t, c)
     t, c = box(0, 0, 0, w, ground_h, d)
     tmp.solid("stone", t, c)
     t, c = box(0, ground_h, 0, w * 1.04, upper_h, d * 1.04)
@@ -414,116 +434,188 @@ def _house(mb, rng, cx, cz, w, d, ground_h, upper_h, roof_h, rot=0.0, roof_slot=
             tmp.solid("wood", t, c)
             t, c = box(0, ground_h + upper_h - 0.04, zz, w * 1.06, 0.05, 0.03)
             tmp.solid("wood", t, c)
+        for sx in (-1, 1):
+            t, c = box(sx * w * 0.525, ground_h - 0.02, 0, 0.03, 0.05, d * 1.06)
+            tmp.solid("wood", t, c)
     top = ground_h + upper_h
     t, c = gable_roof(0, top - 0.02, 0, w * 1.18, d * 1.25, roof_h, along_x=True)
     tmp.solid(roof_slot, t, c)
-    # Baca
-    t, c = box(w * 0.28, top + roof_h * 0.2, d * 0.15, 0.14, roof_h * 0.95, 0.14)
+    # Çatı mahya kirişi ve kalkan kenar kirişleri
+    t, c = box(0, top + roof_h - 0.04, 0, w * 1.20, 0.045, 0.05)
+    tmp.solid("wood", t, c)
+    # Şapkalı taş baca
+    ch_x, ch_y, ch_z = w * 0.28, top + roof_h * 0.2, d * 0.15
+    ch_h = roof_h * 0.95
+    t, c = box(ch_x, ch_y, ch_z, 0.14, ch_h, 0.14)
     tmp.solid("stone", t, c)
-    # Kapı ve pencereler (ön yüz +z)
+    t, c = box(ch_x, ch_y + ch_h, ch_z, 0.19, 0.04, 0.19)
+    tmp.solid("stone", t, c)
+    # Kapı, eşik taşı ve çerçeve (+z)
+    t, c = box(-w * 0.18, 0, d / 2 + 0.07, 0.28, 0.04, 0.14)
+    tmp.solid("stone", t, c)
     t, c = box(-w * 0.18, 0, d / 2 + 0.01, 0.2, ground_h * 0.8, 0.03)
     tmp.solid("wood", t, c)
+    # Çerçeveli, denizlikli ve çıtalı pencereler (+z)
     for wx in (w * 0.2, -w * 0.25, w * 0.25):
         y = ground_h * 0.35 if wx == w * 0.2 else ground_h + upper_h * 0.3
-        t, c = box(wx, y - 0.02, d / 2 + 0.03, 0.2, 0.24, 0.02)
+        t, c = box(wx, y - 0.02, d / 2 + 0.03, 0.21, 0.24, 0.025)
         tmp.solid("wood", t, c)
-        t, c = box(wx, y, d / 2 + 0.04, 0.15, 0.19, 0.02)
+        t, c = box(wx, y - 0.045, d / 2 + 0.045, 0.24, 0.03, 0.05)
+        tmp.solid("stone", t, c)
+        t, c = box(wx, y, d / 2 + 0.042, 0.15, 0.19, 0.02)
         tmp.solid("glass", t, c)
-    # Yan pencereler
+        # Haç pencere çıtaları
+        t, c = box(wx, y, d / 2 + 0.054, 0.02, 0.19, 0.012)
+        tmp.solid("wood", t, c)
+        t, c = box(wx, y + 0.085, d / 2 + 0.054, 0.15, 0.02, 0.012)
+        tmp.solid("wood", t, c)
+    # Yan pencereler (pervazlı)
     for sx in (-1, 1):
-        t, c = box(sx * (w / 2 + 0.04), ground_h + upper_h * 0.3, 0, 0.02, 0.19, 0.15)
+        t, c = box(sx * (w / 2 + 0.03), ground_h + upper_h * 0.3 - 0.02, 0, 0.025, 0.23, 0.20)
+        tmp.solid("wood", t, c)
+        t, c = box(sx * (w / 2 + 0.042), ground_h + upper_h * 0.3, 0, 0.02, 0.18, 0.15)
         tmp.solid("glass", t, c)
     mb.merge(tmp, lambda p: add(rot_y(p, rot), (cx, 0, cz)))
 
 
 @model("hut", ["log", "roof", "stone", "wood"])
 def hut(mb, rng):
-    w, d, h = 1.0, 0.8, 0.55
-    t, c = box(0, 0, 0, w, 0.08, d)
+    w, d, h = 1.04, 0.84, 0.58
+    t, c = box(0, 0, 0, w * 1.06, 0.10, d * 1.06)
     mb.solid("stone", t, c)
-    # Yatay kütük duvarlar (köşelerden taşan)
-    n = 6
+    # Ön taş eşik basamağı
+    t, c = box(-0.12, 0, d / 2 + 0.11, 0.34, 0.05, 0.18)
+    mb.solid("stone", t, c)
+    # 8 sıralı kütük duvarlar (köşelerden taşan)
+    n = 8
     for i in range(n):
-        y = 0.08 + i * (h / n)
+        y = 0.09 + i * (h / n)
         r = h / n / 2
         for zz in (-d / 2, d / 2):
-            t, c = frustum(r, r, w + 0.16, 6, base=(0, 0, 0))
-            t = [tuple(add(rot_z(p, -math.pi / 2), (-(w + 0.16) / 2, y + r, zz)) for p in tr) for tr in t]
+            t, c = frustum(r, r, w + 0.18, 7, base=(0, 0, 0))
+            t = [tuple(add(rot_z(p, -math.pi / 2), (-(w + 0.18) / 2, y + r, zz)) for p in tr) for tr in t]
             mb.solid("log", t, (0, y + r, zz))
         for xx in (-w / 2, w / 2):
-            t, c = frustum(r, r, d + 0.16, 6, base=(0, 0, 0))
-            t = [tuple(add(rot_x(p, math.pi / 2), (xx, y + r, -(d + 0.16) / 2)) for p in tr) for tr in t]
+            t, c = frustum(r, r, d + 0.18, 7, base=(0, 0, 0))
+            t = [tuple(add(rot_x(p, math.pi / 2), (xx, y + r, -(d + 0.18) / 2)) for p in tr) for tr in t]
             mb.solid("log", t, (xx, y + r, 0))
-    t, c = box(0, 0.08, 0, w - 0.04, h, d - 0.04)
+    t, c = box(0, 0.09, 0, w - 0.04, h, d - 0.04)
     mb.solid("log", t, c)
-    t, c = gable_roof(0, 0.08 + h, 0, w * 1.35, d * 1.45, 0.5)
+    # Çatı + mahya kütüğü
+    t, c = gable_roof(0, 0.09 + h, 0, w * 1.38, d * 1.48, 0.52)
     mb.solid("roof", t, c)
-    t, c = box(0.28, 0.5, -0.12, 0.14, 0.55, 0.14)
-    mb.solid("stone", t, c)
-    t, c = box(-0.12, 0.08, d / 2 + 0.06, 0.22, 0.4, 0.03)
+    t, c = box(0, 0.09 + h + 0.50, 0, w * 1.44, 0.05, 0.06)
     mb.solid("wood", t, c)
-    # Odun yığını
-    for i in range(3):
-        for j in range(3 - i):
-            t, c = frustum(0.035, 0.035, 0.3, 6)
-            t = [tuple(add(rot_x(p, math.pi / 2), (0.62 + j * 0.075 + i * 0.037, 0.035 + i * 0.065, -0.15)) for p in tr)
-                 for tr in t]
-            mb.solid("wood", t, (0.62 + j * 0.075 + i * 0.037, 0.035 + i * 0.065, 0))
+    # Şapkalı baca
+    t, c = box(0.30, 0.52, -0.14, 0.15, 0.62, 0.15)
+    mb.solid("stone", t, c)
+    t, c = box(0.30, 1.14, -0.14, 0.21, 0.04, 0.21)
+    mb.solid("stone", t, c)
+    # Kapı kasası ve kapı
+    t, c = box(-0.12, 0.09, d / 2 + 0.05, 0.28, 0.44, 0.03)
+    mb.solid("log", t, c)
+    t, c = box(-0.12, 0.09, d / 2 + 0.065, 0.21, 0.40, 0.025)
+    mb.solid("wood", t, c)
+    # Yan küçük ahşap pencere kepengi/çerçevesi
+    t, c = box(0.26, 0.26, d / 2 + 0.06, 0.16, 0.16, 0.03)
+    mb.solid("wood", t, c)
+    # Daha dolgun 4 sıralı odun yığını
+    for i in range(4):
+        for j in range(4 - i):
+            t, c = frustum(0.032, 0.032, 0.32, 6)
+            lx = 0.64 + j * 0.068 + i * 0.034
+            ly = 0.032 + i * 0.058
+            t = [tuple(add(rot_x(p, math.pi / 2), (lx, ly, -0.16)) for p in tr) for tr in t]
+            mb.solid("wood", t, (lx, ly, 0))
 
 
 @model("house", ["stone", "plaster", "roof", "wood", "glass"])
 def house(mb, rng):
     _house(mb, rng, 0, 0, 1.4, 1.05, 0.55, 0.5, 0.6)
-    # Çit ve bahçe
-    for i in range(7):
-        x = -0.9 + i * 0.3
-        t, c = box(x, 0, 0.95, 0.04, 0.22, 0.04)
+    # Ön veranda sundurması ve dikme direkleri (+z)
+    t, c = box(-0.25, 0.56, 0.72, 0.52, 0.06, 0.42)
+    mb.solid("roof", t, c)
+    for px in (-0.46, -0.04):
+        t, c = box(px, 0.0, 0.88, 0.05, 0.56, 0.05)
         mb.solid("wood", t, c)
-    t, c = box(0, 0.12, 0.95, 1.85, 0.03, 0.02)
+    # Çit ve bahçe giriş boşluğu
+    for i in range(7):
+        if i == 2:
+            continue
+        x = -0.9 + i * 0.3
+        t, c = box(x, 0, 1.02, 0.045, 0.24, 0.045)
+        mb.solid("wood", t, c)
+    t, c = box(-0.75, 0.14, 1.02, 0.36, 0.03, 0.025)
+    mb.solid("wood", t, c)
+    t, c = box(0.45, 0.14, 1.02, 0.96, 0.03, 0.025)
+    mb.solid("wood", t, c)
+    # Taş bahçe yürüme yolu
+    for sz in (0.76, 0.96, 1.16):
+        t, c = box(-0.26, 0.0, sz, 0.26, 0.025, 0.13)
+        mb.solid("stone", t, c)
+    # Pencere altı ahşap çiçeklik kutusu
+    t, c = box(0.30, 0.14, 0.58, 0.30, 0.09, 0.10)
     mb.solid("wood", t, c)
 
 
 @model("farm", ["barn", "roof", "wood", "stone", "plaster", "trim", "hay"])
 def farm(mb, rng):
-    # Ahır
-    t, c = box(-0.75, 0, 0, 1.2, 0.85, 0.95)
+    # Ahır + taş kaide
+    t, c = box(-0.75, 0, 0, 1.24, 0.10, 0.99)
+    mb.solid("stone", t, c)
+    t, c = box(-0.75, 0, 0, 1.2, 0.88, 0.95)
     mb.solid("barn", t, c)
-    t, c = gable_roof(-0.75, 0.83, 0, 1.38, 1.15, 0.55, along_x=False)
+    t, c = gable_roof(-0.75, 0.86, 0, 1.40, 1.18, 0.58, along_x=False)
     mb.solid("roof", t, c)
+    # Çatı üstü samanlık yükleme penceresi (gable hayloft)
+    t, c = box(-0.75, 0.95, 0.50, 0.26, 0.24, 0.04)
+    mb.solid("trim", t, c)
+    t, c = box(-0.75, 0.97, 0.515, 0.20, 0.19, 0.03)
+    mb.solid("wood", t, c)
     # Ahır kapısı + beyaz çapraz çıtalar
-    t, c = box(-0.75, 0, 0.48, 0.5, 0.6, 0.03)
+    t, c = box(-0.75, 0, 0.485, 0.52, 0.62, 0.03)
     mb.solid("barn", t, c)
     for x0, x1 in ((-1.0, -0.5), (-0.5, -1.0)):
         ang = math.atan2(0.6, x1 - x0)
         t, c = box(0, 0, 0, 0.78, 0.05, 0.02)
-        t = [tuple(add(rot_z(p, ang if x1 > x0 else math.pi - ang), (-0.75, 0.3, 0.5)) for p in tr) for tr in t]
+        t = [tuple(add(rot_z(p, ang if x1 > x0 else math.pi - ang), (-0.75, 0.3, 0.505)) for p in tr) for tr in t]
         mb.solid("trim", t, (-0.75, 0.3, 0.0))
     for x in (-1.0, -0.5):
-        t, c = box(x, 0, 0.5, 0.04, 0.62, 0.02)
+        t, c = box(x, 0, 0.505, 0.04, 0.64, 0.02)
         mb.solid("trim", t, c)
-    t, c = box(-0.75, 0.6, 0.5, 0.54, 0.04, 0.02)
+    t, c = box(-0.75, 0.62, 0.505, 0.54, 0.04, 0.02)
     mb.solid("trim", t, c)
-    # Yel değirmeni gövdesi (kanatlar ayrı model: windmill_blades)
-    t, c = frustum(0.36, 0.24, 1.55, 10, base=(0.75, 0, -0.15))
-    mb.solid("plaster", t, c)
-    t, c = frustum(0.38, 0.38, 0.12, 10, base=(0.75, 0, -0.15))
+    # Ahır yan tahıl silosu
+    sx, sz = -1.52, -0.18
+    t, c = frustum(0.24, 0.24, 0.10, 12, base=(sx, 0, sz))
     mb.solid("stone", t, c)
-    t, c = frustum(0.3, 0.0, 0.42, 10, base=(0.75, 1.55, -0.15))
+    t, c = frustum(0.22, 0.22, 0.92, 12, base=(sx, 0.10, sz))
+    mb.solid("plaster", t, c)
+    t, c = frustum(0.25, 0.0, 0.26, 12, base=(sx, 1.02, sz))
     mb.solid("roof", t, c)
-    t, c = box(0.75, 0, 0.21, 0.18, 0.38, 0.03)
+    # Yel değirmeni gövdesi (ahşap kuşak bantlı)
+    t, c = frustum(0.36, 0.24, 1.55, 12, base=(0.75, 0, -0.15))
+    mb.solid("plaster", t, c)
+    t, c = frustum(0.39, 0.39, 0.14, 12, base=(0.75, 0, -0.15))
+    mb.solid("stone", t, c)
+    for by, br in ((0.55, 0.33), (1.05, 0.29)):
+        t, c = frustum(br, br, 0.05, 12, base=(0.75, by, -0.15))
+        mb.solid("wood", t, c)
+    t, c = frustum(0.31, 0.0, 0.44, 12, base=(0.75, 1.55, -0.15))
+    mb.solid("roof", t, c)
+    t, c = box(0.75, 0, 0.22, 0.19, 0.38, 0.03)
     mb.solid("wood", t, c)
-    # Saman balyaları
-    for i, (x, z) in enumerate(((0.1, 0.65), (0.4, 0.75), (0.25, 0.85))):
+    # Saman balyaları (4 adet, üst üste yığılı)
+    for x, y, z in ((0.08, 0.13, 0.65), (0.38, 0.13, 0.72), (0.24, 0.13, 0.88), (0.23, 0.35, 0.72)):
         t, c = frustum(0.13, 0.13, 0.22, 10)
-        y = 0.13 if i < 2 else 0.13
         t = [tuple(add(rot_x(p, math.pi / 2), (x, y, z - 0.11)) for p in tr) for tr in t]
         mb.solid("hay", t, (x, y, z))
     # Çit
-    for i in range(8):
-        x = -1.45 + i * 0.27
-        t, c = box(x, 0, -0.8, 0.04, 0.2, 0.04)
+    for i in range(9):
+        x = -1.55 + i * 0.27
+        t, c = box(x, 0, -0.82, 0.04, 0.22, 0.04)
         mb.solid("wood", t, c)
-    t, c = box(-0.5, 0.12, -0.8, 1.95, 0.03, 0.02)
+    t, c = box(-0.47, 0.14, -0.82, 2.20, 0.03, 0.02)
     mb.solid("wood", t, c)
 
 
@@ -545,22 +637,35 @@ def windmill_blades(mb, rng):
 
 @model("village", ["stone", "plaster", "roof", "roof2", "wood", "glass", "water"])
 def village(mb, rng):
-    # Meydan taşları
-    for i in range(14):
-        a = 2 * math.pi * i / 14
-        r = 0.55 + (i % 2) * 0.12
-        t, c = frustum(0.13, 0.13, 0.03, 6, base=(math.cos(a) * r, 0, math.sin(a) * r), phase=a)
-        mb.solid("stone", t, c)
-    # Kuyu / çeşme
-    t, c = frustum(0.32, 0.32, 0.26, 12)
+    # Çift sıralı Arnavut kaldırımlı meydan halkası
+    for r_base, count in ((0.54, 14), (0.78, 18)):
+        for i in range(count):
+            a = 2 * math.pi * i / count + (0.15 if r_base > 0.6 else 0.0)
+            r = r_base + (i % 2) * 0.06
+            t, c = frustum(0.11, 0.10, 0.03, 6, base=(math.cos(a) * r, 0, math.sin(a) * r), phase=a)
+            mb.solid("stone", t, c)
+    # Kuyu / çeşme + çıkrık kolu + asılı kova
+    t, c = frustum(0.34, 0.34, 0.28, 12)
     mb.solid("stone", t, c)
-    t, c = frustum(0.25, 0.25, 0.02, 12, base=(0, 0.22, 0))
+    t, c = frustum(0.26, 0.26, 0.02, 12, base=(0, 0.24, 0))
     mb.solid("water", t, c)
     for sx in (-1, 1):
-        t, c = box(sx * 0.27, 0.2, 0, 0.05, 0.5, 0.05)
+        t, c = box(sx * 0.28, 0.20, 0, 0.055, 0.54, 0.055)
         mb.solid("wood", t, c)
-    t, c = gable_roof(0, 0.68, 0, 0.75, 0.5, 0.22, along_x=True)
+    t, c = box(0, 0.54, 0, 0.56, 0.04, 0.04)
+    mb.solid("wood", t, c)
+    t, c = box(0, 0.38, 0, 0.09, 0.11, 0.09)
+    mb.solid("wood", t, c)
+    t, c = gable_roof(0, 0.72, 0, 0.78, 0.54, 0.24, along_x=True)
     mb.solid("roof", t, c)
+    # Küçük pazar tezgahı (sağ ön)
+    t, c = box(0.25, 0.0, 0.92, 0.55, 0.26, 0.30)
+    mb.solid("wood", t, c)
+    for px in (0.02, 0.48):
+        t, c = box(px, 0.26, 0.92, 0.035, 0.32, 0.035)
+        mb.solid("wood", t, c)
+    t, c = gable_roof(0.25, 0.56, 0.92, 0.64, 0.42, 0.16, along_x=True)
+    mb.solid("roof2", t, c)
     _house(mb, rng, -1.25, -0.55, 1.0, 0.8, 0.45, 0.42, 0.48, rot=0.35)
     _house(mb, rng, 1.25, -0.5, 1.0, 0.8, 0.45, 0.42, 0.48, rot=-0.4, roof_slot="roof2")
     _house(mb, rng, 0.1, -1.45, 1.1, 0.8, 0.5, 0.45, 0.5, rot=0.0)
@@ -568,39 +673,53 @@ def village(mb, rng):
 
 @model("town", ["stone", "plaster", "roof", "roof2", "wood", "glass", "gold"])
 def town(mb, rng):
-    # Belediye binası
-    t, c = box(0, 0, -0.55, 2.2, 0.35, 1.2)
+    # Belediye binası + ön revaklı giriş portiği ve merdivenler
+    t, c = box(0, 0, -0.55, 2.24, 0.38, 1.24)
     mb.solid("stone", t, c)
-    t, c = box(0, 0.35, -0.55, 2.2, 0.75, 1.2)
+    t, c = box(0, 0.38, -0.55, 2.2, 0.75, 1.2)
     mb.solid("plaster", t, c)
-    t, c = gable_roof(0, 1.08, -0.55, 2.4, 1.4, 0.6)
+    t, c = gable_roof(0, 1.11, -0.55, 2.42, 1.42, 0.62)
     mb.solid("roof", t, c)
     for i in range(6):
         x = -0.9 + i * 0.36
-        t, c = box(x, 0.5, 0.06, 0.16, 0.36, 0.02)
+        t, c = box(x, 0.50, 0.06, 0.16, 0.36, 0.02)
         mb.solid("glass", t, c)
-        t, c = box(x, 0.0, 0.08, 0.07, 0.35, 0.07)
+        t, c = box(x, 0.50, 0.072, 0.19, 0.03, 0.025)
+        mb.solid("wood", t, c)
+        t, c = box(x, 0.0, 0.08, 0.08, 0.38, 0.08)
         mb.solid("stone", t, c)
-    # Saat kulesi
-    t, c = box(0, 0, 0.35, 0.75, 2.6, 0.75)
+    # Saat kulesi (altın saat kadranları 4 yönde + akrep/yelkovan + kule alemi)
+    t, c = box(0, 0, 0.35, 0.78, 0.36, 0.78)
     mb.solid("stone", t, c)
-    t, c = box(0, 2.6, 0.35, 0.85, 0.1, 0.85)
+    t, c = box(0, 0.36, 0.35, 0.74, 2.24, 0.74)
+    mb.solid("stone", t, c)
+    t, c = box(0, 2.60, 0.35, 0.88, 0.11, 0.88)
     mb.solid("stone", t, c)
     for sx in (-1, 1):
         for sz in (-1, 1):
-            t, c = box(sx * 0.32, 2.7, 0.35 + sz * 0.32, 0.1, 0.5, 0.1)
+            t, c = box(sx * 0.33, 2.71, 0.35 + sz * 0.33, 0.11, 0.50, 0.11)
             mb.solid("stone", t, c)
-    t, c = box(0, 2.7, 0.35, 0.5, 0.05, 0.5)
+    t, c = box(0, 2.71, 0.35, 0.52, 0.06, 0.52)
     mb.solid("wood", t, c)
-    t, c = pyramid(0, 3.2, 0.35, 0.95, 0.95, 1.0)
+    t, c = pyramid(0, 3.21, 0.35, 0.96, 0.96, 1.02)
     mb.solid("roof2", t, c)
-    t, c = frustum(0.24, 0.24, 0.03, 16, base=(0, 0, 0))
-    t = [tuple(add(rot_x(p, math.pi / 2), (0, 2.1, 0.73)) for p in tr) for tr in t]
-    mb.solid("gold", t, (0, 2.1, 0.7))
-    t, c = frustum(0.2, 0.2, 0.03, 16, base=(0, 0, 0))
-    t = [tuple(add(rot_x(p, math.pi / 2), (0, 2.1, 0.75)) for p in tr) for tr in t]
-    mb.solid("plaster", t, (0, 2.1, 0.72))
-    t, c = box(0, 0, 0.73, 0.3, 0.55, 0.03)
+    # Tepe altın alem
+    t, c = frustum(0.04, 0.015, 0.24, 8, base=(0, 4.21, 0.35))
+    mb.solid("gold", t, c)
+    # 4 yönde saat kadranı
+    for dx, dz, ry in ((0, 0.39, 0.0), (0, -0.39, math.pi), (0.39, 0, math.pi / 2), (-0.39, 0, -math.pi / 2)):
+        dial_pos = (dx, 2.12, 0.35 + dz)
+        t, _ = frustum(0.23, 0.23, 0.03, 16, base=(0, 0, 0))
+        t = [tuple(add(rot_y(rot_x(p, math.pi / 2), ry), dial_pos) for p in tr) for tr in t]
+        mb.solid("gold", t, dial_pos)
+        face_pos = (dx * 1.04, 2.12, 0.35 + dz * 1.04)
+        t, _ = frustum(0.19, 0.19, 0.025, 16, base=(0, 0, 0))
+        t = [tuple(add(rot_y(rot_x(p, math.pi / 2), ry), face_pos) for p in tr) for tr in t]
+        mb.solid("plaster", t, face_pos)
+    # Saat kulesi giriş kapısı + taş merdiven
+    t, c = box(0, 0, 0.85, 0.62, 0.08, 0.24)
+    mb.solid("stone", t, c)
+    t, c = box(0, 0.08, 0.74, 0.32, 0.56, 0.03)
     mb.solid("wood", t, c)
     _house(mb, rng, -1.6, 0.7, 0.85, 0.75, 0.42, 0.4, 0.45, rot=0.6, roof_slot="roof2")
     _house(mb, rng, 1.6, 0.7, 0.85, 0.75, 0.42, 0.4, 0.45, rot=-0.6)
@@ -609,100 +728,153 @@ def town(mb, rng):
 @model("castle", ["stone", "stone_dark", "roof", "wood", "gold", "banner"])
 def castle(mb, rng):
     s = 1.25  # kule merkezlerinin yarı açıklığı
-    # Sur duvarları
+    # Sur duvarları + alt kaide
     corners = [(-s, -s), (s, -s), (s, s), (-s, s)]
     for i in range(4):
         x0, z0 = corners[i]
         x1, z1 = corners[(i + 1) % 4]
         cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
         horiz = abs(z1 - z0) < 1e-6
-        w, d = (abs(x1 - x0), 0.22) if horiz else (0.22, abs(z1 - z0))
-        t, c = box(cx, 0, cz, w, 0.85, d)
+        w, d = (abs(x1 - x0), 0.28) if horiz else (0.28, abs(z1 - z0))
+        t, c = box(cx, 0, cz, w, 0.16, d)
+        mb.solid("stone_dark", t, c)
+        w2, d2 = (abs(x1 - x0), 0.22) if horiz else (0.22, abs(z1 - z0))
+        t, c = box(cx, 0.16, cz, w2, 0.72, d2)
         mb.solid("stone", t, c)
-        for tris, cc in line_battlements(x0, z0, x1, z1, 0.85, 0.12, 0.11, 0.24, 0.09):
+        for tris, cc in line_battlements(x0, z0, x1, z1, 0.88, 0.13, 0.11, 0.24, 0.09):
             mb.solid("stone", tris, cc)
-    # Kapı kulesi (ön +z)
-    t, c = box(0, 0, s, 0.7, 1.15, 0.4)
+    # İkiz burçlu ön kapı kulesi (+z)
+    t, c = box(0, 0, s, 0.74, 1.18, 0.42)
     mb.solid("stone_dark", t, c)
-    for tris, cc in line_battlements(-0.35, s + 0.2, 0.35, s + 0.2, 1.15, 0.12, 0.1, 0.06, 0.06):
+    for gx in (-0.34, 0.34):
+        t, c = frustum(0.16, 0.15, 1.32, 10, base=(gx, 0, s + 0.10))
+        mb.solid("stone_dark", t, c)
+        t, c = frustum(0.17, 0.0, 0.34, 10, base=(gx, 1.32, s + 0.10))
+        mb.solid("roof", t, c)
+    for tris, cc in line_battlements(-0.35, s + 0.21, 0.35, s + 0.21, 1.18, 0.12, 0.1, 0.06, 0.06):
         mb.solid("stone_dark", tris, cc)
-    t, c = box(0, 0, s + 0.21, 0.34, 0.55, 0.03)
+    t, c = box(0, 0, s + 0.21, 0.34, 0.56, 0.03)
     mb.solid("wood", t, c)
     t, c = frustum(0.17, 0.17, 0.03, 10, base=(0, 0, 0), caps=(True, True))
-    t = [tuple(add(rot_x(p, math.pi / 2), (0, 0.55, s + 0.205)) for p in tr) for tr in t]
-    mb.solid("wood", t, (0, 0.55, s + 0.19))
-    # Ana kale (keep)
-    t, c = box(0, 0, -0.1, 1.2, 1.75, 1.2)
+    t = [tuple(add(rot_x(p, math.pi / 2), (0, 0.56, s + 0.205)) for p in tr) for tr in t]
+    mb.solid("wood", t, (0, 0.56, s + 0.19))
+    # Demir kapı parmaklık çizgileri
+    for bx in (-0.09, 0.0, 0.09):
+        t, c = box(bx, 0.06, s + 0.23, 0.025, 0.50, 0.015)
+        mb.solid("stone_dark", t, c)
+    # Ana kale (keep) + köşe kulecikleri
+    t, c = box(0, 0, -0.1, 1.24, 1.80, 1.24)
     mb.solid("stone_dark", t, c)
-    for x0, z0, x1, z1 in ((-0.6, 0.5, 0.6, 0.5), (-0.6, -0.7, 0.6, -0.7), (-0.6, -0.7, -0.6, 0.5), (0.6, -0.7, 0.6, 0.5)):
-        for tris, cc in line_battlements(x0, z0, x1, z1, 1.75, 0.14, 0.12, 0.08, 0.09):
+    for kx, kz in ((-0.56, -0.66), (0.56, -0.66), (-0.56, 0.46), (0.56, 0.46)):
+        t, c = frustum(0.15, 0.13, 2.02, 8, base=(kx, 0, kz))
+        mb.solid("stone", t, c)
+        t, c = frustum(0.16, 0.0, 0.34, 8, base=(kx, 2.02, kz))
+        mb.solid("roof", t, c)
+    for x0, z0, x1, z1 in ((-0.62, 0.52, 0.62, 0.52), (-0.62, -0.72, 0.62, -0.72), (-0.62, -0.72, -0.62, 0.52), (0.62, -0.72, 0.62, 0.52)):
+        for tris, cc in line_battlements(x0, z0, x1, z1, 1.80, 0.14, 0.12, 0.08, 0.09):
             mb.solid("stone_dark", tris, cc)
     for i in range(3):
         y = 0.5 + i * 0.42
         for x in (-0.3, 0.3):
-            t, c = box(x, y, 0.51, 0.08, 0.2, 0.02)
+            t, c = box(x, y, 0.53, 0.09, 0.22, 0.025)
             mb.solid("wood", t, c)
-    # Köşe kuleleri
+    # Köşe kuleleri + altın alem
     for x, z in corners:
-        t, c = frustum(0.36, 0.32, 1.45, 12, base=(x, 0, z))
+        t, c = frustum(0.37, 0.32, 1.48, 12, base=(x, 0, z))
         mb.solid("stone", t, c)
-        t, c = frustum(0.4, 0.4, 0.08, 12, base=(x, 1.45, z))
+        t, c = frustum(0.41, 0.41, 0.08, 12, base=(x, 1.48, z))
         mb.solid("stone", t, c)
-        for tris, cc in ring_battlements(x, 1.53, z, 0.4, 8, 0.12, 0.12, 0.08):
+        for tris, cc in ring_battlements(x, 1.56, z, 0.41, 8, 0.12, 0.12, 0.08):
             mb.solid("stone", tris, cc)
-        t, c = frustum(0.33, 0.0, 0.75, 12, base=(x, 1.53, z))
+        t, c = frustum(0.34, 0.0, 0.78, 12, base=(x, 1.56, z))
         mb.solid("roof", t, c)
-        t, c = box(x, 0.8, z + (0.33 if z > 0 else -0.33), 0.06, 0.16, 0.03)
+        t, c = frustum(0.025, 0.0, 0.16, 6, base=(x, 2.34, z))
+        mb.solid("gold", t, c)
+        t, c = box(x, 0.82, z + (0.33 if z > 0 else -0.33), 0.06, 0.18, 0.03)
         mb.solid("wood", t, c)
     # Bayrak direği + flama
-    t, c = frustum(0.02, 0.015, 0.75, 6, base=(0, 1.75, -0.1))
+    t, c = frustum(0.022, 0.015, 0.82, 6, base=(0, 1.80, -0.1))
     mb.solid("gold", t, c)
-    t, c = box(0.18, 2.3, -0.1, 0.32, 0.18, 0.015)
+    t, c = box(0.19, 2.38, -0.1, 0.34, 0.19, 0.018)
     mb.solid("banner", t, c)
 
 
 @model("lighthouse", ["rock", "white", "red", "glass", "dark"])
 def lighthouse(mb, rng):
-    t, c = icosphere((0, 0.05, 0), 0.5, 1, 0.22, rng, squash=0.45)
+    # Çok parçalı kayalık kıyı kaidesi
+    t, c = icosphere((0, 0.05, 0), 0.54, 1, 0.24, rng, squash=0.45)
     mb.solid("rock", t, c)
+    for rx, rz, rr in ((-0.36, 0.22, 0.20), (0.38, -0.18, 0.22), (0.18, 0.35, 0.16)):
+        t, c = icosphere((rx, 0.04, rz), rr, 0, 0.22, rng, squash=0.6)
+        mb.solid("rock", t, c)
+    # Bakıcı kulübesi ek binası
+    t, c = box(0.30, 0.14, 0.04, 0.30, 0.26, 0.28)
+    mb.solid("white", t, c)
+    t, c = gable_roof(0.30, 0.40, 0.04, 0.36, 0.34, 0.14, along_x=True)
+    mb.solid("red", t, c)
+    t, c = box(0.30, 0.14, 0.19, 0.09, 0.16, 0.02)
+    mb.solid("dark", t, c)
+    # Kule şeritleri
     bands = [(0.0, 0.36, "white"), (0.36, 0.34, "red"), (0.7, 0.36, "white"), (1.06, 0.3, "red")]
-    rb, rt_total, h_total = 0.3, 0.2, 1.36
+    rb, rt_total, h_total = 0.31, 0.20, 1.36
     for y, h, slot in bands:
         r0 = rb - (rb - rt_total) * (y / h_total)
         r1 = rb - (rb - rt_total) * ((y + h) / h_total)
-        t, c = frustum(r0, r1, h, 12, base=(0, 0.2 + y, 0))
+        t, c = frustum(r0, r1, h, 14, base=(0, 0.2 + y, 0))
         mb.solid(slot, t, c)
     top = 0.2 + h_total
-    t, c = frustum(0.3, 0.3, 0.05, 12, base=(0, top, 0))
+    t, c = frustum(0.31, 0.31, 0.055, 14, base=(0, top, 0))
     mb.solid("dark", t, c)
+    # Galeri korkuluğu ve üst halka
     for i in range(12):
         a = 2 * math.pi * i / 12
-        t, c = box(math.cos(a) * 0.28, top + 0.05, math.sin(a) * 0.28, 0.02, 0.12, 0.02)
+        t, c = box(math.cos(a) * 0.29, top + 0.055, math.sin(a) * 0.29, 0.02, 0.13, 0.02)
         mb.solid("dark", t, c)
-    t, c = frustum(0.15, 0.15, 0.24, 8, base=(0, top + 0.05, 0))
+    t, c = frustum(0.16, 0.16, 0.25, 10, base=(0, top + 0.055, 0))
     mb.solid("glass", t, c)
-    t, c = frustum(0.2, 0.0, 0.2, 8, base=(0, top + 0.29, 0))
+    t, c = frustum(0.22, 0.0, 0.22, 10, base=(0, top + 0.305, 0))
     mb.solid("red", t, c)
-    t, c = box(0, 0.2, 0.28, 0.12, 0.22, 0.03)
+    t, c = frustum(0.025, 0.0, 0.12, 6, base=(0, top + 0.51, 0))
+    mb.solid("dark", t, c)
+    t, c = box(0, 0.2, 0.29, 0.13, 0.23, 0.03)
     mb.solid("dark", t, c)
 
 
 @model("monument", ["stone", "marble", "gold"])
 def monument(mb, rng):
-    t, c = box(0, 0, 0, 0.8, 0.1, 0.8)
+    t, c = box(0, 0, 0, 0.86, 0.10, 0.86)
     mb.solid("stone", t, c)
-    t, c = box(0, 0.1, 0, 0.6, 0.1, 0.6)
+    t, c = box(0, 0.10, 0, 0.66, 0.10, 0.66)
     mb.solid("stone", t, c)
-    t, c = box(0, 0.2, 0, 0.42, 0.12, 0.42)
+    # 4 köşe taş baba direği
+    for bx in (-0.34, 0.34):
+        for bz in (-0.34, 0.34):
+            t, c = box(bx, 0.10, bz, 0.09, 0.16, 0.09)
+            mb.solid("stone", t, c)
+    t, c = box(0, 0.20, 0, 0.44, 0.14, 0.44)
     mb.solid("marble", t, c)
-    # Dikilitaş (hafif daralan)
-    t, c = frustum(0.16, 0.11, 1.2, 4, base=(0, 0.32, 0), phase=math.pi / 4)
+    # Dikilitaş ve altın kuşak bantları
+    t, c = frustum(0.165, 0.11, 1.24, 4, base=(0, 0.34, 0), phase=math.pi / 4)
     mb.solid("marble", t, c)
-    t, c = pyramid(0, 1.52, 0, 0.155, 0.155, 0.16)
+    for gy, gr in ((0.44, 0.172), (1.36, 0.130)):
+        t, c = frustum(gr, gr, 0.04, 4, base=(0, gy, 0), phase=math.pi / 4)
+        mb.solid("gold", t, c)
+    t, c = pyramid(0, 1.58, 0, 0.158, 0.158, 0.18)
     mb.solid("gold", t, c)
 
 
-# ── glTF (GLB) yazıcı ──────────────────────────────────────────────
+# ── glTF (GLB) yazıcı (triplanar TEXCOORD_0 ile) ───────────────────
+
+_UV_SCALE = 1.6
+
+
+def _triplanar_uv(p, n):
+    ax, ay, az = abs(n[0]), abs(n[1]), abs(n[2])
+    if ax >= ay and ax >= az:
+        return (p[2] * _UV_SCALE, -p[1] * _UV_SCALE)
+    if ay >= ax and ay >= az:
+        return (p[0] * _UV_SCALE, p[2] * _UV_SCALE)
+    return (p[0] * _UV_SCALE, -p[1] * _UV_SCALE)
 
 
 def write_glb(path, mb, name):
@@ -723,25 +895,35 @@ def write_glb(path, mb, name):
         if not tris:
             # Boş slot'a da tek bir dejenere üçgen koy — subset sırası QML ile hizalı kalsın
             tris = [((0, -50, 0), (0.0001, -50, 0), (0, -50, 0.0001))]
-        pos, nrm, idx = [], [], []
+        pos, nrm, uvs, idx = [], [], [], []
         for a, b, c in tris:
             n = norm(cross(sub(b, a), sub(c, a)))
             for p in (a, b, c):
                 pos.extend(p)
                 nrm.extend(n)
+                uvs.extend(_triplanar_uv(p, n))
                 idx.append(len(idx))
         xs, ys, zs = pos[0::3], pos[1::3], pos[2::3]
         pv = push(struct.pack("<%df" % len(pos), *pos), 34962)
         nv = push(struct.pack("<%df" % len(nrm), *nrm), 34962)
+        uvv = push(struct.pack("<%df" % len(uvs), *uvs), 34962)
         iv = push(struct.pack("<%dI" % len(idx), *idx), 34963)
         accessors.append({"bufferView": pv, "componentType": 5126, "count": len(pos) // 3, "type": "VEC3",
                           "min": [min(xs), min(ys), min(zs)], "max": [max(xs), max(ys), max(zs)]})
         accessors.append({"bufferView": nv, "componentType": 5126, "count": len(nrm) // 3, "type": "VEC3"})
+        accessors.append({"bufferView": uvv, "componentType": 5126, "count": len(uvs) // 2, "type": "VEC2"})
         accessors.append({"bufferView": iv, "componentType": 5125, "count": len(idx), "type": "SCALAR"})
         materials.append({"name": slot, "pbrMetallicRoughness": {"baseColorFactor": [0.8, 0.8, 0.8, 1.0],
                                                                  "metallicFactor": 0.0, "roughnessFactor": 0.85}})
-        primitives.append({"attributes": {"POSITION": len(accessors) - 3, "NORMAL": len(accessors) - 2},
-                           "indices": len(accessors) - 1, "material": len(materials) - 1})
+        primitives.append({
+            "attributes": {
+                "POSITION": len(accessors) - 4,
+                "NORMAL": len(accessors) - 3,
+                "TEXCOORD_0": len(accessors) - 2,
+            },
+            "indices": len(accessors) - 1,
+            "material": len(materials) - 1,
+        })
 
     blob = b"".join(bin_chunks)
     gltf = {
@@ -762,6 +944,122 @@ def write_glb(path, mb, name):
     return sum(len(mb.tris[s]) for s in mb.slots)
 
 
+# ── dikişsiz prosedürel PNG doku üreticisi (harici bağımlılık yok) ───
+
+
+def _png_chunk(tag: bytes, data: bytes) -> bytes:
+    return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+
+
+def _write_png_rgba(path: str, w: int, h: int, rows_rgba: list[bytes]) -> None:
+    raw = b"".join(b"\x00" + r for r in rows_rgba)
+    png = (
+        b"\x89PNG\r\n\x1a\n"
+        + _png_chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))
+        + _png_chunk(b"IDAT", zlib.compress(raw, level=9))
+        + _png_chunk(b"IEND", b"")
+    )
+    with open(path, "wb") as f:
+        f.write(png)
+
+
+def _hash2(ix: int, iy: int, seed: int) -> float:
+    n = (ix * 374761393 + iy * 668265263 + seed * 1442695041) & 0xFFFFFFFF
+    n = ((n ^ (n >> 13)) * 1274126177) & 0xFFFFFFFF
+    return ((n ^ (n >> 16)) & 0xFFFF) / 65535.0
+
+
+def _tile_noise(x: float, y: float, freq: int, seed: int, size: int = 128) -> float:
+    gx = (x / size) * freq
+    gy = (y / size) * freq
+    x0 = int(math.floor(gx)) % freq
+    y0 = int(math.floor(gy)) % freq
+    x1 = (x0 + 1) % freq
+    y1 = (y0 + 1) % freq
+    fx = gx - math.floor(gx)
+    fy = gy - math.floor(gy)
+    sx = fx * fx * (3.0 - 2.0 * fx)
+    sy = fy * fy * (3.0 - 2.0 * fy)
+    v00 = _hash2(x0, y0, seed)
+    v10 = _hash2(x1, y0, seed)
+    v01 = _hash2(x0, y1, seed)
+    v11 = _hash2(x1, y1, seed)
+    return (v00 * (1 - sx) + v10 * sx) * (1 - sy) + (v01 * (1 - sx) + v11 * sx) * sy
+
+
+def _clamp_byte(val: float) -> int:
+    return max(0, min(255, int(round(val * 255.0))))
+
+
+def _build_texture_bytes(kind: str, size: int = 128) -> list[bytes]:
+    rows = []
+    for y in range(size):
+        row = bytearray(size * 4)
+        for x in range(size):
+            n8 = _tile_noise(x, y, 8, 11, size)
+            n16 = _tile_noise(x, y, 16, 29, size)
+            n32 = _tile_noise(x, y, 32, 47, size)
+            if kind == "stone":
+                rh, bw = 32, 32
+                r_idx = y // rh
+                lx = (x + (r_idx % 2) * (bw // 2)) % size
+                c_idx = lx // bw
+                in_y, in_x = y % rh, lx % bw
+                mortar = (in_y < 2) or (in_x < 2)
+                block_tint = 0.87 + 0.11 * _hash2(c_idx, r_idx, 7)
+                lum = (0.73 + 0.04 * n16) if mortar else (block_tint + 0.07 * (n16 - 0.5) + 0.04 * (n32 - 0.5))
+                r_v, g_v, b_v = lum, lum * 0.99, lum * 0.97
+            elif kind == "roof":
+                rh, bw = 16, 32
+                r_idx = y // rh
+                lx = (x + (r_idx % 2) * (bw // 2)) % size
+                c_idx = lx // bw
+                in_y, in_x = y % rh, lx % bw
+                edge_shadow = (in_y >= rh - 2) or (in_x == 0)
+                tile_tint = 0.86 + 0.12 * _hash2(c_idx, r_idx, 19)
+                grad = 1.0 - 0.08 * (in_y / rh)
+                lum = (0.74 + 0.04 * n16) if edge_shadow else (tile_tint * grad + 0.05 * (n32 - 0.5))
+                r_v, g_v, b_v = lum, lum * 0.98, lum * 0.96
+            elif kind == "wood":
+                pw = 32
+                p_idx = x // pw
+                in_x = x % pw
+                seam = in_x < 2
+                grain = 0.5 + 0.5 * math.sin((x * 0.45) + 3.5 * n8 + 1.2 * n16 + math.sin(y * 0.098))
+                plank_tint = 0.88 + 0.09 * _hash2(p_idx, 0, 31)
+                lum = 0.75 if seam else (plank_tint * (0.87 + 0.13 * grain))
+                r_v, g_v, b_v = lum, lum * 0.96, lum * 0.92
+            elif kind == "plaster":
+                lum = 0.88 + 0.08 * n8 + 0.04 * n16 + 0.03 * (n32 - 0.5)
+                r_v, g_v, b_v = lum, lum * 0.995, lum * 0.98
+            elif kind == "foliage":
+                lum = 0.77 + 0.14 * n8 + 0.10 * n16 + 0.05 * n32
+                r_v, g_v, b_v = lum * 0.95, lum, lum * 0.94
+            else:  # thatch
+                fiber = _tile_noise((x * 2) % size, (y // 2) % size, 16, 61, size)
+                band = 0.94 + 0.06 * math.sin(y * 2 * math.pi / 16.0)
+                lum = (0.76 + 0.22 * fiber + 0.06 * (n32 - 0.5)) * band
+                r_v, g_v, b_v = lum, lum * 0.98, lum * 0.90
+
+            base = x * 4
+            row[base] = _clamp_byte(max(0.70, min(1.0, r_v)))
+            row[base + 1] = _clamp_byte(max(0.70, min(1.0, g_v)))
+            row[base + 2] = _clamp_byte(max(0.70, min(1.0, b_v)))
+            row[base + 3] = 255
+        rows.append(bytes(row))
+    return rows
+
+
+TEXTURE_KINDS = ("stone", "roof", "wood", "plaster", "foliage", "thatch")
+
+
+def generate_maps() -> None:
+    os.makedirs(MAPS_DIR, exist_ok=True)
+    for kind in TEXTURE_KINDS:
+        out_path = os.path.join(MAPS_DIR, f"{kind}_tex.png")
+        _write_png_rgba(out_path, 128, 128, _build_texture_bytes(kind, 128))
+
+
 def find_balsam():
     import PySide6
     exe = os.path.join(os.path.dirname(PySide6.__file__), "balsam.exe" if os.name == "nt" else "balsam")
@@ -773,6 +1071,7 @@ def find_balsam():
 def main():
     os.makedirs(GLB_DIR, exist_ok=True)
     os.makedirs(MESH_DIR, exist_ok=True)
+    generate_maps()
     balsam = find_balsam()
     for name, fn in MODELS.items():
         mb = fn()
@@ -791,7 +1090,8 @@ def main():
         f.write("# 3D ada kaynak modelleri\n\n"
                 "Bu `.glb` dosyaları `tools/build_island_assets.py` tarafından prosedürel olarak üretilir "
                 "(harici kaynak / lisans yok). Uygulama, `balsam` ile dönüştürülmüş "
-                "`app/ui/qml/components/island3d/meshes/*.mesh` dosyalarını kullanır.\n\n"
+                "`app/ui/qml/components/island3d/meshes/*.mesh` dosyalarını ve "
+                "`app/ui/qml/components/island3d/maps/*.png` dikişsiz yüzey dokularını kullanır.\n\n"
                 "Subset (malzeme) sırası:\n\n")
         for n, s in SUBSETS.items():
             f.write(f"- `{n}`: {', '.join(s)}\n")

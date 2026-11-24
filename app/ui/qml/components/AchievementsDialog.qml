@@ -79,12 +79,12 @@ Popup {
                             Text {
                                 text: modelData.unlocked ? Strings.achievementsUnlockedLabel : Strings.achievementsLockedLabel
                                 color: modelData.unlocked ? Theme.success : Theme.textDimmed
-                                font.pixelSize: 11
+                                font.pixelSize: 12
                             }
                         }
                         Text {
                             text: modelData.description
-                            color: Theme.textDimmed; font.pixelSize: 11
+                            color: Theme.textDimmed; font.pixelSize: 12
                             Layout.fillWidth: true; Layout.leftMargin: 26
                             elide: Text.ElideRight
                         }

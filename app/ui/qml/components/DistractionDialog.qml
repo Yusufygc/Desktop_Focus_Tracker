@@ -61,17 +61,14 @@ Popup {
 
         RowLayout {
             width: parent.width; spacing: 8
-            Rectangle {
-                Layout.fillWidth: true; height: 36; radius: 8; color: Theme.surface3
-                border.color: Theme.border; border.width: 1
-                TextInput {
-                    id: newCatInput
-                    anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                    verticalAlignment: TextInput.AlignVCenter; color: Theme.textPrimary; font.pixelSize: 13
-                    Text { anchors.verticalCenter: parent.verticalCenter; text: Strings.distractionNewCategoryPlaceholder; color: Theme.textDimmed; font.pixelSize: 13; visible: newCatInput.text === "" }
-                    Keys.onReturnPressed: addCatBtn.clicked()
-                    Keys.onEnterPressed:  addCatBtn.clicked()
-                }
+            FTTextArea {
+                id: newCatInput
+                Layout.fillWidth: true
+                minHeight: 36
+                maxHeight: 68
+                singleLineSubmit: true
+                placeholderText: Strings.distractionNewCategoryPlaceholder
+                onSubmitted: addCatBtn.clicked()
             }
             FTButton {
                 id: addCatBtn; Layout.preferredWidth: 40; height: 36; label: "+"; variant: "ghost"
@@ -87,37 +84,59 @@ Popup {
 
         Item { height: 12; width: 1 }
 
-        Grid {
-            id: categoryGrid
-            columns: 2; spacing: 8; width: parent.width
-            property string selected: ""
+        Flickable {
+            id: catFlick
+            width: parent.width
+            height: Math.min(categoryGrid.implicitHeight, 152)
+            contentWidth: width
+            contentHeight: categoryGrid.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-            Repeater {
-                model: root.categoriesData
-                delegate: Rectangle {
-                    width: (categoryGrid.width - categoryGrid.spacing) / 2; height: 36; radius: 8
-                    color: categoryGrid.selected === modelData.name ? Theme.primaryDark : Theme.surface3
-                    border.color: categoryGrid.selected === modelData.name ? Theme.primary : Theme.border; border.width: 1
-                    property bool itemHovered: catMouse.containsMouse
+            ScrollBar.vertical: ScrollBar {
+                id: catScrollBar
+                parent: catFlick
+                x: catFlick.width - width
+                y: 0
+                height: catFlick.height
+                policy: ScrollBar.AsNeeded
+                visible: catScrollBar.size < 1.0
+                width: 6
+            }
 
-                    Text {
-                        anchors.centerIn: parent; text: modelData.name
-                        color: categoryGrid.selected === modelData.name ? Theme.accent : Theme.textSecondary
-                        font.pixelSize: 12; elide: Text.ElideRight
-                        width: parent.width - 24; horizontalAlignment: Text.AlignHCenter
-                    }
-                    MouseArea {
-                        id: catMouse; anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor; hoverEnabled: true
-                        onClicked: categoryGrid.selected = modelData.name
-                    }
-                    AppIcon {
-                        anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
-                        name: "close"; size: 16; color: Theme.dangerMuted
-                        visible: parent.itemHovered
+            Grid {
+                id: categoryGrid
+                columns: 2; spacing: 8
+                width: parent.width - (catScrollBar.size < 1.0 ? 12 : 0)
+                property string selected: ""
+
+                Repeater {
+                    model: root.categoriesData
+                    delegate: Rectangle {
+                        width: (categoryGrid.width - categoryGrid.spacing) / 2; height: 36; radius: 8
+                        color: categoryGrid.selected === modelData.name ? Theme.primaryDark : Theme.surface3
+                        border.color: categoryGrid.selected === modelData.name ? Theme.primary : Theme.border; border.width: 1
+                        property bool itemHovered: catMouse.containsMouse
+
+                        Text {
+                            anchors.centerIn: parent; text: modelData.name
+                            color: categoryGrid.selected === modelData.name ? Theme.accent : Theme.textSecondary
+                            font.pixelSize: 12; elide: Text.ElideRight
+                            width: parent.width - 28; horizontalAlignment: Text.AlignHCenter
+                        }
                         MouseArea {
-                            anchors.fill: parent; anchors.margins: -8; cursorShape: Qt.PointingHandCursor
-                            onClicked: { categoryBridge.deleteCategory(modelData.id); root.loadCategories() }
+                            id: catMouse; anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor; hoverEnabled: true
+                            onClicked: categoryGrid.selected = modelData.name
+                        }
+                        AppIcon {
+                            anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
+                            name: "close"; size: 16; color: Theme.dangerMuted
+                            visible: parent.itemHovered
+                            MouseArea {
+                                anchors.fill: parent; anchors.margins: -8; cursorShape: Qt.PointingHandCursor
+                                onClicked: { categoryBridge.deleteCategory(modelData.id); root.loadCategories() }
+                            }
                         }
                     }
                 }
@@ -126,17 +145,15 @@ Popup {
 
         Text { text: Strings.distractionNoteLabel; color: Theme.textMuted; font.pixelSize: 12; bottomPadding: 6; topPadding: 16 }
 
-        Rectangle {
-            width: parent.width; height: 40; radius: 8; color: Theme.surface3
-            border.color: noteField.activeFocus ? Theme.borderActive : Theme.border; border.width: 1
-            TextInput {
-                id: noteField
-                anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                verticalAlignment: TextInput.AlignVCenter; color: Theme.textPrimary; font.pixelSize: 13
-                Keys.onReturnPressed: saveBtn.clicked()
-                Keys.onEnterPressed:  saveBtn.clicked()
-                Text { anchors.verticalCenter: parent.verticalCenter; text: Strings.distractionNotePlaceholder; color: Theme.textSubtle; font.pixelSize: 13; visible: noteField.text === "" }
-            }
+        FTTextArea {
+            id: noteField
+            width: parent.width
+            minHeight: 44
+            maxHeight: 96
+            singleLineSubmit: true
+            activeBorderColor: Theme.borderActive
+            placeholderText: Strings.distractionNotePlaceholder
+            onSubmitted: saveBtn.clicked()
         }
 
         Item { height: 16; width: 1 }

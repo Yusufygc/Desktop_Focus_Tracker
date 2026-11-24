@@ -12,8 +12,8 @@ Popup {
     Overlay.modal: Rectangle { color: Theme.overlayDim }
 
     property var subjectsData: []
-    property string selectedColor: "#4CAF50"
-    property var colorOptions: ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4", "#E91E63", "#3F51B5", "#009688", "#795548", "#607D8B", "#FFC107"]
+    property var colorOptions: Theme.subjectColors
+    property string selectedColor: Theme.subjectColors[0]
 
     function loadSubjects() { subjectsData = subjectBridge.getSubjects() }
 
@@ -83,18 +83,14 @@ Popup {
                     onClicked: colorPopup.open()
                 }
             }
-            Rectangle {
-                Layout.fillWidth: true; height: 40; radius: 8; color: Theme.surface3
-                border.color: newSubjectInput.activeFocus ? Theme.primary : Theme.border; border.width: 1
-                TextInput {
-                    id: newSubjectInput
-                    anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.textPrimary; font.pixelSize: 13
-                    Text { anchors.verticalCenter: parent.verticalCenter; text: Strings.subjectManagerNewPlaceholder; color: Theme.textDimmed; font.pixelSize: 13; visible: newSubjectInput.text === "" }
-                    Keys.onReturnPressed: addSubjectBtn.clicked()
-                    Keys.onEnterPressed:  addSubjectBtn.clicked()
-                }
+            FTTextArea {
+                id: newSubjectInput
+                Layout.fillWidth: true
+                minHeight: 40
+                maxHeight: 72
+                singleLineSubmit: true
+                placeholderText: Strings.subjectManagerNewPlaceholder
+                onSubmitted: addSubjectBtn.clicked()
             }
             FTButton {
                 id: addSubjectBtn; Layout.preferredWidth: 60; height: 40; label: Strings.subjectManagerAddButton; variant: "primary"

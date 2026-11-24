@@ -8,7 +8,9 @@ GlassCard {
     property string accentColor: Theme.accent
     property string icon: ""   // opsiyonel — verilirse değerin üstünde küçük ikon gösterilir
 
-    height: 80
+    implicitHeight: 96
+    Layout.preferredHeight: 96
+    height: 96
     clip: true   // uzun değer/etiket asla yuvarlak kenarı taşmasın
     property bool hovered: false
     glowOpacity: hovered ? 0.6 : 0.0
@@ -23,14 +25,14 @@ GlassCard {
 
     ColumnLayout {
         anchors.centerIn: parent
-        width: parent.width - 16
-        spacing: 4
+        width: parent.width - 20
+        spacing: 3
 
         AppIcon {
             Layout.alignment: Qt.AlignHCenter
             visible: root.icon !== ""
             name: root.icon
-            size: 14
+            size: 15
             color: root.accentColor
         }
 
@@ -40,9 +42,12 @@ GlassCard {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             maximumLineCount: 1
+            lineHeight: 1.05
+            topPadding: 0
+            bottomPadding: 0
             text: root.value
             color: root.accentColor
-            font.pixelSize: 26
+            font.pixelSize: 24
             font.weight: Font.Bold
 
             NumberAnimation on scale {
@@ -61,9 +66,11 @@ GlassCard {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             maximumLineCount: 1
+            topPadding: 0
+            bottomPadding: 0
             text: root.label
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: 12
             font.letterSpacing: 1
         }
     }

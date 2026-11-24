@@ -62,7 +62,11 @@ Window {
                 spacing: 2
                 Text {
                     text: {
-                        if (!sessionBridge.isActive) return "Bekleniyor"
+                        if (!sessionBridge.isActive) {
+                            if (sessionBridge.isPomodoroMode) return "Pomodoro · Hazır"
+                            if (sessionBridge.plannedMinutes > 0) return "Hedef: " + sessionBridge.plannedMinutes + " dk"
+                            return "Bekleniyor"
+                        }
                         if (sessionBridge.isPomodoroMode) {
                             var s = sessionBridge.pomodoroState
                             if (s === "SHORT_BREAK") return "Kısa Mola"
@@ -72,15 +76,25 @@ Window {
                         return sessionBridge.currentSubject || "Genel Odak"
                     }
                     color: Theme.textDimmed
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
                 Text {
                     id: miniTimer
+                    function _fmtClock(totalSec) {
+                        var s = Math.max(0, Math.floor(totalSec))
+                        var h = Math.floor(s / 3600)
+                        var m = Math.floor((s % 3600) / 60)
+                        var sec = s % 60
+                        if (h > 0) {
+                            return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m) + ":" + (sec < 10 ? "0" + sec : sec)
+                        }
+                        return (m < 10 ? "0" + m : m) + ":" + (sec < 10 ? "0" + sec : sec)
+                    }
                     text: {
-                        if (!sessionBridge.isActive) return "00:00:00"
                         if (sessionBridge.isPomodoroMode) {
+                            if (!sessionBridge.isActive) return _fmtClock(sessionBridge.pomodoroFocusMinutes * 60)
                             var target = sessionBridge.pomodoroTarget
                             var rem = 0
                             if (sessionBridge.pomodoroState === "FOCUS") {
@@ -88,11 +102,13 @@ Window {
                             } else if (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK") {
                                 rem = target - sessionBridge.pomodoroBreakElapsed
                             }
-                            if (rem < 0) rem = 0
-                            var m = Math.floor(rem / 60)
-                            var s = rem % 60
-                            return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s)
+                            return _fmtClock(Math.max(0, rem))
+                        } else if (sessionBridge.plannedMinutes > 0) {
+                            var totalSec = sessionBridge.plannedMinutes * 60
+                            var remain = sessionBridge.isActive ? Math.max(0, totalSec - sessionBridge.elapsedSec) : totalSec
+                            return _fmtClock(remain)
                         } else {
+                            if (!sessionBridge.isActive) return "00:00:00"
                             var h = Math.floor(sessionBridge.elapsedSec / 3600)
                             var mm = Math.floor((sessionBridge.elapsedSec % 3600) / 60)
                             var ss = sessionBridge.elapsedSec % 60
@@ -100,7 +116,7 @@ Window {
                         }
                     }
                     color: (sessionBridge.isPomodoroMode && (sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK")) ? Theme.success : Theme.accent
-                    font.pixelSize: 26
+                    font.pixelSize: miniTimer.text.length > 5 ? 20 : 26
                     font.weight: Font.Bold
                     font.family: "Consolas"
                 }

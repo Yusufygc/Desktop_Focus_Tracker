@@ -30,12 +30,30 @@ Item {
     onInsightPeriodChanged: loadInsightPeriodData()
 
     ScrollView {
-        anchors { fill: parent; margins: 24 }
+        id: analyticsScroll
+        anchors { fill: parent; leftMargin: 24; topMargin: 24; bottomMargin: 24; rightMargin: 8 }
         contentWidth: availableWidth
         clip: true
 
+        ScrollBar.vertical: ScrollBar {
+            id: analyticsVBar
+            parent: analyticsScroll
+            x: analyticsScroll.width - width
+            y: analyticsScroll.topPadding
+            height: analyticsScroll.availableHeight
+            policy: ScrollBar.AsNeeded
+            visible: analyticsVBar.size < 1.0
+            width: 6
+            contentItem: Rectangle {
+                implicitWidth: 6
+                radius: 3
+                color: analyticsVBar.pressed ? Theme.primary : (analyticsVBar.hovered ? Theme.borderActive : Theme.border)
+                opacity: analyticsVBar.size < 1.0 ? (analyticsVBar.active ? 0.85 : 0.35) : 0.0
+            }
+        }
+
         ColumnLayout {
-            width: parent.width
+            width: Math.max(0, analyticsScroll.availableWidth - 16)
             spacing: 20
 
             Text { text: Strings.analyticsTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
@@ -112,33 +130,49 @@ Item {
 
             // ── Odak kalitesi trendi + otomatik özet ──────────────────
             GlassCard {
-                Layout.fillWidth: true; height: 260
+                Layout.fillWidth: true
+                Layout.preferredHeight: trendContent.implicitHeight + 40
 
                 ColumnLayout {
+                    id: trendContent
                     anchors { fill: parent; margins: 20 }
                     spacing: 12
 
-                    RowLayout {
+                    GridLayout {
                         Layout.fillWidth: true
-                        Text { text: Strings.analyticsQualityTrendTitle; color: Theme.textSecondary; font.pixelSize: 13; font.weight: Font.Medium; Layout.fillWidth: true }
-                        Repeater {
-                            model: [
-                                { key: "day",   label: Strings.focusStatsPeriodDay   },
-                                { key: "week",  label: Strings.focusStatsPeriodWeek  },
-                                { key: "month", label: Strings.focusStatsPeriodMonth },
-                                { key: "year",  label: Strings.focusStatsPeriodYear  }
-                            ]
-                            delegate: FTButton {
-                                Layout.preferredWidth: 64; height: 32
-                                label: modelData.label
-                                variant: root.insightPeriod === modelData.key ? "primary" : "ghost"
-                                onClicked: root.insightPeriod = modelData.key
+                        columns: root.width < 640 ? 1 : 2
+                        rowSpacing: 8
+                        columnSpacing: 12
+
+                        Text {
+                            text: Strings.analyticsQualityTrendTitle
+                            color: Theme.textSecondary; font.pixelSize: 13; font.weight: Font.Medium
+                            Layout.fillWidth: true; Layout.minimumWidth: 0; elide: Text.ElideRight
+                        }
+
+                        RowLayout {
+                            spacing: 6
+                            Layout.alignment: root.width < 640 ? Qt.AlignLeft : Qt.AlignRight
+                            Repeater {
+                                model: [
+                                    { key: "day",   label: Strings.focusStatsPeriodDay   },
+                                    { key: "week",  label: Strings.focusStatsPeriodWeek  },
+                                    { key: "month", label: Strings.focusStatsPeriodMonth },
+                                    { key: "year",  label: Strings.focusStatsPeriodYear  }
+                                ]
+                                delegate: FTButton {
+                                    Layout.preferredWidth: 64; height: 32
+                                    label: modelData.label
+                                    variant: root.insightPeriod === modelData.key ? "primary" : "ghost"
+                                    onClicked: root.insightPeriod = modelData.key
+                                }
                             }
                         }
                     }
 
                     PeriodBarChart {
-                        Layout.fillWidth: true; Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 160
                         chartData: root.qualityTrend.map(function(t) { return { label: t.label, value: t.avgScore } })
                         tooltipFormatter: function(entry) { return entry.label + ": " + entry.value + "/100" }
                     }

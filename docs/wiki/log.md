@@ -1,5 +1,54 @@
 # Wiki Log
 
+## [2026-11-24] FEATURE | Prosedürel 3D Adada UV Yüzey Dokuları & Zenginleştirilmiş Mimari Geometri
+- **`tools/build_island_assets.py`:**
+  - `write_glb()` içine yüz normaline göre triplanar `TEXCOORD_0` (`VEC2`) UV haritalaması eklendi (`_UV_SCALE = 1.6`); tüm `.glb` ve `balsam.exe` çıktısı `.mesh` dosyaları artık doku koordinatı içerir.
+  - Harici bağımlılık olmadan (`zlib` + `struct`) `128×128` dikişsiz `stone_tex.png`, `roof_tex.png`, `wood_tex.png`, `plaster_tex.png`, `foliage_tex.png` ve `thatch_tex.png` dokuları `app/ui/qml/components/island3d/maps/` altına üretildi.
+  - Tüm modellerin geometrisi (`hut`, `house`, `farm`, `village`, `town`, `castle`, `lighthouse`, `monument`, `oak_tree`, `stump`) `SUBSETS` sırası korunarak mimari/doğal ayrıntılarla zenginleştirildi (taş kaideler, mahya kirişleri, pervazlı ve çıtalı pencereler, sundurma, tahıl silosu, pazar tezgahı, 4 yüzlü saat kulesi, ikiz kapı kulesi/keep burçları, deniz feneri bakıcı evi, 3 katlı anıt kaidesi ve 10 kümeli gür meşe tacı).
+- **QML Entegrasyonu:** `SettlementCenter3D.qml`, `OakTree3D.qml`, `Stump3D.qml`, `Lighthouse3D.qml` ve `Monument3D.qml` dosyalarındaki `PrincipledMaterial` slotlarına `baseColorMap` dokuları (`Texture.Repeat`) bağlandı; `biome` renk paleti ve ders rengi harmanlaması korundu.
+
+## [2026-11-24] POLISH | İstatistikler Sayfası 3D Ada Kutusunu Büyütme & Optimize 3D Asset Entegrasyonu
+- **`FocusStatsPage.qml` & `HybridIslandView.qml`:** Yerleşim kartı (`settlementCard`) ve iç görünüm alanı (`settlementViewport`) alta doğru genişletildi (`3D Ada` görünümünde `Math.max(440, Math.round(root.height * 0.56)) + 135`, minimum `575px` kart yüksekliği; `2D Köy` modunda minimum `395px`; `HybridIslandView.implicitHeight: 440`).
+- **3D Model Entegrasyonu (`IslandBase.qml`, `PineTree3D.qml`):** Tripo kaynaklı `island.glb` ve `pine_tree.glb` modelleri `@gltf-transform/cli` (`weld` + `simplify` + `resize`) ile küçültülüp `balsam.exe` üzerinden `app/ui/qml/components/island3d/imported/` altına `.mesh` + doku olarak dönüştürüldü ve sahneye bağlandı.
+
+## [2026-11-24] FIX | Başlangıç Pencere Taşması, TimerCard Taşma Düzeltmesi & Klasik Halka Seçeneği
+- **Başlangıç Pencere Sınırlandırması (`main.py`, `app/ui/qml/Main.qml`):** Açılışta pencere boyut ve koordinatları koşulsuz olarak birincil monitörün kullanılabilir masaüstü alanına (`availableGeometry`, başlık çubuğu ve görev çubuğu payı dahil) kırpılıp ortalanacak şekilde güncellendi; `Main.qml` içinde Qt6 `Screen.desktopAvailableWidth/Height` kullanımıyla alt/sağ taşmalar giderildi.
+- **`TimerCard.qml` & `FlipClockView.qml` Yerleşim Düzeltmeleri:**
+  - `TimerCard` ve `dialArea` üzerine `clip: true` eklendi; üst kontrol barı (`topBar`) dar pencerelerde butonları sağ kenardan taşırmadan 2 satıra saracak ve `dialArea` genişliğini şişirmeyecek şekilde (`Layout.minimumWidth: 0`) yeniden kuruldu.
+  - Geri sayım modlarında (`plannedMinutes > 0` veya Pomodoro) `60 dk` vb. sürelerin 3 kart (`01:00:00`) yerine 2 kart (`60:00`) biçiminde gösterilmesi sağlandı (`HH:MM:SS` yalnızca serbest kronometrede >= 1 saat için kullanılır).
+  - `dialArea` içindeki opak `backdropColor` kutusu kaldırılarak `FlipClockView` şeffaf sahneyle doğrudan koyu kart içine alındı; `FlipClockView` kenarlık/ayırıcı genişlik hesabı daraltıldı.
+- **Klasik Halka (Ring) Seçeneği (`app/ui/qml/components/TimerCustomizeDialog.qml`):** Saat Özelleştirme diyaloğunun üstüne **"Saat Görünümü"** (`Fliqlo Flip Saat` | `Dairesel Halka (Klasik)`) seçici eklendi, canlı önizleme iki stili de gösterecek şekilde güncellendi ve arka plan ayarı `Zen Tam Ekran Arka Planı` olarak netleştirildi.
+- **Doğrulama:** 268 birim test (`unittest`) ve farklı pencere boyutlarında (`1180x720`, `1180x624`, `840x560`) headless QML doğrulaması geçirildi; [[qml-ui]] güncellendi.
+
+## [2026-11-24] FEATURE | Mac (Fliqlo) Tarzı Kişiselleştirilebilir Flip Clock & Zen Modu
+- **Mimari (`app/ui/timer_settings.py`, `app/core/container.py`):** `TimerSettings` eklendi (`timerStyle/*` QSettings kalıcılığı). Faz 1'de kart/rakam/arka plan rengi, cam yansıma efekti, saydamlık ve 5 hazır tema açıldı; Faz 2 için `timerStyle`, `fontFamily`, `cornerRadius`, `showHinge`, `showSeconds` ve `flipDurationMs` şemada ve QML bileşenlerinde hazır tutuldu.
+- **Bileşenler:** `FlipDigitCard.qml` (split-flap 3D flip animasyonu + yatay menteşe), `FlipClockView.qml`, `TimerCustomizeDialog.qml` (canlı önizleme), `ZenTimerOverlay.qml` (`Esc` ile çıkılan tam pencere Zen sahnesi), `icons/maximize-2.svg`, `icons/sliders.svg`.
+- **Entegrasyon & Doğrulama:** `TimerCard.qml`, `TrackerPage.qml`, `Main.qml` ve `qmldir` güncellendi; `tests/test_timer_settings.py` eklendi, [[qml-ui]] güncellendi.
+
+## [2026-11-23] THEME | Karanlık Mod Nötr Obsidyen / Karbon Paleti (Seçenek A)
+- `app/ui/theme.py` içindeki mor-lacivert `_DARK` yüzeyi (`#0a0a18`–`#1e1e40`) ve varsayılan `#6366f1` indigo yerine nötr obsidyen/karbon yüzeyler (`#0d0e11`–`#272c36`, kenarlık `#2b303b`) ve okyanus/çelik mavi (`#3b82f6` koyu / `#2563eb` açık) vurgu uygulandı.
+- `DESIGN.md`, `.impeccable/design.json`, `tests/test_theme_and_strings.py` ve [[qml-ui]] güncellendi.
+
+## [2026-11-23] POLISH | Bozulma Sütun Hizalaması, Süre Listesi Ortalama, ScrollBar Boşluğu & StatCard Düzeni
+- **Nizami Bozulma Listesi:** `SessionDetailPanel` ve `DistractionListPanel` satırlarında sütun genişlikleri sabitlenip boş notta `Layout.fillWidth: true` korundu; boş notlu satırlarda kategori adının ortaya kayması düzeltildi.
+- **Süre Açılır Listesi (`TimerCard.qml`):** `presetDelegate` içindeki dakika metni ve hover silme (`×`) ikonu dikey ortalandı.
+- **ScrollBar Oluk Boşluğu & Sağ Kenar Konumlandırması:** `SettingsDialog`, `FocusStatsPage`, `AnalyticsPage`, `SessionDetailPanel`, `TrackerPage`, `DistractionDialog` ve `FTTextArea` özel dikey kaydırma çubuklarına açık `parent`/`x`/`y`/`height` ve `visible: size < 1.0` eklendi; içeriklerin sağ kenardan oluk boşluğu bırakması ve kaydırma yokken sol üstte (`x=0`) dikey çizgi kalmaması sağlandı.
+- **StatCard İç Ortalama:** `StatCard.qml` yüksekliği `96px` yapıldı, tüm sayfa ve özet diyalogu kartlarında üst/alt kenar boşlukları dengelendi.
+
+## [2026-11-23] FEATURE | Input Sarma/İmleç Takibi, Forest Geri Sayım & Pomodoro Ayarları, Palet & Taşma Düzeltmeleri
+- **Input Sarma ve İmleç Takibi:** Yeni `FTTextArea.qml` bileşeni (`wrapMode: TextEdit.Wrap`, `Flickable.ensureVisible(cursorRectangle)`) eklendi; tüm dialog inputları güncellendi. `TrackerPage` `subjectCombo` ve `TimerCard` `presetInput` için `clip` ve `autoScroll` eklendi.
+- **Forest Geri Sayım & Kişiselleştirilebilir Pomodoro:** `SessionBridge` içine `plannedMinutes` (varsayılan `25`, `0 = Serbest (∞)`), `targetCompleted` sinyali ve `QSettings` kalıcılıklı Pomodoro odak/kısa mola/uzun mola ayarları eklendi. `TimerCard` ve `MiniWindow` hedef süreden `00:00`'a geri sayacak şekilde güncellendi; süre dolduğunda `SessionSummaryDialog` otomatik açılır. `SettingsDialog`'a temalı `FTSpinBox` ile Pomodoro süre ayarları eklendi.
+- **Palet & Taşma Düzeltmeleri:** `app/ui/theme.py` içindeki `_ACCENT_PRESETS` tam koyu/açık palet tokenlarıyla (`primaryHover`, `primaryDark`, `primaryBorder`, `borderActive`, `lightAccent`) genişletildi; `DistractionDialog`, `SettingsDialog`, `AnalyticsPage`, `FocusStatsPage` ve `SessionDetailPanel` içindeki taşma/kırpılma noktaları giderildi.
+- **Doğrulama:** `tests/test_session_bridge.py` ve `tests/test_theme_and_strings.py` güncellendi, [[qml-ui]] güncellendi.
+
+## [2026-11-23] POLISH | Tasarım Sistemi (PRODUCT/DESIGN), Erişilebilirlik, Kontrast ve UI/UX İyileştirmeleri
+Impeccable (`init` + `document` + `critique` + `audit`) ve `ui-ux-pro-max` değerlendirmesi doğrultusunda masaüstü arayüzü güncellendi:
+- **Tasarım Dokümantasyonu:** Kökte `PRODUCT.md`, `DESIGN.md` ve `.impeccable/design.json` (`schemaVersion: 2`) oluşturuldu.
+- **Kontrast & Token Merkezileştirme (`app/ui/theme.py`):** `_DARK` metin tokenları WCAG AA oranlarına çıkarıldı; 12 konu rengi `Theme.subjectColors` olarak merkezileştirildi (`TrackerPage.qml`, `SubjectManagerDialog.qml`).
+- **Klavye & Ekran Okuyucu Erişilebilirliği:** `FTButton`, `NavButton`, `Sidebar`, `TrackerPage` (`distractionBtn`) ve `FocusHeatmap` bileşenlerine `activeFocusOnTab`, görünür 2px `Theme.accent` odak halkası, klavye aktivasyonu (`Enter`/`Space` ve ısı haritasında ok tuşları) ve `Accessible.*` rolleri eklendi.
+- **İkon, Rozet & Tipografi:** `minimize-2.svg` eklendi, çıplak ikon butonları `FTButton` ile standartlaştırıldı, aktif Pomodoro faz rozeti eklendi, tüm `10px`/`11px` yazılar en az `12px` yapıldı ve `FocusStatsPage` ısı haritasına 5 kademeli yoğunluk lejantı eklendi.
+- **Doğrulama:** `tests/test_theme_and_strings.py` genişletildi, [[qml-ui]] güncellendi.
+
 ## [2026-10-15] INGEST | Prod Hazırlığı: Kararlı EXE, Inno Setup, Otomatik Güncelleme ve Sürüm Yayınlama Altyapısı
 `C:\2UYGULAMALAR\D002-HazirPromptlar\Prod hazırlığı` altındaki dağıtım rehberi, güncelleme sistemi ve sürüm yayınlama dökümanları incelendi ve FocusTracker projesine uyarlandı:
 - **Kararlı EXE & SAC Koruması (`build_exe.py`):**

@@ -3,6 +3,8 @@ SessionBridge birim testleri.
 SessionService/DistractionService constructor'dan enjekte edildiği için doğrudan Mock verilir.
 """
 
+import os
+import tempfile
 import unittest
 from unittest.mock import Mock
 
@@ -16,7 +18,12 @@ class TestSessionBridge(unittest.TestCase):
         self.session_svc = Mock()
         self.distraction_svc = Mock()
         self.session_svc.has_active = False
-        self.bridge = SessionBridge(self.session_svc, self.distraction_svc)
+        self._tmp_dir = tempfile.TemporaryDirectory()
+        self._settings_path = os.path.join(self._tmp_dir.name, "test_settings.ini")
+        self.bridge = SessionBridge(self.session_svc, self.distraction_svc, settings_path=self._settings_path)
+
+    def tearDown(self):
+        self._tmp_dir.cleanup()
 
     def test_start_session_calls_service_and_emits_sessionStarted(self):
         received = []
@@ -127,6 +134,42 @@ class TestSessionBridge(unittest.TestCase):
 
         self.bridge.finishSession("not")
         self.assertEqual(len(paused_changed), 2)
+
+    def test_planned_minutes_countdown_emits_targetCompleted_and_pauses(self):
+        session = Session(subject="Matematik", id=5, last_paused_at=None)
+        self.session_svc.has_active = True
+        self.session_svc.active_session = session
+
+        self.bridge.setPlannedMinutes(1)
+        self.assertEqual(self.bridge.plannedMinutes, 1)
+
+        completed = []
+        self.bridge.targetCompleted.connect(lambda: completed.append(True))
+
+        self.bridge._elapsed = 59
+        self.bridge._tick()
+
+        self.assertEqual(self.bridge.elapsedSec, 60)
+        self.session_svc.pause.assert_called_once()
+        self.assertEqual(len(completed), 1)
+
+    def test_custom_pomodoro_durations_update_targets(self):
+        self.bridge.setPomodoroFocusMinutes(50)
+        self.bridge.setPomodoroShortBreakMinutes(10)
+        self.bridge.setPomodoroLongBreakMinutes(20)
+
+        self.assertEqual(self.bridge.pomodoroFocusMinutes, 50)
+        self.assertEqual(self.bridge.pomodoroShortBreakMinutes, 10)
+        self.assertEqual(self.bridge.pomodoroLongBreakMinutes, 20)
+
+        self.bridge.isPomodoroMode = True
+        self.assertEqual(self.bridge.pomodoroTarget, 50 * 60)
+
+        self.bridge._pomodoro_state = "SHORT_BREAK"
+        self.assertEqual(self.bridge.pomodoroTarget, 10 * 60)
+
+        self.bridge._pomodoro_state = "LONG_BREAK"
+        self.assertEqual(self.bridge.pomodoroTarget, 20 * 60)
 
 
 if __name__ == "__main__":

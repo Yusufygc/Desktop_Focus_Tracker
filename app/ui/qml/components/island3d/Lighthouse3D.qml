@@ -9,14 +9,31 @@ Node {
     property bool isUnlocked: false
     visible: isUnlocked
 
+    Texture {
+        id: stoneTex
+        source: "maps/stone_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+    Texture {
+        id: plasterTex
+        source: "maps/plaster_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+
     Model {
         source: "meshes/lighthouse.mesh"
         castsShadows: true
         receivesShadows: true
         materials: [
-            PrincipledMaterial { baseColor: "#6f6a64"; roughness: 0.9 },
-            PrincipledMaterial { baseColor: "#f1f5f9"; roughness: 0.6 },
-            PrincipledMaterial { baseColor: "#c0392b"; roughness: 0.6 },
+            PrincipledMaterial { baseColor: "#6f6a64"; baseColorMap: stoneTex; roughness: 0.9 },
+            PrincipledMaterial { baseColor: "#f1f5f9"; baseColorMap: plasterTex; roughness: 0.6 },
+            PrincipledMaterial { baseColor: "#c0392b"; baseColorMap: plasterTex; roughness: 0.6 },
             PrincipledMaterial { baseColor: "#fef08a"; emissiveFactor: Qt.vector3d(1.0, 0.92, 0.5); roughness: 0.2 },
             PrincipledMaterial { baseColor: "#1f2937"; roughness: 0.5; metalness: 0.1 }
         ]

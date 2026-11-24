@@ -9,12 +9,20 @@ Item {
     property int todaySessionCount: 0
     property int todayFocusSec: 0
     property string currentSubjectText: root._resolveSubjectName(subjectCombo.editText || "")
+    readonly property string currentClockText: timerCard.currentClockText
+    readonly property string currentPhaseLabel: timerCard.currentPhaseLabel
+    readonly property string currentSubtitleText: timerCard.currentSubtitleText
     readonly property bool isNarrow: root.width < 760
     readonly property int pageMargin: root.height < 650 ? 16 : 20
     readonly property int rowGap: root.height < 650 ? 8 : 12
     readonly property real widePanelHeight: Math.max(root.height < 650 ? 180 : 220, root.height - (pageMargin * 2) - 30 - 54 - 46 - 42 - (rowGap * 4))
 
     signal miniModeRequested()
+    signal targetCompletedRequested()
+    signal zenModeRequested()
+
+    function openDistractionDialog() { distractionDialog.open() }
+    function openCustomizeDialog()   { timerCustomizeDialog.open() }
 
     // Yazılan konu, mevcut bir konuyla sadece büyük/küçük harf farkıyla eşleşiyorsa
     // (ör. "matematik" yazılınca "Matematik" varsa) kayıtlı adı (orijinal harf durumuyla)
@@ -71,6 +79,7 @@ Item {
         function onDistractionAdded(n, cat, note)  { distractionPanel.addEntry(n, cat, note) }
         function onPomodoroStateChanged(state)     { root._updatePomodoroStatus(); timerCard.refreshProgress() }
         function onPomodoroBreakEnded()            { root._handleBreakEnded() }
+        function onTargetCompleted()               { root.targetCompletedRequested(); root.triggerFinish() }
     }
 
     function _updatePomodoroStatus() {
@@ -144,21 +153,25 @@ Item {
 
         ScrollBar.vertical: ScrollBar {
             id: vBar
+            parent: trackerScroll
+            x: trackerScroll.width - width - 2
+            y: trackerScroll.topPadding
+            height: trackerScroll.availableHeight
             policy: ScrollBar.AsNeeded
-            width: 8
+            visible: vBar.size < 1.0
+            width: 6
             contentItem: Rectangle {
                 implicitWidth: 6
-                implicitHeight: 40
                 radius: 3
                 color: vBar.pressed ? Theme.primary : (vBar.hovered ? Theme.borderActive : Theme.border)
-                opacity: vBar.active ? 0.8 : 0.0
+                opacity: vBar.size < 1.0 ? (vBar.active ? 0.85 : 0.35) : 0.0
                 Behavior on opacity { NumberAnimation { duration: 200 } }
             }
         }
 
         Item {
             id: scrollContent
-            width: trackerScroll.availableWidth
+            width: Math.max(0, trackerScroll.availableWidth - 12)
             height: mainGrid.y + mainGrid.implicitHeight + root.pageMargin
 
             GridLayout {
@@ -201,6 +214,31 @@ Item {
                             NumberAnimation { to: 1.0; duration: 800 }
                         }
                     }
+                    Rectangle {
+                        id: pomodoroBadge
+                        readonly property bool isBreakPhase: sessionBridge.pomodoroState === "SHORT_BREAK" || sessionBridge.pomodoroState === "LONG_BREAK"
+                        visible: sessionBridge.isPomodoroMode && sessionBridge.isActive
+                        height: 24
+                        width: pomodoroBadgeText.implicitWidth + 16
+                        radius: 12
+                        color: Theme.surface3
+                        border.color: isBreakPhase ? Theme.info : Theme.success
+                        border.width: 1
+
+                        Text {
+                            id: pomodoroBadgeText
+                            anchors.centerIn: parent
+                            text: {
+                                var s = sessionBridge.pomodoroState
+                                if (s === "SHORT_BREAK") return Strings.trackerPomodoroShortBreak
+                                if (s === "LONG_BREAK") return Strings.trackerPomodoroLongBreak
+                                return Strings.trackerPomodoroFocus
+                            }
+                            color: pomodoroBadge.isBreakPhase ? Theme.info : Theme.success
+                            font.pixelSize: 12
+                            font.weight: Font.DemiBold
+                        }
+                    }
                 }
 
                 // ── KONU SEÇİMİ ──────────────────────────────────────────
@@ -224,9 +262,10 @@ Item {
                             model: subjectBridge ? subjectBridge.getSubjects() : []
                             background: Rectangle { color: "transparent" }
                             contentItem: TextInput {
-                                leftPadding: 4; text: subjectCombo.editText
+                                leftPadding: 4; rightPadding: 38; text: subjectCombo.editText
                                 color: Theme.textPrimary; font.pixelSize: 14
                                 verticalAlignment: TextInput.AlignVCenter
+                                clip: true; autoScroll: true
                                 onAccepted: {
                                     var txt = text.trim()
                                     if (txt.length === 0) return
@@ -236,7 +275,7 @@ Item {
                                         return
                                     }
                                     if (subjectCombo.find(txt) === -1) {
-                                        var palette = ["#4CAF50", "#2196F3", "#9C27B0", "#FF9800", "#F44336", "#00BCD4", "#E91E63", "#3F51B5", "#009688", "#795548", "#607D8B", "#FFC107"]
+                                        var palette = Theme.subjectColors
                                         var color = palette[subjectCombo.count % palette.length]
                                         subjectBridge.addSubject(txt, color)
                                         subjectCombo.model = subjectBridge.getSubjects()
@@ -286,26 +325,17 @@ Item {
                                 }
                             }
                         }
-                        AppIcon {
-                            name: "settings-gear"; size: 16; color: Theme.textMuted
-                            MouseArea {
-                                anchors.fill: parent; anchors.margins: -10
-                                cursorShape: Qt.PointingHandCursor; hoverEnabled: true
-                                onClicked: subjectManagerDialog.open()
-                            }
+                        FTButton {
+                            Layout.preferredWidth: 36; height: 36
+                            icon: "settings-gear"
+                            variant: "ghost"
+                            toolTipText: Strings.subjectManagerTitle
+                            onClicked: subjectManagerDialog.open()
                         }
                         Rectangle { Layout.preferredWidth: 1; Layout.fillHeight: true; Layout.topMargin: 4; Layout.bottomMargin: 4; color: Theme.borderDim }
                         FTButton {
                             Layout.preferredWidth: 40; height: 36
-                            icon: "clock"
-                            variant: sessionBridge.isPomodoroMode ? "primary" : "ghost"
-                            enabled: !sessionBridge.isActive
-                            toolTipText: "Katı Pomodoro Modu\n(25dk Odak + 5dk Mola)"
-                            onClicked: sessionBridge.isPomodoroMode = !sessionBridge.isPomodoroMode
-                        }
-                        FTButton {
-                            Layout.preferredWidth: 40; height: 36
-                            icon: "trend-down"
+                            icon: "minimize-2"
                             variant: "ghost"
                             toolTipText: "Mini Moda Geç"
                             onClicked: root.miniModeRequested()
@@ -335,6 +365,8 @@ Item {
                     Layout.fillHeight: false
                     Layout.minimumHeight: root.height < 650 ? 170 : 220
                     Layout.preferredHeight: root.isNarrow ? (root.height < 650 ? 200 : 280) : root.widePanelHeight
+                    onCustomizeRequested: timerCustomizeDialog.open()
+                    onZenModeRequested:   root.zenModeRequested()
                 }
 
                 // ── ODAK BOZULDU BUTONU ──────────────────────────────────
@@ -349,9 +381,17 @@ Item {
                     radius: 12
                     property bool isBtnActive: false
                     opacity: isBtnActive ? 1.0 : 0.35
+                    activeFocusOnTab: distractionBtn.isBtnActive
+                    Accessible.role: Accessible.Button
+                    Accessible.name: Strings.trackerDistractionButton
                     Behavior on opacity { NumberAnimation { duration: 200 } }
                     color: Theme.danger
-                    border.color: Theme.dangerBorder; border.width: 1
+                    border.color: distractionBtn.activeFocus ? Theme.accent : Theme.dangerBorder
+                    border.width: distractionBtn.activeFocus ? 2 : 1
+
+                    Keys.onReturnPressed: if (distractionBtn.isBtnActive) distractionDialog.open()
+                    Keys.onEnterPressed: if (distractionBtn.isBtnActive) distractionDialog.open()
+                    Keys.onSpacePressed: if (distractionBtn.isBtnActive) distractionDialog.open()
 
                     Rectangle {
                         anchors.fill: parent; radius: parent.radius; color: "#000000"
@@ -432,6 +472,10 @@ Item {
     SubjectManagerDialog {
         id: subjectManagerDialog
         onSubjectsChanged: subjectCombo.model = subjectBridge.getSubjects()
+    }
+
+    TimerCustomizeDialog {
+        id: timerCustomizeDialog
     }
 
     Toast {

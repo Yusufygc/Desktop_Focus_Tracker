@@ -99,11 +99,22 @@ ColumnLayout {
                     RowLayout {
                         anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
                         spacing: 12
-                        Text { text: "#" + model.n;   color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold }
-                        Text { text: model.cat;        color: Theme.dangerMuted; font.pixelSize: 13 }
                         Text {
-                            text: model.note || ""; color: Theme.textMuted; font.pixelSize: 12
-                            visible: model.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight
+                            text: "#" + model.n
+                            color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold
+                            Layout.preferredWidth: 28; Layout.alignment: Qt.AlignVCenter
+                        }
+                        Text {
+                            text: model.cat || ""
+                            color: Theme.dangerMuted; font.pixelSize: 13; font.weight: Font.Medium
+                            Layout.preferredWidth: 120; Layout.maximumWidth: 140
+                            Layout.alignment: Qt.AlignVCenter; elide: Text.ElideRight
+                        }
+                        Text {
+                            text: model.note || ""
+                            color: Theme.textMuted; font.pixelSize: 12
+                            Layout.fillWidth: true; Layout.minimumWidth: 0
+                            Layout.alignment: Qt.AlignVCenter; elide: Text.ElideRight
                         }
                     }
                 }
@@ -146,7 +157,7 @@ ColumnLayout {
             RowLayout {
                 spacing: 6
                 AppIcon { name: "search"; size: 13; color: Theme.textDimmed }
-                Text { text: Strings.distractionIntervalAnalysisTitle; color: Theme.textDimmed; font.pixelSize: 10; font.letterSpacing: 2 }
+                Text { text: Strings.distractionIntervalAnalysisTitle; color: Theme.textDimmed; font.pixelSize: 12; font.letterSpacing: 2 }
             }
 
             Text {
@@ -182,7 +193,7 @@ ColumnLayout {
                         var s = root.computeIntervalStats()
                         return (s && s.trend === "better") ? Theme.success : Theme.dangerMuted
                     }
-                    font.pixelSize: 11
+                    font.pixelSize: 12
                 }
             }
         }

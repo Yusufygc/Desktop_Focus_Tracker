@@ -142,11 +142,11 @@ ColumnLayout {
                 }
                 RowLayout {
                     spacing: 10
-                    Text { text: sessionDelegate.startedAt; color: Theme.textDimmed; font.pixelSize: 11 }
+                    Text { text: sessionDelegate.startedAt; color: Theme.textDimmed; font.pixelSize: 12 }
                     Rectangle { width: 3; height: 3; radius: 2; color: Theme.borderDim }
-                    Text { text: root._fmtDur(sessionDelegate.durationSec); color: Theme.info; font.pixelSize: 11 }
+                    Text { text: root._fmtDur(sessionDelegate.durationSec); color: Theme.info; font.pixelSize: 12 }
                     Rectangle { width: 3; height: 3; radius: 2; color: Theme.borderDim }
-                    Text { text: sessionDelegate.distractions + " boz."; color: Theme.dangerMuted; font.pixelSize: 11 }
+                    Text { text: sessionDelegate.distractions + " boz."; color: Theme.dangerMuted; font.pixelSize: 12 }
                 }
             }
 

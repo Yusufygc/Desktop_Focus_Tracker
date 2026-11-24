@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-23T21:55:00+03:00",
+  "title": "Design System: FocusTracker",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Ocean Steel Blue",
+        "canonical": "#3b82f6",
+        "tonalRamp": ["#172554", "#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Sky Blue Accent",
+        "canonical": "#93c5fd",
+        "tonalRamp": ["#172554", "#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"]
+      },
+      "accent-warm": {
+        "role": "secondary",
+        "displayName": "Warm Amber",
+        "canonical": "#f59e0b",
+        "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a"]
+      },
+      "surface-0": {
+        "role": "neutral",
+        "displayName": "Obsidian Canvas",
+        "canonical": "#0d0e11",
+        "tonalRamp": ["#08090b", "#0d0e11", "#13151a", "#181b21", "#1f232b", "#272c36", "#2b303b", "#475569"]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Cool Slate Ink",
+        "canonical": "#e2e8f0",
+        "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Timer", "purpose": "Live session stopwatch and Pomodoro countdown readouts in Consolas." },
+      "headline": { "displayName": "Metric Headline", "purpose": "StatCard primary numbers and MiniWindow timer." },
+      "title": { "displayName": "Page Title", "purpose": "Primary screen headers and modal dialog headings." },
+      "body": { "displayName": "Body UI", "purpose": "Buttons, navigation labels, list rows, and form inputs." },
+      "label": { "displayName": "Label & Caption", "purpose": "Chart tooltips, metadata tags, and legend bounds (12px floor)." }
+    },
+    "shadows": [
+      { "name": "card-border-glow", "value": "0 0 0 1px rgba(59, 130, 246, 0.6)", "purpose": "Subtle hover outline on StatCard GlassCards instead of drop shadows." }
+    ],
+    "motion": [
+      { "name": "ease-out-cubic-rail", "value": "200ms cubic-bezier(0.33, 1, 0.68, 1)", "purpose": "Sidebar collapse/expand width and active nav indicator transitions." },
+      { "name": "color-shift", "value": "120ms ease", "purpose": "Button and interactive row hover state transitions." },
+      { "name": "arc-smooth", "value": "900ms linear", "purpose": "Smooth 1-second interpolation on TimerCard canvas arc." }
+    ],
+    "breakpoints": [
+      { "name": "mini", "value": "360px" },
+      { "name": "narrow-grid", "value": "680px" },
+      { "name": "single-column", "value": "760px" },
+      { "name": "min-window", "value": "840px" },
+      { "name": "default-window", "value": "1180px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary session and confirmation action button (FTButton primary).",
+      "html": "<button class=\"ds-btn-primary\">Başlat</button>",
+      "css": ".ds-btn-primary { background: #3b82f6; color: #ffffff; height: 44px; padding: 0 16px; border: 1px solid #1d4ed8; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.12s ease, transform 0.08s ease; } .ds-btn-primary:hover { background: #60a5fa; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #93c5fd; outline-offset: 1px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary action, toolbar icon button, and unselected period toggle (FTButton ghost).",
+      "html": "<button class=\"ds-btn-ghost\">Duraklat</button>",
+      "css": ".ds-btn-ghost { background: #272c36; color: #e2e8f0; height: 44px; padding: 0 16px; border: 1px solid #3d4454; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.12s ease; } .ds-btn-ghost:hover { background: #323846; } .ds-btn-ghost:focus-visible { outline: 2px solid #93c5fd; outline-offset: 1px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive delete and active distraction action (FTButton danger).",
+      "html": "<button class=\"ds-btn-danger\">ODAK BOZULDU</button>",
+      "css": ".ds-btn-danger { background: #991b1b; color: #ffffff; height: 44px; padding: 0 16px; border: 1px solid #7f1d1d; border-radius: 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: background 0.12s ease; } .ds-btn-danger:hover { background: #b91c1c; } .ds-btn-danger:focus-visible { outline: 2px solid #93c5fd; outline-offset: 1px; }"
+    },
+    {
+      "name": "Glass Card",
+      "kind": "card",
+      "refersTo": "glass-card",
+      "description": "Tonal surface card used across Tracker, Analytics, Stats, and History pages.",
+      "html": "<div class=\"ds-glass-card\"><strong>Toplam Odak</strong><p>2sa 15dk</p></div>",
+      "css": ".ds-glass-card { background: #181b21; color: #e2e8f0; border: 1px solid #2b303b; border-radius: 16px; padding: 20px; transition: border-color 0.2s ease; } .ds-glass-card:hover { border-color: #3b82f6; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-button",
+      "description": "Left navigation rail button with active accent bar and keyboard focus border.",
+      "html": "<button class=\"ds-nav-item\">Takip</button>",
+      "css": ".ds-nav-item { background: #172554; color: #e2e8f0; height: 44px; padding: 0 14px; border: none; border-left: 3px solid #93c5fd; border-radius: 10px; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; } .ds-nav-item:hover { background: #272c36; } .ds-nav-item:focus-visible { outline: 2px solid #93c5fd; outline-offset: 1px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Cockpit",
+    "overview": "FocusTracker is an Operate-mode desktop productivity workspace designed to stay calm in peripheral vision while keeping critical session controls immediately legible. Instead of floating drop-shadows or ornamental chrome, the interface relies on neutral obsidian-carbon tonal steps (in dark mode) and crisp slate surfaces (in light mode) framed by hairline borders.\n\nColor carries operational meaning rather than decoration: crisp steel blue (or user-selected accent presets) anchors primary focus actions, emerald signals active progress and unbroken streaks, amber marks cumulative settlement milestones, and saturated red is reserved exclusively for interruption logging and destructive confirmation.",
+    "keyCharacteristics": [
+      "Tonal surface hierarchy (surface0 -> surface4) paired with crisp 1px borders instead of heavy drop shadows.",
+      "High-contrast monospace telemetry (Consolas) for live timers so digits never jitter horizontally as seconds tick.",
+      "Single-stroke Lucide SVG iconography rendered cleanly through AppIcon (ColorOverlay) in both light and dark themes.",
+      "Responsive desktop breakpoints adapting smoothly from compact 840x560 split windows and 360x90 always-on-top mini windows to 1920px maximized displays."
+    ],
+    "rules": [
+      { "name": "The Semantic Color Rule", "body": "Never spend red (danger) on neutral metadata or amber (accentWarm) on ordinary buttons; red means interruption or deletion, and emerald means active/completed focus.", "section": "colors" },
+      { "name": "The Token Authority Rule", "body": "Every surface, border, text, and subject palette color in QML must resolve through Theme.* rather than inline hex literals.", "section": "colors" },
+      { "name": "The Tabular Timecode Rule", "body": "Live countdowns and elapsed clocks always render in Consolas so digit widths never shift horizontally on tick.", "section": "typography" },
+      { "name": "The 12px Floor Rule", "body": "No informational label, tooltip, caption, or chart readout may drop below 12px.", "section": "typography" },
+      { "name": "The Flat-Layering Rule", "body": "Convey depth through surface contrast steps (surface0 -> surface4) and hairline borders (border, borderActive), reserving translucent overlays (overlayDim) strictly for modal focus protection.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do route every color through Theme.* tokens and every user-facing string through Strings.* (app/core/strings.py).",
+      "Do give every custom MouseArea-backed control activeFocusOnTab, Enter/Space keyboard activation, a visible activeFocus border (2px Theme.accent), and Accessible.role / Accessible.name.",
+      "Do keep font.pixelSize >= 12 for all readable UI copy, tooltips, badges, and metadata.",
+      "Do use single-stroke Lucide SVGs via AppIcon so icons recolor cleanly across dark/light themes and accent presets."
+    ],
+    "donts": [
+      "Don't hardcode hex colors inside QML pages or dialogs when a Theme token or Theme.subjectColors belongs there.",
+      "Don't use emojis as UI icons or pair semantically misleading icons (like financial trend arrows for window controls).",
+      "Don't drop QT_QUICK_CONTROLS_STYLE=Basic or rely on heavy drop shadows inside GlassCard panels.",
+      "Don't convey data intensity in charts (FocusHeatmap, PeriodBarChart) by color opacity alone without a legend or tooltip/keyboard readout."
+    ]
+  }
+}

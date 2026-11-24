@@ -21,17 +21,25 @@ Rectangle {
     height: 44
     radius: 10
     opacity: root.enabled ? 1.0 : 0.35
+    activeFocusOnTab: root.enabled
+    Accessible.role: Accessible.Button
+    Accessible.name: root.label !== "" ? root.label : root.toolTipText
+    Accessible.description: root.toolTipText
+
+    Keys.onReturnPressed: if (root.enabled) root.clicked()
+    Keys.onEnterPressed: if (root.enabled) root.clicked()
+    Keys.onSpacePressed: if (root.enabled) root.clicked()
 
     property string toolTipText: ""
     ToolTip {
         id: ftToolTip
-        visible: mouseArea.containsMouse && root.toolTipText !== ""
+        visible: (mouseArea.containsMouse || root.activeFocus) && root.toolTipText !== ""
         text: root.toolTipText
         delay: 500
         contentItem: Text {
             text: ftToolTip.text
             color: Theme.textPrimary
-            font.pixelSize: 11
+            font.pixelSize: 12
         }
         background: Rectangle {
             color: Theme.surface1
@@ -47,8 +55,8 @@ Rectangle {
     color: mouseArea.containsMouse && root.enabled
            ? root.styles[variant].hover
            : root.styles[variant].bg
-    border.color: root.styles[variant].border
-    border.width: 1
+    border.color: root.activeFocus ? Theme.accent : root.styles[variant].border
+    border.width: root.activeFocus ? 2 : 1
 
     Behavior on color { ColorAnimation { duration: 120 } }
 

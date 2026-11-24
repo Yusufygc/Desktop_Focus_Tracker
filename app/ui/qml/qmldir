@@ -11,6 +11,11 @@ NavButton 1.0 components/NavButton.qml
 GlassCard 1.0 components/GlassCard.qml
 FTButton 1.0 components/FTButton.qml
 FTDialog 1.0 components/FTDialog.qml
+FTTextArea 1.0 components/FTTextArea.qml
+FlipDigitCard 1.0 components/FlipDigitCard.qml
+FlipClockView 1.0 components/FlipClockView.qml
+TimerCustomizeDialog 1.0 components/TimerCustomizeDialog.qml
+ZenTimerOverlay 1.0 components/ZenTimerOverlay.qml
 StatCard 1.0 components/StatCard.qml
 AppIcon 1.0 components/AppIcon.qml
 UpdateDialog 1.0 components/UpdateDialog.qml

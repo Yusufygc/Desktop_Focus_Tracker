@@ -72,3 +72,6 @@ build/
 
 # --- Inno Setup ---
 Output/
+
+# --- Ham AI 3D Konsept Dosyaları (optimize .mesh çıktıları repo içindedir) ---
+assets/island3d/concepts/*.glb

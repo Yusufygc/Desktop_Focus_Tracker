@@ -10,14 +10,31 @@ Node {
 
     scale: Qt.vector3d(treeScale, treeScale, treeScale)
 
+    Texture {
+        id: woodTex
+        source: "maps/wood_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+    Texture {
+        id: foliageTex
+        source: "maps/foliage_tex.png"
+        tilingModeHorizontal: Texture.Repeat
+        tilingModeVertical: Texture.Repeat
+        generateMipmaps: true
+        mipFilter: Texture.Linear
+    }
+
     Model {
         source: "meshes/stump.mesh"
         castsShadows: true
         receivesShadows: true
         materials: [
-            PrincipledMaterial { baseColor: "#5b3a24"; roughness: 0.95 },
-            PrincipledMaterial { baseColor: "#c99a63"; roughness: 0.85 },
-            PrincipledMaterial { baseColor: "#84cc16"; roughness: 0.7 }
+            PrincipledMaterial { baseColor: "#5b3a24"; baseColorMap: woodTex; roughness: 0.95 },
+            PrincipledMaterial { baseColor: "#c99a63"; baseColorMap: woodTex; roughness: 0.85 },
+            PrincipledMaterial { baseColor: "#84cc16"; baseColorMap: foliageTex; roughness: 0.7 }
         ]
     }
 }

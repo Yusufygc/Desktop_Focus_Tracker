@@ -86,12 +86,30 @@ Item {
     }
 
     ScrollView {
-        anchors { fill: parent; margins: 24 }
+        id: statsScroll
+        anchors { fill: parent; leftMargin: 24; topMargin: 24; bottomMargin: 24; rightMargin: 8 }
         contentWidth: availableWidth
         clip: true
 
+        ScrollBar.vertical: ScrollBar {
+            id: statsVBar
+            parent: statsScroll
+            x: statsScroll.width - width
+            y: statsScroll.topPadding
+            height: statsScroll.availableHeight
+            policy: ScrollBar.AsNeeded
+            visible: statsVBar.size < 1.0
+            width: 6
+            contentItem: Rectangle {
+                implicitWidth: 6
+                radius: 3
+                color: statsVBar.pressed ? Theme.primary : (statsVBar.hovered ? Theme.borderActive : Theme.border)
+                opacity: statsVBar.size < 1.0 ? (statsVBar.active ? 0.85 : 0.35) : 0.0
+            }
+        }
+
         ColumnLayout {
-            width: parent.width
+            width: Math.max(0, statsScroll.availableWidth - 16)
             spacing: 20
 
             Text { text: Strings.focusStatsTitle; color: Theme.textPrimary; font.pixelSize: 22; font.weight: Font.Bold }
@@ -99,8 +117,12 @@ Item {
 
             // ── Yerleşim (dönemden bağımsız, tüm-zamanlar kümülatif) ──
             GlassCard {
+                id: settlementCard
+                readonly property int viewportHeight: root.viewMode3D
+                    ? Math.max(440, Math.round(root.height * 0.56))
+                    : Math.max(260, Math.round(root.height * 0.36))
                 Layout.fillWidth: true
-                Layout.preferredHeight: root.viewMode3D ? 425 : 315
+                Layout.preferredHeight: viewportHeight + 135
                 height: Layout.preferredHeight
                 Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 property bool hovered: false
@@ -139,10 +161,10 @@ Item {
                                     Layout.fillWidth: true; Layout.fillHeight: true; radius: 12
                                     color: !root.viewMode3D ? Theme.primary : "transparent"
                                     Behavior on color { ColorAnimation { duration: 150 } }
-                                    Text {
+                                        Text {
                                         anchors.centerIn: parent
                                         text: "2D Köy"
-                                        font.pixelSize: 11
+                                        font.pixelSize: 12
                                         font.weight: !root.viewMode3D ? Font.Bold : Font.Normal
                                         color: !root.viewMode3D ? Theme.onSolid : Theme.textSecondary
                                     }
@@ -160,7 +182,7 @@ Item {
                                     Text {
                                         anchors.centerIn: parent
                                         text: "3D Ada"
-                                        font.pixelSize: 11
+                                        font.pixelSize: 12
                                         font.weight: root.viewMode3D ? Font.Bold : Font.Normal
                                         color: root.viewMode3D ? Theme.onSolid : Theme.textSecondary
                                     }
@@ -181,20 +203,20 @@ Item {
                             text: root.settlement.totalHoursLabel
                             color: Theme.textDimmed; font.pixelSize: 13
                         }
-                        AppIcon {
-                            name: "sparkles"; size: 16; color: Theme.textSecondary
-                            MouseArea {
-                                anchors.fill: parent; anchors.margins: -6
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: achievementsDialog.open()
-                            }
+                        FTButton {
+                            Layout.preferredWidth: 34; height: 30
+                            icon: "sparkles"
+                            variant: "ghost"
+                            toolTipText: Strings.achievementsTitle
+                            onClicked: achievementsDialog.open()
                         }
                     }
 
                     // ── Görünüm Alanı (3D Ada veya 2D Köy) ────────────
                     Item {
+                        id: settlementViewport
                         Layout.fillWidth: true
-                        Layout.preferredHeight: root.viewMode3D ? 290 : 180
+                        Layout.preferredHeight: settlementCard.viewportHeight
                         Behavior on Layout.preferredHeight { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                         HybridIslandView {
@@ -238,32 +260,40 @@ Item {
             }
 
             // ── Periyot seçici + geçmiş dönem gezinme toolbar'ı ───────
-            RowLayout {
+            GridLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                columns: root.width < 680 ? 1 : 2
+                rowSpacing: 10
+                columnSpacing: 12
 
-                Repeater {
-                    model: [
-                        { key: "day",   label: Strings.focusStatsPeriodDay   },
-                        { key: "week",  label: Strings.focusStatsPeriodWeek  },
-                        { key: "month", label: Strings.focusStatsPeriodMonth },
-                        { key: "year",  label: Strings.focusStatsPeriodYear  }
-                    ]
-                    delegate: FTButton {
-                        Layout.preferredWidth: 80
-                        label: modelData.label
-                        variant: root.selectedPeriod === modelData.key ? "primary" : "ghost"
-                        onClicked: root.selectedPeriod = modelData.key
+                RowLayout {
+                    spacing: 8
+                    Layout.fillWidth: true
+
+                    Repeater {
+                        model: [
+                            { key: "day",   label: Strings.focusStatsPeriodDay   },
+                            { key: "week",  label: Strings.focusStatsPeriodWeek  },
+                            { key: "month", label: Strings.focusStatsPeriodMonth },
+                            { key: "year",  label: Strings.focusStatsPeriodYear  }
+                        ]
+                        delegate: FTButton {
+                            Layout.preferredWidth: 74
+                            label: modelData.label
+                            variant: root.selectedPeriod === modelData.key ? "primary" : "ghost"
+                            onClicked: root.selectedPeriod = modelData.key
+                        }
                     }
                 }
 
-                Item { Layout.fillWidth: true }
-
                 RowLayout {
                     spacing: 4
+                    Layout.alignment: root.width < 680 ? Qt.AlignLeft : Qt.AlignRight
+
                     FTButton {
                         Layout.preferredWidth: 36; height: 32
                         label: "‹"; variant: "ghost"
+                        toolTipText: "Önceki Dönem"
                         onClicked: root.goToPreviousPeriod()
                     }
                     Text {
@@ -271,11 +301,13 @@ Item {
                         color: Theme.textSecondary; font.pixelSize: 12; font.weight: Font.Medium
                         Layout.preferredWidth: 150
                         horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
                     }
                     FTButton {
                         Layout.preferredWidth: 36; height: 32
                         label: "›"; variant: "ghost"
                         enabled: !root.report.isCurrentPeriod
+                        toolTipText: "Sonraki Dönem"
                         onClicked: root.goToNextPeriod()
                     }
                 }
@@ -372,7 +404,43 @@ Item {
                     anchors { fill: parent; margins: 20 }
                     spacing: 12
 
-                    Text { text: Strings.focusStatsHeatmapTitle; color: Theme.textSecondary; font.pixelSize: 13; font.weight: Font.Medium }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Text {
+                            text: Strings.focusStatsHeatmapTitle
+                            color: Theme.textSecondary
+                            font.pixelSize: 13
+                            font.weight: Font.Medium
+                            Layout.fillWidth: true
+                        }
+
+                        Row {
+                            spacing: 4
+                            Text {
+                                text: "Az (0sa)"
+                                color: Theme.textMuted
+                                font.pixelSize: 12
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            Repeater {
+                                model: [0.0, 0.25, 0.5, 0.75, 1.0]
+                                delegate: Rectangle {
+                                    width: 10; height: 10; radius: 2
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: modelData === 0.0 ? Theme.surface3 : Theme.primary
+                                    opacity: modelData === 0.0 ? 1.0 : modelData
+                                }
+                            }
+                            Text {
+                                text: "Çok (4sa+)"
+                                color: Theme.textMuted
+                                font.pixelSize: 12
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                    }
 
                     FocusHeatmap {
                         id: heatmap

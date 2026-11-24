@@ -37,11 +37,30 @@ GlassCard {
 
     // ── Seçili seans detayı ────────────────────────────────────────
     ScrollView {
-        anchors.fill: parent; anchors.margins: 24; contentWidth: availableWidth
+        id: detailScroll
+        anchors { fill: parent; leftMargin: 24; topMargin: 24; bottomMargin: 24; rightMargin: 8 }
+        contentWidth: availableWidth
         visible: root.hasSelection; clip: true
 
+        ScrollBar.vertical: ScrollBar {
+            id: detailVBar
+            parent: detailScroll
+            x: detailScroll.width - width
+            y: detailScroll.topPadding
+            height: detailScroll.availableHeight
+            policy: ScrollBar.AsNeeded
+            visible: detailVBar.size < 1.0
+            width: 6
+            contentItem: Rectangle {
+                implicitWidth: 6
+                radius: 3
+                color: detailVBar.pressed ? Theme.primary : (detailVBar.hovered ? Theme.borderActive : Theme.border)
+                opacity: detailVBar.size < 1.0 ? (detailVBar.active ? 0.85 : 0.35) : 0.0
+            }
+        }
+
         ColumnLayout {
-            width: parent.width; spacing: 16
+            width: Math.max(0, detailScroll.availableWidth - 16); spacing: 16
 
             // Başlık + aksiyon butonları
             RowLayout {
@@ -53,18 +72,24 @@ GlassCard {
                     color: root.sessionData.subjectColor || Theme.primary
                     Behavior on color { ColorAnimation { duration: 200 } }
                 }
-                Text {
-                    text: root.sessionData.subject || ""
-                    color: Theme.accent; font.pixelSize: 20; font.weight: Font.Bold
-                    Layout.fillWidth: true; elide: Text.ElideRight
-                }
-                Text {
-                    text: root.sessionData.startedAt || ""
-                    color: Theme.textDimmed; font.pixelSize: 12
-                    Layout.alignment: Qt.AlignVCenter
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 2
+
+                    Text {
+                        text: root.sessionData.subject || ""
+                        color: Theme.accent; font.pixelSize: 20; font.weight: Font.Bold
+                        Layout.fillWidth: true; Layout.minimumWidth: 0; elide: Text.ElideRight
+                    }
+                    Text {
+                        text: root.sessionData.startedAt || ""
+                        color: Theme.textDimmed; font.pixelSize: 12
+                        Layout.fillWidth: true; Layout.minimumWidth: 0; elide: Text.ElideRight
+                    }
                 }
                 FTButton {
-                    Layout.preferredWidth: 100; height: 34; label: Strings.historyEditButton; icon: "edit"; variant: "ghost"
+                    Layout.preferredWidth: 96; height: 34; label: Strings.historyEditButton; icon: "edit"; variant: "ghost"
                     onClicked: root.editRequested(root.sessionData.subject || "", root.sessionData.notes || "")
                 }
                 FTButton {
@@ -108,25 +133,25 @@ GlassCard {
             }
 
             // Seans notu
-            Column {
+            ColumnLayout {
                 Layout.fillWidth: true; spacing: 6
                 visible: (root.sessionData.notes || "") !== ""
 
                 Text { text: Strings.historyNoteLabel; color: Theme.textDimmed; font.pixelSize: 12 }
                 Rectangle {
-                    width: parent.width; radius: 8; color: Theme.surface2
-                    height: noteText.implicitHeight + 20
+                    Layout.fillWidth: true; radius: 8; color: Theme.surface2
+                    Layout.preferredHeight: noteText.implicitHeight + 20
                     Text {
                         id: noteText
                         anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10; topMargin: 10 }
                         text: root.sessionData.notes || ""
-                        color: Theme.textSecondary; font.pixelSize: 13; wrapMode: Text.WordWrap
+                        color: Theme.textSecondary; font.pixelSize: 13; wrapMode: Text.Wrap
                     }
                 }
             }
 
             // Bozulma listesi
-            Column {
+            ColumnLayout {
                 Layout.fillWidth: true; spacing: 8
                 visible: root.distractions.length > 0
 
@@ -135,15 +160,33 @@ GlassCard {
                 Repeater {
                     model: root.distractions
                     delegate: Rectangle {
-                        width: parent.width; height: 38; radius: 8
+                        Layout.fillWidth: true; Layout.preferredHeight: 38; radius: 8
                         color: index % 2 === 0 ? Theme.surface2 : "transparent"
                         RowLayout {
                             anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
                             spacing: 10
-                            Text { text: "#" + (index + 1); color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold }
-                            Text { text: modelData.time;     color: Theme.textDimmed;  font.pixelSize: 11; font.family: "Consolas" }
-                            Text { text: modelData.category; color: Theme.dangerMuted;  font.pixelSize: 13 }
-                            Text { text: modelData.note;     color: Theme.textMuted;  font.pixelSize: 12; visible: modelData.note !== ""; Layout.fillWidth: true; elide: Text.ElideRight }
+                            Text {
+                                text: "#" + (index + 1)
+                                color: Theme.primary; font.pixelSize: 12; font.weight: Font.Bold
+                                Layout.preferredWidth: 28; Layout.alignment: Qt.AlignVCenter
+                            }
+                            Text {
+                                text: modelData.time || ""
+                                color: Theme.textDimmed; font.pixelSize: 12; font.family: "Consolas"
+                                Layout.preferredWidth: 68; Layout.alignment: Qt.AlignVCenter
+                            }
+                            Text {
+                                text: modelData.category || ""
+                                color: Theme.dangerMuted; font.pixelSize: 13; font.weight: Font.Medium
+                                Layout.preferredWidth: 130; Layout.maximumWidth: 150
+                                Layout.alignment: Qt.AlignVCenter; elide: Text.ElideRight
+                            }
+                            Text {
+                                text: modelData.note || ""
+                                color: Theme.textMuted; font.pixelSize: 12
+                                Layout.fillWidth: true; Layout.minimumWidth: 0
+                                Layout.alignment: Qt.AlignVCenter; elide: Text.ElideRight
+                            }
                         }
                     }
                 }

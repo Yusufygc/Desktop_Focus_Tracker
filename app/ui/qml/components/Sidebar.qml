@@ -44,8 +44,17 @@ Item {
                 x: root.collapsed ? Math.round((parent.width - width) / 2) : 4
                 Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 radius: 8
+                activeFocusOnTab: true
+                Accessible.role: Accessible.Button
+                Accessible.name: root.collapsed ? Strings.sidebarExpandTooltip : Strings.sidebarCollapseTooltip
                 color: hamburgerMouse.containsMouse ? Theme.surface4 : "transparent"
+                border.color: hamburgerBtn.activeFocus ? Theme.accent : "transparent"
+                border.width: hamburgerBtn.activeFocus ? 2 : 0
                 Behavior on color { ColorAnimation { duration: 150 } }
+
+                Keys.onReturnPressed: root.collapsed = !root.collapsed
+                Keys.onEnterPressed: root.collapsed = !root.collapsed
+                Keys.onSpacePressed: root.collapsed = !root.collapsed
 
                 AppIcon {
                     anchors.centerIn: parent
@@ -63,7 +72,7 @@ Item {
                 }
 
                 ToolTip {
-                    visible: hamburgerMouse.containsMouse
+                    visible: hamburgerMouse.containsMouse || hamburgerBtn.activeFocus
                     text: root.collapsed ? Strings.sidebarExpandTooltip : Strings.sidebarCollapseTooltip
                     delay: 300
                 }
@@ -122,11 +131,20 @@ Item {
             Layout.fillWidth: true
             height: 44
             property bool hovered: false
+            activeFocusOnTab: true
+            Accessible.role: Accessible.Button
+            Accessible.name: Theme.isDark ? Strings.themeToggleLightLabel : Strings.themeToggleDarkLabel
+
+            Keys.onReturnPressed: Theme.toggleTheme()
+            Keys.onEnterPressed: Theme.toggleTheme()
+            Keys.onSpacePressed: Theme.toggleTheme()
 
             Rectangle {
                 anchors.fill: parent
                 radius: 10
                 color: themeToggle.hovered ? Theme.surface4 : "transparent"
+                border.color: themeToggle.activeFocus ? Theme.accent : "transparent"
+                border.width: themeToggle.activeFocus ? 2 : 0
                 Behavior on color { ColorAnimation { duration: 150 } }
             }
 
@@ -169,7 +187,7 @@ Item {
             }
 
             ToolTip {
-                visible: themeToggle.hovered && root.collapsed
+                visible: (themeToggle.hovered || themeToggle.activeFocus) && root.collapsed
                 text: Theme.isDark ? Strings.themeToggleLightLabel : Strings.themeToggleDarkLabel
                 delay: 200
                 timeout: 3000
@@ -182,11 +200,20 @@ Item {
             Layout.fillWidth: true
             height: 44
             property bool hovered: false
+            activeFocusOnTab: true
+            Accessible.role: Accessible.Button
+            Accessible.name: Strings.settingsTitle
+
+            Keys.onReturnPressed: settingsDialog.open()
+            Keys.onEnterPressed: settingsDialog.open()
+            Keys.onSpacePressed: settingsDialog.open()
 
             Rectangle {
                 anchors.fill: parent
                 radius: 10
                 color: settingsRow.hovered ? Theme.surface4 : "transparent"
+                border.color: settingsRow.activeFocus ? Theme.accent : "transparent"
+                border.width: settingsRow.activeFocus ? 2 : 0
                 Behavior on color { ColorAnimation { duration: 150 } }
             }
 
@@ -229,7 +256,7 @@ Item {
             }
 
             ToolTip {
-                visible: settingsRow.hovered && root.collapsed
+                visible: (settingsRow.hovered || settingsRow.activeFocus) && root.collapsed
                 text: Strings.settingsTitle
                 delay: 200
                 timeout: 3000

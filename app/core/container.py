@@ -10,6 +10,7 @@ from app.core.session_store import SessionStore
 from app.ui.theme import AppTheme
 from app.ui.strings import AppStrings
 from app.ui.goal_settings import GoalSettings
+from app.ui.timer_settings import TimerSettings
 from app.ui.app_config import AppConfig
 
 from app.core.repositories.session_repo import SessionRepository
@@ -68,6 +69,7 @@ class AppContainer:
         self.theme = AppTheme()
         self.strings = AppStrings()
         self.goal_settings = GoalSettings()
+        self.timer_settings = TimerSettings()
         self.app_config = AppConfig()
 
         # 4. Bridges
@@ -96,4 +98,5 @@ class AppContainer:
         ctx.setContextProperty("Theme", self.theme)
         ctx.setContextProperty("Strings", self.strings)
         ctx.setContextProperty("goalSettings", self.goal_settings)
+        ctx.setContextProperty("timerSettings", self.timer_settings)
         ctx.setContextProperty("appIconUrl", app_icon_url)

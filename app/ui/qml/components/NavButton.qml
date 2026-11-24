@@ -14,6 +14,13 @@ Item {
 
     Layout.fillWidth: true
     height: 44
+    activeFocusOnTab: true
+    Accessible.role: Accessible.Button
+    Accessible.name: root.label
+
+    Keys.onReturnPressed: root.clicked()
+    Keys.onEnterPressed: root.clicked()
+    Keys.onSpacePressed: root.clicked()
 
     property bool hovered: false
 
@@ -21,6 +28,8 @@ Item {
         anchors.fill: parent
         radius: 10
         color: active ? Theme.primaryDark : (hovered ? Theme.surface4 : "transparent")
+        border.color: root.activeFocus ? Theme.accent : "transparent"
+        border.width: root.activeFocus ? 2 : 0
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 
@@ -74,7 +83,7 @@ Item {
     }
 
     ToolTip {
-        visible: root.hovered && root.collapsed
+        visible: (root.hovered || root.activeFocus) && root.collapsed
         text: root.label
         delay: 200
         timeout: 3000

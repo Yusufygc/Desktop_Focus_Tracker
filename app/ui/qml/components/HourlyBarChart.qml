@@ -108,7 +108,7 @@ Item {
             id: tipText
             anchors.centerIn: parent
             color: Theme.textPrimary
-            font.pixelSize: 11
+            font.pixelSize: 12
         }
     }
 }
