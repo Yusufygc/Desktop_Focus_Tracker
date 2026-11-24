@@ -31,26 +31,25 @@ Uygulamanın temel felsefesi:
 
 ## 🌟 Öne Çıkan Özellikler
 
-### 1. 🎯 Gelişmiş Odaklanma Zamanlayıcısı
-- **Serbest Kronometre Modu:** Önceden süre sınırı koymadan derin çalışmaya dalın; çalıştığınız süreyi saniye saniye takip eder.
-- **Katı Pomodoro Modu:** Belirlediğiniz çalışma ve mola döngüleriyle (örn. 25 dk Odak / 5 dk Mola) disiplinli çalışma seansları oluşturur.
-- **Tek Tıkla Süre Önayarları (Presets):** 15, 25, 45, 60, 90 dakika gibi sık kullanılan süreleri tek tıkla başlatma veya yeni özel önayarlar tanımlama imkanı.
-- **Daima Üstte Mini Pencere Modu (PiP):** Ana pencere dikkatinizi dağıtıyorsa ekranın bir köşesinde sürekli görünen, seansı duraklatıp bitirebileceğiniz kompakt mini moda geçebilirsiniz.
+### 1. 🎯 Fliqlo Flip Clock, Forest Geri Sayım ve Pomodoro Zamanlayıcısı
+- **Kişiselleştirilebilir Fliqlo Flip Saat & Klasik Halka:** Varsayılan split-flap çevirmeli saat görünümünde 5 hazır tema, kart/rakam renkleri, cam yansıma efekti ve saydamlık ayarları sunulur; tek tıkla eski **Dairesel Halka (Klasik)** stiline de geçilebilir.
+- **Zen Tam Ekran Modu:** Sayaç kartındaki büyütme butonuyla dikkat dağıtıcıları gizleyen tam pencere Fliqlo odak sahnesine (`Esc` ile çıkış) geçilebilir.
+- **Forest Tarzı Hedef Geri Sayım & Serbest Kronometre:** Varsayılan `25 dk` (veya `15`, `45`, `60`, `90` dk / özel süreler) hedef süreden `00:00`'a geri sayar ve süre dolunca özet kaydını otomatik açar; istenirse **Serbest (∞)** kronometre modu kullanılabilir.
+- **Kişiselleştirilebilir Pomodoro Modu:** Odak, kısa mola ve uzun mola süreleri **Ayarlar** penceresinden özelleştirilebilir.
+- **Daima Üstte Mini Pencere Modu (PiP):** Ekranın bir köşesinde kalan kompakt mini pencereden seansı başlatabilir, duraklatabilir veya bitirebilirsiniz.
 
 ### 2. 🏝️ 3D Yüzen Ada ve Medeniyet Simülasyonu (Gamification)
-- **Forest Tarzı Kümülatif İlerleme:** Odaklandığınız her seans adanızda yeni bir ağaç yeşertir. Başarıyla tamamlanan seanslar dersinize/projenize ait renkle çam veya meşe ağacına dönüşürken, yarım kalan seanslar taze filizli kesik kütüklere dönüşür.
-- **6 Aşamalı Gelişen Medeniyet:** Toplam odak süreniz arttıkça adanız seviye atlar:
-  1. *Kulübe (Hut)* ➔ Saz çatılı balıkçı/orman kulübesi
-  2. *Ev (House)* ➔ Taş zeminli, ahşap karkaslı kır evi
-  3. *Çiftlik (Farm)* ➔ Dönen yel değirmeni ve kırmızı ahır
-  4. *Köy (Village)* ➔ Taş avlulu evler ve su kuyusu
-  5. *Kasaba (Town)* ➔ Saat kuleli belediye konağı ve loncalar
-  6. *Şehir & Kale (Castle)* ➔ Mazgallı surlar, 4 köşe kulesi ve sancaklı iç kale
-- **Başarım Binaları:** 
-  - *Deniz Feneri:* Maraton başarımı kazanıldığında adanın kayalığına yerleşir ve 360° ışık huzmesi saçar.
-  - *Zafer Anıtı:* 100 seans başarımı ile mermer kaideli ve altın başlıklı dikilitaş yükselir.
+- **Forest Tarzı Kümülatif İlerleme:** Odaklandığınız her seans adanızda yeni bir ağaç yeşertir. Başarıyla tamamlanan seanslar dersinize/projenize ait renkle çam veya meşe ağacına dönüşürken, yüksek bozulmalı seanslar taze filizli kesik kütüklere dönüşür.
+- **UV Yüzey Kaplamalı 6 Aşamalı Medeniyet:** Taş, kiremit, ahşap, sıva, saman ve yaprak dokularıyla zenginleştirilmiş yapılar toplam odak süreniz arttıkça seviye atlar:
+  1. *Kulübe (Hut)* ➔ Köşe kütük duvarlı, odun yığınlı orman kulübesi
+  2. *Ev (House)* ➔ Verandalı, taş patikalı ve ahşap karkaslı kır evi
+  3. *Çiftlik (Farm)* ➔ Tahıl silolu, saman balyalı ve dönen yel değirmenli çiftlik
+  4. *Köy (Village)* ➔ Arnavut kaldırımlı meydan, üstü kapalı kuyu ve pazar tezgahlı yerleşim
+  5. *Kasaba (Town)* ➔ 4 yönde altın kadranlı saat kulesi ve belediye konağı
+  6. *Şehir & Kale (Castle)* ➔ İkiz burçlu kapı kulesi, mazgallı surlar ve sancaklı iç kale
+- **Başarım Binaları & 2D/3D Geçiş:** Maraton başarımıyla dönen ışık huzmeli *Deniz Feneri*, 100 seans başarımıyla altın başlıklı *Zafer Anıtı* açılır; **2D Köy** ve **3D Ada** görünümleri arasında anında geçiş yapılabilir.
 - **İnteraktif 3D Kontroller:** Fare ile 360° serbest döndürme (orbit), eğme açısı (pitch), tekerlekle yakınlaşma/uzaklaşma (zoom) ve çift tıkla kamerayı sıfırlama.
-- **4 Dinamik Biyom Teması:** Varsayılan, Sonbahar (kehribar yapraklar), Kış (karlı platolar) ve Gece (pencereleri ışıldayan yapılar).
+- **4 Dinamik Biyom Teması:** Varsayılan, Sonbahar (kehribar tonlar), Kış (karlı platolar) ve Gece (pencereleri ışıldayan yapılar).
 
 ### 3. ⚡ Odak Bozulması Takibi (Distraction Analytics)
 - Çalışırken dikkatiniz dağıldığında (telefon, ani toplantı, gürültü vb.) tek tıkla **"Odak Bozuldu"** butonuna basarak nedeni kaydedin.
@@ -61,9 +60,10 @@ Uygulamanın temel felsefesi:
 - **Trend ve Seri (Streak) Takibi:** Önceki döneme göre odak artış/azalış yüzdesi ve ardışık gün serisi.
 - **Zaman Dilimi Filtreleri:** Günlük, haftalık, aylık ve yıllık görünüm modları.
 
-### 5. 🎨 Modern Arayüz ve Akıllı Ekran Desteği
-- **Koyu ve Açık Tema:** Göz yormayan koyu tema ile ferah açık tema arasında anında geçiş.
-- **Çoklu Monitör Güvenliği:** Sanal ekran (VDD) veya çoklu monitör kurulumlarında pencerenin ekran sınırları dışına taşmasını engelleyen otomatik geometrik hizalama.
+### 5. 🎨 Modern Arayüz, Erişilebilirlik ve Akıllı Ekran Desteği
+- **Nötr Obsidyen Koyu & Açık Tema:** Göz yormayan nötr grafit/obsidyen koyu palet, ferah açık tema ve 6 seçilebilir vurgu rengi.
+- **Klavye Navigasyonu & Çok Satırlı Notlar:** `Tab` odak halkası ve klavye aktivasyonu; otomatik satır saran ve imleci takip eden not alanları (`FTTextArea`).
+- **Çoklu Monitör Güvenliği:** Sanal ekran (VDD) veya çoklu monitör kurulumlarında pencerenin kullanılabilir ekran sınırları içinde otomatik ortalanıp hizalanması.
 - **Sistem Tepsisi (Tray) & Global Kısayol:** `Ctrl+Shift+F` kısayolu ile arka plandayken dahi seansı duraklatabilir veya başlatabilirsiniz.
 
 ### 6. 🔄 Kesintisiz ve Güvenli Güncelleme Altyapısı
@@ -108,7 +108,7 @@ Projeyi yerel geliştirme ortamınızda çalıştırmak için:
 
 5. **Birim Testlerini Çalıştırın:**
    ```bash
-   pytest
+   python -m unittest discover -s tests
    ```
 
 ---
@@ -144,20 +144,25 @@ FocusTracker, Windows Smart App Control (SAC) standartlarına uygun **kararlı E
 ```
 Desktop_Focus_Tracker/
 ├── app/
-│   ├── bridge/             # QML <-> Python haberleşme köprüleri (@QmlElement)
-│   ├── core/               # SQLite veritabanı, modeller, repository'ler ve logger
-│   ├── services/           # İş mantığı (Zamanlayıcı, Analiz, Başarımlar, Güncelleme)
+│   ├── bridge/             # QML <-> Python haberleşme köprüleri (@QmlElement, BaseBridge)
+│   ├── core/               # DI Container (AppContainer), SQLite, modeller, repository'ler
+│   ├── services/           # İş mantığı (Zamanlayıcı, Analiz, Odak İstatistikleri, Başarımlar, Güncelleme)
 │   ├── ui/
-│   │   ├── qml/            # QML arayüz dosyaları ve sayfalar (Main, Tracker, Analytics...)
-│   │   │   ├── components/ # Yeniden kullanılabilir butonlar, kartlar, diyaloglar
-│   │   │   └── island3d/   # 3D ada modelleri (.mesh) ve QML 3D bileşenleri
-│   │   └── theme.py        # Koyu/Açık tema tokenları ve renk paletleri
+│   │   ├── qml/            # QML arayüz sayfaları (Main, Tracker, Analytics, FocusStats, History)
+│   │   │   ├── components/ # FlipClockView, ZenTimerOverlay, FTTextArea, GlassCard, diyaloglar
+│   │   │   └── island3d/   # 3D ada mesh/dokuları (meshes/, maps/, imported/) ve QML 3D bileşenleri
+│   │   ├── theme.py        # Nötr Obsidyen Koyu / Açık tema tokenları ve vurgu paletleri
+│   │   ├── timer_settings.py # Fliqlo saat görünümü ve Zen modu tercihleri (QSettings)
+│   │   ├── goal_settings.py  # Günlük / haftalık odak hedefleri (QSettings)
+│   │   ├── app_config.py   # QML sabit yapılandırma adaptörü
+│   │   └── strings.py      # Yerelleştirilmiş arayüz metinleri
 │   └── version.py          # Tekil sürüm kaynağı (Single Source of Truth)
-├── assets/island3d/        # Prosedürel glTF 2.0 3D modelleri (.glb)
-├── docs/                   # Proje belgeleri, wiki ve ekran görüntüleri
+├── assets/island3d/        # Prosedürel glTF 2.0 3D modelleri (.glb) ve konsept görseller
+├── docs/                   # Proje belgeleri, LLM Wiki (docs/wiki/), planlar ve ekran görüntüleri
 ├── packaging/              # Inno Setup (.iss), launcher ve sürüm meta verileri
-├── tools/                  # 3D model derleme ve sürüm yayınlama araçları
-├── tests/                  # Pytest birim ve entegrasyon testleri
+├── tools/                  # 3D model/doku derleme ve sürüm yayınlama araçları
+├── tests/                  # unittest birim ve entegrasyon testleri
+├── DESIGN.md / PRODUCT.md  # Kalıcı tasarım sistemi ve ürün bağlam dokümanları
 ├── build_installer.py      # Tek tıkla kurulum sihirbazı üretici
 └── main.py                 # Uygulama başlangıç noktası
 ```

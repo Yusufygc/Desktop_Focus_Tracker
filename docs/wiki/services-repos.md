@@ -1,7 +1,7 @@
 # Service & Repository Katmanları
 
 ## Repository (`app/core/repositories/`)
-Ham SQL, parametrik sorgular (`?` placeholder — SQL injection'a karşı korumalı). Her domain nesnesi için ayrı modül: `session_repo.py`, `distraction_repo.py`, `category_repo.py`, `subject_repo.py`, `timer_preset_repo.py`, `achievement_repo.py`.
+Ham SQL, parametrik sorgular (`?` placeholder — SQL injection'a karşı korumalı); tümü `BaseRepository` (`base_repository.py`) sınıfından türer. Her domain nesnesi için ayrı modül: `session_repo.py`, `distraction_repo.py`, `category_repo.py`, `subject_repo.py`, `timer_preset_repo.py`, `achievement_repo.py`.
 
 ## Service (`app/services/`)
 - `SessionService` — aktif seans yaşam döngüsü (`start`, `finish`, `increment_distraction_count`, `get_all_sessions`). Tek aktif seans invariant'ı: `has_active` iken tekrar `start()` → `RuntimeError`.

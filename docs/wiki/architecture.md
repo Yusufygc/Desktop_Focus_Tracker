@@ -7,13 +7,13 @@ Model → Repository → Service → Bridge → QML
 ```
 
 - **Model** (`app/core/models/models.py`): Saf `dataclass`'lar (`Session`, `Distraction`). DB veya UI'ya bağımlılığı yok.
-- **Repository** (`app/core/repositories/*.py`): Ham SQL erişimi. Her tablo için ayrı repo modülü (`session_repo`, `category_repo`, `subject_repo`, `distraction_repo`, `timer_preset_repo`). Bkz. [[database]].
+- **Repository** (`app/core/repositories/*.py`): Ham SQL erişimi (`BaseRepository` temel sınıfından türer). Her tablo için ayrı repo modülü (`session_repo`, `category_repo`, `subject_repo`, `distraction_repo`, `timer_preset_repo`, `achievement_repo`). Bkz. [[database]].
 - **Service** (`app/services/*.py`): İş kuralları, repo'yu kullanır, UI'dan bağımsız. Bkz. [[services-repos]].
-- **Bridge** (`app/bridge/*.py`): `@QmlElement` ile işaretli `QObject` sınıfları — Service'i QML'e `Slot`/`Signal`/`Property` olarak açar. Bkz. [[bridges]].
-- **QML** (`app/ui/qml/**`): Görsel katman, bridge'lere `sessionBridge`, `analyticsBridge` vb. context property adlarıyla erişir. Bkz. [[qml-ui]].
+- **Bridge** (`app/bridge/*.py`): `BaseBridge` temel sınıfından türeyen ve `@QmlElement` ile işaretli `QObject` sınıfları — Service'i QML'e `Slot`/`Signal`/`Property` olarak açar. Bkz. [[bridges]].
+- **QML** (`app/ui/qml/**`): Görsel katman, bridge ve ayar adaptörlerine (`sessionBridge`, `analyticsBridge`, `timerSettings`, `Theme`, `AppConfig`, `Strings` vb.) context property adlarıyla erişir. Bkz. [[qml-ui]].
 
-## Giriş noktası
-`main.py`: `QGuiApplication` + `QQmlApplicationEngine` kurar, tüm bridge'leri instantiate edip `rootContext().setContextProperty(...)` ile QML'e enjekte eder, `db.connect()` / `db.close()` yaşam döngüsünü yönetir.
+## Giriş noktası ve DI (`AppContainer`)
+`main.py`: `QGuiApplication` + `QQmlApplicationEngine` kurar, `db.connect()` / `db.close()` yaşam döngüsünü yönetir. Tüm repository, service, UI adaptörleri (`AppTheme`, `AppStrings`, `GoalSettings`, `TimerSettings`, `AppConfig`, `SessionStore`) ve bridge'ler merkezi olarak `app/core/container.py` (`AppContainer`) içinde oluşturulup `register_context_properties(engine, app_icon_url)` ile QML `rootContext()`'e bağlanır.
 
 ## Kural
 Bridge katmanı **asla** doğrudan `db.conn.execute(...)` çağırmaz — her zaman Service üzerinden gider. (Nisan 2026 denetiminde bu ihlal bulunmuş ve o zamandan beri düzeltilmiş; bkz. [[audit-history]].)

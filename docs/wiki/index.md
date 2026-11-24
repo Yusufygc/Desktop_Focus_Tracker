@@ -3,15 +3,15 @@
 FocusTracker: PySide6 (QML) + SQLite tabanlı odak/pomodoro takip masaüstü uygulaması. Bu wiki, projenin mimarisini, kararlarını ve bağlamını kalıcı olarak tutar.
 
 ## Mimari
-- [[architecture]] — Katmanlı yapı: Model → Repository → Service → Bridge → QML. Bağımlılık yönü ve her katmanın sorumluluğu.
-- [[database]] — SQLite şeması, `Database` singleton, thread-safety guard, case-insensitive migrasyon.
+- [[architecture]] — Katmanlı yapı: Model → Repository → Service → Bridge → QML, `AppContainer` DI kurulumu ve native OS istisnası.
+- [[database]] — SQLite şeması (`sessions`, `distractions`, `categories`, `subjects`, `timer_presets`, `unlocked_achievements`), `Database` singleton, thread-safety guard, case-insensitive migrasyon.
 
 ## Backend
-- [[services-repos]] — Service ve Repository katmanları: `SessionService`, `AnalyticsService`, `FocusStatsService`, repo modülleri.
-- [[bridges]] — QML'e açılan `@QmlElement` bridge sınıfları, CRUD bridge tekrar deseni.
+- [[services-repos]] — Service ve `BaseRepository` katmanları: `SessionService`, `AnalyticsService`, `FocusStatsService`, `AchievementService`, repo modülleri.
+- [[bridges]] — `BaseBridge` tabanlı ve `@QmlElement` ile açılan bridge sınıfları (`UpdateBridge` dahil), context property envanteri.
 
 ## Frontend
-- [[qml-ui]] — QML sayfa/komponent envanteri, `components/` altındaki paylaşılan parçalar (GlassCard, FTButton, vb).
+- [[qml-ui]] — QML sayfa/komponent envanteri, `components/` + `island3d/` 3B bileşenleri, Fliqlo Flip Clock / Zen modu, tema & `TimerSettings`/`GoalSettings` adaptörleri.
 
 ## Geçmiş / Denetim
 - [[audit-history]] — `docs/walkthrough.md` denetim raporunun özeti ve hangi bulguların çözüldüğü (bkz. commit `f9eb870`).

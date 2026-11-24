@@ -3,10 +3,10 @@
 `app/core/database.py` — `Database` singleton (`__new__` ile tek instance), SQLite üzerinde çalışır. Yol: `config.py`'deki `DB_PATH` (`%APPDATA%/FocusTracker/focustracker.db`).
 
 ## Şema (`SCHEMA_SQL`, tek yerde tanımlı)
-- `sessions(id, subject, started_at, ended_at, notes, total_distractions)`
+- `sessions(id, subject, started_at, ended_at, notes, total_distractions, total_paused_sec, last_paused_at)`
 - `distractions(id, session_id → sessions.id ON DELETE CASCADE, occurred_at, category, note)`
 - `categories(id, name UNIQUE COLLATE NOCASE)`
-- `subjects(id, name UNIQUE COLLATE NOCASE)`
+- `subjects(id, name UNIQUE COLLATE NOCASE, color)`
 - `timer_presets(id, minutes UNIQUE)`
 - `unlocked_achievements(key PRIMARY KEY, unlocked_at)` (2026-07-07) — başarı sistemi unlock-log'u. Ayrı bir "tanım tablosu" yok, tanımlar Python'da statik (`AchievementService.ACHIEVEMENT_DEFINITIONS`). Yeni tablo `CREATE TABLE IF NOT EXISTS` ile eklendi — migrasyonsuz, mevcut kullanıcı DB'lerinde de şeffaf çalışır (bkz. `_create_tables()`).
 

@@ -44,7 +44,7 @@ Release iş akışı (`.github/workflows/release.yml`) sırayla şunları yapar:
 
 ## 3. Kontrol Listesi
 
-- [ ] Testler yeşil: `python -m pytest -q` yerelde geçiyor (258/258).
+- [ ] Testler yeşil: `python -m unittest discover -s tests` yerelde geçiyor (268/268).
 - [ ] Davranış değişikliği varsa `README.md` ve ilgili wiki sayfası güncel.
 - [ ] `tools/release.py` çalıştırıldı, `app/version.py` ve README rozeti aynı sürümde.
 - [ ] Exe özeti onaylananla aynı (CI günlüğünde "Kararlı exe özeti onaylananla aynı"); değilse yayın durmuştur: nedeni araştır, bilerek değiştirdiysen [[exe-dagitim-rehberi]].

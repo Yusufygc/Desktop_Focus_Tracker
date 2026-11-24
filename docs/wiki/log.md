@@ -1,5 +1,10 @@
 # Wiki Log
 
+## [2026-11-24] LINT | Wiki Sağlık Kontrolü & Tutarlılık Güncellemesi
+- **`qml-ui.md`:** `SettlementView` içindeki eskimiş *"Qt Quick 3D reddedildi"* ifadesi `HybridIslandView` eklenişine göre tarihsel not olarak güncellendi; `components/` + `island3d/` envanteri ve güncel `TimerCard.qml` (`659` satır) / `TrackerPage.qml` (`491` satır) boyutları düzeltildi.
+- **`architecture.md`, `bridges.md`, `services-repos.md`, `index.md`:** `app/core/container.py` (`AppContainer`) DI kurulumu, `BaseRepository`, `BaseBridge` ve `UpdateBridge` (`updateBridge`) eklendi; eski "`main.py` tek tek instantiate ediyor" ve "ortak base class yok" ifadeleri güncellendi.
+- **`database.md` & `surum-yayinlama.md`:** `sessions` (`total_paused_sec`, `last_paused_at`) ve `subjects` (`color`) şema kolonları ile güncel test sayısı (`268/268`, `unittest`) senkronize edildi.
+
 ## [2026-11-24] FEATURE | Prosedürel 3D Adada UV Yüzey Dokuları & Zenginleştirilmiş Mimari Geometri
 - **`tools/build_island_assets.py`:**
   - `write_glb()` içine yüz normaline göre triplanar `TEXCOORD_0` (`VEC2`) UV haritalaması eklendi (`_UV_SCALE = 1.6`); tüm `.glb` ve `balsam.exe` çıktısı `.mesh` dosyaları artık doku koordinatı içerir.
