@@ -7,6 +7,7 @@ Node {
     id: root
 
     property bool isUnlocked: false
+    property bool active: true
     visible: isUnlocked
 
     Texture {
@@ -27,7 +28,7 @@ Node {
     }
 
     Model {
-        source: "meshes/lighthouse.mesh"
+        source: root.isUnlocked ? "meshes/lighthouse.mesh" : ""
         castsShadows: true
         receivesShadows: true
         materials: [
@@ -43,6 +44,7 @@ Node {
     Node {
         position: Qt.vector3d(0, 1.68, 0)
         NumberAnimation on eulerRotation.y {
+            running: root.active && root.isUnlocked && root.visible
             from: 0; to: 360; duration: 4000
             loops: Animation.Infinite
         }

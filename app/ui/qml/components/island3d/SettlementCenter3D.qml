@@ -10,6 +10,7 @@ Node {
 
     property int stageIndex: 0
     property string biome: "default"
+    property bool active: true
 
     // ── Biome'a göre ortak malzeme paleti ─────────────────────────────
     readonly property color cStone:     biome === "winter" ? "#9aa3ae" : (biome === "night" ? "#4b5563" : "#8b8680")
@@ -76,7 +77,7 @@ Node {
     // ── AŞAMA 0: KULÜBE — log, roof, stone, wood ─────────────────────
     Model {
         visible: root.stageIndex === 0
-        source: "meshes/hut.mesh"
+        source: root.stageIndex === 0 ? "meshes/hut.mesh" : ""
         castsShadows: true; receivesShadows: true
         materials: [ Mat { baseColor: root.cLog; baseColorMap: woodTex },
                      Mat { baseColor: root.cThatch; baseColorMap: thatchTex; roughness: 1.0 },
@@ -87,7 +88,7 @@ Node {
     // ── AŞAMA 1: EV — stone, plaster, roof, wood, glass ───────────────
     Model {
         visible: root.stageIndex === 1
-        source: "meshes/house.mesh"
+        source: root.stageIndex === 1 ? "meshes/house.mesh" : ""
         castsShadows: true; receivesShadows: true
         materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
                      Mat { baseColor: root.cPlaster; baseColorMap: plasterTex },
@@ -100,7 +101,7 @@ Node {
     Node {
         visible: root.stageIndex === 2
         Model {
-            source: "meshes/farm.mesh"
+            source: root.stageIndex === 2 ? "meshes/farm.mesh" : ""
             castsShadows: true; receivesShadows: true
             materials: [ Mat { baseColor: root.biome === "winter" ? "#8b3a3a" : "#9b2c2c"; baseColorMap: woodTex },
                          Mat { baseColor: "#4a3b33"; baseColorMap: roofTex },
@@ -114,11 +115,12 @@ Node {
         Node {
             position: Qt.vector3d(0.75, 1.35, 0.17)
             NumberAnimation on eulerRotation.z {
+                running: root.active && root.stageIndex === 2 && root.visible
                 from: 0; to: 360; duration: 7000
                 loops: Animation.Infinite
             }
             Model {
-                source: "meshes/windmill_blades.mesh"
+                source: root.stageIndex === 2 ? "meshes/windmill_blades.mesh" : ""
                 castsShadows: true
                 materials: [ Mat { baseColor: root.cWood; baseColorMap: woodTex },
                              Mat { baseColor: "#f3ead7"; baseColorMap: plasterTex; roughness: 1.0 } ]
@@ -129,7 +131,7 @@ Node {
     // ── AŞAMA 3: KÖY — stone, plaster, roof, roof2, wood, glass, water ─
     Model {
         visible: root.stageIndex === 3
-        source: "meshes/village.mesh"
+        source: root.stageIndex === 3 ? "meshes/village.mesh" : ""
         castsShadows: true; receivesShadows: true
         materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
                      Mat { baseColor: root.cPlaster; baseColorMap: plasterTex },
@@ -142,7 +144,7 @@ Node {
     // ── AŞAMA 4: KASABA — stone, plaster, roof, roof2, wood, glass, gold ─
     Model {
         visible: root.stageIndex === 4
-        source: "meshes/town.mesh"
+        source: root.stageIndex === 4 ? "meshes/town.mesh" : ""
         castsShadows: true; receivesShadows: true
         materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
                      Mat { baseColor: root.cPlaster; baseColorMap: plasterTex },
@@ -155,7 +157,7 @@ Node {
     // ── AŞAMA 5+: ŞEHİR / KALE — stone, stone_dark, roof, wood, gold, banner ─
     Model {
         visible: root.stageIndex >= 5
-        source: "meshes/castle.mesh"
+        source: root.stageIndex >= 5 ? "meshes/castle.mesh" : ""
         castsShadows: true; receivesShadows: true
         materials: [ Mat { baseColor: root.cStone; baseColorMap: stoneTex },
                      Mat { baseColor: root.cStoneDark; baseColorMap: stoneTex },

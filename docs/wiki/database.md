@@ -9,6 +9,7 @@
 - `subjects(id, name UNIQUE COLLATE NOCASE, color)`
 - `timer_presets(id, minutes UNIQUE)`
 - `unlocked_achievements(key PRIMARY KEY, unlocked_at)` (2026-07-07) — başarı sistemi unlock-log'u. Ayrı bir "tanım tablosu" yok, tanımlar Python'da statik (`AchievementService.ACHIEVEMENT_DEFINITIONS`). Yeni tablo `CREATE TABLE IF NOT EXISTS` ile eklendi — migrasyonsuz, mevcut kullanıcı DB'lerinde de şeffaf çalışır (bkz. `_create_tables()`).
+- **İndeksler (2026-11-26):** `idx_sessions_started_at` (`sessions(started_at DESC)`), `idx_distractions_session_id` (`distractions(session_id)`), `idx_distractions_occurred_at` (`distractions(occurred_at DESC)`).
 
 Testler (`tests/db_test_utils.py`) aynı `SCHEMA_SQL` sabitini kullanarak izole in-memory DB kurar — şema tek kaynaklı.
 

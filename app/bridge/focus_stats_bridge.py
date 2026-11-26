@@ -66,8 +66,9 @@ class FocusStatsBridge(BaseBridge):
         try:
             ref = date.fromisoformat(reference_date_iso) if reference_date_iso else date.today()
             sessions = self._get_sessions()
-            totals = self._stats.period_totals(sessions, period, reference_date=ref)
-            buckets = self._stats.period_buckets(sessions, period, reference_date=ref)
+            daily = self._stats._daily_totals(sessions)
+            totals = self._stats.period_totals(sessions, period, reference_date=ref, daily=daily)
+            buckets = self._stats.period_buckets(sessions, period, reference_date=ref, daily=daily)
             return {
                 "currentTotalSec": totals["current_total_sec"],
                 "currentTotalLabel": _format_duration(totals["current_total_sec"]),

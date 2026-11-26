@@ -71,6 +71,10 @@ class Database:
             key         TEXT PRIMARY KEY,
             unlocked_at TEXT NOT NULL
         );
+
+        CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_distractions_session_id ON distractions(session_id);
+        CREATE INDEX IF NOT EXISTS idx_distractions_occurred_at ON distractions(occurred_at DESC);
     """
 
     def __new__(cls):

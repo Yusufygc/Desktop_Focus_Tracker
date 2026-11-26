@@ -12,7 +12,7 @@ Node {
 
     Texture {
         id: woodTex
-        source: "maps/wood_tex.png"
+        source: root.visible ? "maps/wood_tex.png" : ""
         tilingModeHorizontal: Texture.Repeat
         tilingModeVertical: Texture.Repeat
         generateMipmaps: true
@@ -20,7 +20,7 @@ Node {
     }
     Texture {
         id: foliageTex
-        source: "maps/foliage_tex.png"
+        source: root.visible ? "maps/foliage_tex.png" : ""
         tilingModeHorizontal: Texture.Repeat
         tilingModeVertical: Texture.Repeat
         generateMipmaps: true
@@ -28,7 +28,7 @@ Node {
     }
 
     Model {
-        source: "meshes/stump.mesh"
+        source: root.visible ? "meshes/stump.mesh" : ""
         castsShadows: true
         receivesShadows: true
         materials: [

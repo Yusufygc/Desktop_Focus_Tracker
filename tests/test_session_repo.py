@@ -126,6 +126,18 @@ class TestSessionRepo(unittest.TestCase):
         self.assertIsNotNone(session2.ended_at)
         self.assertEqual(session2.ended_at, paused_at)
 
+    def test_get_since_filters_and_orders_desc(self):
+        old = Session(subject="Eski", started_at=datetime(2026, 1, 1, 10, 0))
+        mid = Session(subject="Orta", started_at=datetime(2026, 1, 5, 9, 0))
+        new = Session(subject="Yeni", started_at=datetime(2026, 1, 6, 14, 0))
+        self.repo.insert(old)
+        self.repo.insert(mid)
+        self.repo.insert(new)
+
+        sessions = self.repo.get_since(datetime(2026, 1, 5, 0, 0))
+
+        self.assertEqual([s.subject for s in sessions], ["Yeni", "Orta"])
+
 
 if __name__ == "__main__":
     unittest.main()

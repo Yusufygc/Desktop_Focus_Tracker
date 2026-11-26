@@ -4,6 +4,8 @@ Tüm veri QML'e QVariantList/QVariantMap olarak geçer.
 """
 
 import sqlite3
+import time
+from datetime import date, datetime, timedelta
 
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtQml import QmlElement
@@ -15,8 +17,6 @@ from app.services.subject_service import SubjectService
 from app.services.focus_stats_service import FocusStatsService
 from app.core.logger import logger
 from app.core.strings import Errors, Digest
-
-from datetime import date, timedelta
 
 QML_IMPORT_NAME = "FocusTracker.Bridge"
 QML_IMPORT_MAJOR_VERSION = 1
@@ -42,61 +42,123 @@ class AnalyticsBridge(QObject):
         self._subject_svc     = subject_svc
         self._analytics       = AnalyticsService()
         self._focus_stats     = FocusStatsService()
+        self._cached_sessions = None
+        self._cached_sessions_at = 0.0
+        self._cached_distractions = None
+        self._cached_distractions_at = 0.0
+
+    def _get_sessions(self, force_refresh: bool = False) -> list:
+        now = time.time()
+        if force_refresh or self._cached_sessions is None or (now - self._cached_sessions_at > 3.0):
+            self._cached_sessions = self._session_svc.get_all_sessions()
+            self._cached_sessions_at = now
+        return self._cached_sessions
+
+    def _get_distractions(self, force_refresh: bool = False) -> list:
+        now = time.time()
+        if force_refresh or self._cached_distractions is None or (now - self._cached_distractions_at > 3.0):
+            self._cached_distractions = self._distraction_svc.get_all()
+            self._cached_distractions_at = now
+        return self._cached_distractions
+
+    @Slot()
+    def invalidateCache(self):
+        self._cached_sessions = None
+        self._cached_sessions_at = 0.0
+        self._cached_distractions = None
+        self._cached_distractions_at = 0.0
+
+    @Slot(result="QVariantMap")
+    def getTodaySummary(self) -> dict:
+        try:
+            today_start = datetime.combine(date.today(), datetime.min.time())
+            sessions = self._session_svc.get_sessions_since(today_start)
+            return {
+                "count": len(sessions),
+                "totalSec": sum(s.duration_seconds for s in sessions),
+            }
+        except sqlite3.Error as e:
+            logger.error(f"Günlük özet alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return {"count": 0, "totalSec": 0}
 
     @Slot(result="QVariantList")
     def getHourlyData(self) -> list:
-        distractions = self._distraction_svc.get_all()
-        hourly = self._analytics.distractions_per_hour(distractions)
-        return [{"hour": h, "count": hourly.get(h, 0)} for h in range(24)]
+        try:
+            distractions = self._get_distractions()
+            hourly = self._analytics.distractions_per_hour(distractions)
+            return [{"hour": h, "count": hourly.get(h, 0)} for h in range(24)]
+        except sqlite3.Error as e:
+            self.invalidateCache()
+            logger.error(f"Saatlik veri alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return []
 
     @Slot(result="QVariantList")
     def getCategoryData(self) -> list:
-        distractions = self._distraction_svc.get_all()
-        cats = self._analytics.distractions_per_category(distractions)
-        return [{"category": k, "count": v} for k, v in sorted(cats.items(), key=lambda x: -x[1])]
+        try:
+            distractions = self._get_distractions()
+            cats = self._analytics.distractions_per_category(distractions)
+            return [{"category": k, "count": v} for k, v in sorted(cats.items(), key=lambda x: -x[1])]
+        except sqlite3.Error as e:
+            self.invalidateCache()
+            logger.error(f"Kategori verisi alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return []
 
     @Slot(result="QVariantMap")
     def getSummaryStats(self) -> dict:
-        distractions = self._distraction_svc.get_all()
-        stats = self._analytics.summary_stats(distractions)
-        return {
-            "total":       stats["total"],
-            "dailyAvg":    stats["dailyAvg"],
-            "peakHour":    stats["peakHour"],
-            "topCategory": stats["topCategory"],
-        }
+        try:
+            distractions = self._get_distractions()
+            stats = self._analytics.summary_stats(distractions)
+            return {
+                "total":       stats["total"],
+                "dailyAvg":    stats["dailyAvg"],
+                "peakHour":    stats["peakHour"],
+                "topCategory": stats["topCategory"],
+            }
+        except sqlite3.Error as e:
+            self.invalidateCache()
+            logger.error(f"Özet istatistikler alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return {"total": 0, "dailyAvg": 0, "peakHour": "-", "topCategory": "-"}
 
     @Slot(result="QVariantList")
     def getSessionHistory(self) -> list:
-        sessions = self._session_svc.get_all_sessions()
-        color_map = self._subject_svc.get_color_map()
-        today = date.today()
-        yesterday = today - timedelta(days=1)
-        result = []
-        for s in sessions:
-            s_date = s.started_at.date()
-            if s_date == today:
-                group = "Bugün"
-            elif s_date == yesterday:
-                group = "Dün"
-            else:
-                group = s.started_at.strftime("%d.%m.%Y")
+        try:
+            sessions = self._get_sessions()
+            color_map = self._subject_svc.get_color_map()
+            today = date.today()
+            yesterday = today - timedelta(days=1)
+            result = []
+            for s in sessions:
+                s_date = s.started_at.date()
+                if s_date == today:
+                    group = "Bugün"
+                elif s_date == yesterday:
+                    group = "Dün"
+                else:
+                    group = s.started_at.strftime("%d.%m.%Y")
 
-            distractions = self._distraction_svc.get_for_session(s.id)
-            stats = self._analytics.session_stats(s, distractions)
+                stats = self._analytics.session_stats(s)
 
-            result.append({
-                "id":          s.id,
-                "subject":     s.subject,
-                "subjectColor": color_map.get(s.subject, "#4f46e5"),
-                "startedAt":   s.started_at.strftime("%d.%m.%Y %H:%M"),
-                "durationSec": s.duration_seconds,
-                "distractions": s.total_distractions,
-                "notes":       s.notes or "",
-                "dateGroup":   group,
-                "focusScore":  stats["focus_score"],
-            })
-        return result
+                result.append({
+                    "id":          s.id,
+                    "subject":     s.subject,
+                    "subjectColor": color_map.get(s.subject, "#4f46e5"),
+                    "startedAt":   s.started_at.strftime("%d.%m.%Y %H:%M"),
+                    "durationSec": s.duration_seconds,
+                    "distractions": s.total_distractions,
+                    "notes":       s.notes or "",
+                    "dateGroup":   group,
+                    "focusScore":  stats["focus_score"],
+                })
+            return result
+        except sqlite3.Error as e:
+            self.invalidateCache()
+            logger.error(f"Seans geçmişi alınırken hata: {e}", exc_info=True)
+            self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
+            return []
 
     @Slot(int, result="QVariantList")
     def getSessionDistractions(self, session_id: int) -> list:
@@ -115,6 +177,7 @@ class AnalyticsBridge(QObject):
         logger.info(f"QML'den güncelleme isteği geldi: Seans ID {session_id}")
         try:
             self._session_svc.update_info(session_id, subject, notes)
+            self.invalidateCache()
             logger.info("Seans başarıyla güncellendi.")
             return True
         except sqlite3.Error as e:
@@ -127,6 +190,7 @@ class AnalyticsBridge(QObject):
         logger.info(f"QML'den silme isteği geldi: Seans ID {session_id}")
         try:
             self._session_svc.delete(session_id)
+            self.invalidateCache()
             logger.info("Seans başarıyla silindi.")
             return True
         except sqlite3.Error as e:
@@ -137,7 +201,7 @@ class AnalyticsBridge(QObject):
     @Slot(result="QVariantList")
     def getSubjectBreakdown(self) -> list:
         try:
-            sessions = self._session_svc.get_all_sessions()
+            sessions = self._get_sessions()
             totals = self._analytics.time_per_subject(sessions)
             color_map = self._subject_svc.get_color_map()
             items = sorted(totals.items(), key=lambda x: -x[1])
@@ -151,6 +215,7 @@ class AnalyticsBridge(QObject):
                 for subject, total_sec in items
             ]
         except sqlite3.Error as e:
+            self.invalidateCache()
             logger.error(f"Konu dağılımı alınırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return []
@@ -158,10 +223,10 @@ class AnalyticsBridge(QObject):
     @Slot(str, result="QVariantList")
     def getFocusQualityTrend(self, period: str) -> list:
         try:
-            sessions = self._session_svc.get_all_sessions()
-            pairs = [(s, self._distraction_svc.get_for_session(s.id)) for s in sessions]
-            return self._analytics.focus_score_trend(pairs, period)
+            sessions = self._get_sessions()
+            return self._analytics.focus_score_trend(sessions, period)
         except (sqlite3.Error, ValueError) as e:
+            self.invalidateCache()
             logger.error(f"Odak kalitesi trendi alınırken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return []
@@ -169,7 +234,7 @@ class AnalyticsBridge(QObject):
     @Slot(str, result=str)
     def getDigestText(self, period: str) -> str:
         try:
-            sessions = self._session_svc.get_all_sessions()
+            sessions = self._get_sessions()
             totals = self._focus_stats.period_totals(sessions, period)
             current_sec = totals["current_total_sec"]
             period_label = Digest.PERIOD_LABELS.get(period, period)
@@ -189,6 +254,7 @@ class AnalyticsBridge(QObject):
                 bestTotal=best_total,
             )
         except (sqlite3.Error, ValueError) as e:
+            self.invalidateCache()
             logger.error(f"Özet metni oluşturulurken hata: {e}", exc_info=True)
             self.errorOccurred.emit(Errors.FOCUS_STATS_LOAD_FAILED)
             return ""

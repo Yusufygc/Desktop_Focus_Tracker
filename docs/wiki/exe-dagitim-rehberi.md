@@ -77,7 +77,7 @@ Referans: `packaging/FocusTracker.iss`. Temel kurallar:
 
 ## 4. Derleme ve Doğrulama Betikleri
 
-- **`build_exe.py`:** PyInstaller'ı sabit epoch ve bayraklarla çalıştırır, hash kapısını denetler.
+- **`build_exe.py`:** PyInstaller'ı sabit epoch ve bayraklarla çalıştırır, `_internal/PySide6` altındaki kullanılmayan Qt modüllerini (`QtWebEngine*`, `QtPdf*`, `opengl32sw.dll`, `Qt3D*`, `QtMultimedia*`, `QtCharts*` vb.) `prune_unused_qt_files()` ile EXE özetine dokunmadan temizler (~246 MB azaltım), ardından hash kapısını denetler.
 - **`build_verify.py`:** 
   - `launch_check`: Exe'yi başlatır (`FOCUSTRACKER_NO_UPDATE_CHECK=1` ile), 8 saniye boyunca çalışır durumda kaldığını ve SAC hatası (`WinError 4551/1260`) almadığını doğrular, sonra ağacı temiz kapatır.
   - `installer_check`: Kurulum dosyasını geçici klasöre sessizce kurar, kurulan exe'yi açıp dener, kaldırıcıyı (`unins000.exe`) çalıştırır. Gerçek sistemdeki `HKCU` kayıt defteri ve Başlat kısayolu `save_registration` / `restore_registration` ile korunur.

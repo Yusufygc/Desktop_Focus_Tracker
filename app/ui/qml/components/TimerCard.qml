@@ -522,6 +522,7 @@ GlassCard {
                 Canvas {
                     id: arc
                     anchors.fill: parent
+                    visible: dialWrapper.visible
 
                     onPaint: {
                         var ctx = getContext("2d")

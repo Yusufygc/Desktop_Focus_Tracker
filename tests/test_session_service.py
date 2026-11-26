@@ -126,6 +126,18 @@ class TestSessionServiceHistory(unittest.TestCase):
         self.assertEqual(result, expected)
         self.mock_repo.get_all.assert_called_once()
 
+    def test_get_sessions_since_delegates_to_repo(self):
+        from datetime import datetime
+        since = datetime(2026, 1, 1, 0, 0)
+        expected = ["session1"]
+        self.mock_repo.get_since.return_value = expected
+        svc = SessionService(self.mock_repo)
+
+        result = svc.get_sessions_since(since)
+
+        self.assertEqual(result, expected)
+        self.mock_repo.get_since.assert_called_once_with(since)
+
 
 if __name__ == "__main__":
     unittest.main()

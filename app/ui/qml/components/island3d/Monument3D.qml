@@ -27,7 +27,7 @@ Node {
     }
 
     Model {
-        source: "meshes/monument.mesh"
+        source: root.isUnlocked ? "meshes/monument.mesh" : ""
         castsShadows: true
         receivesShadows: true
         materials: [

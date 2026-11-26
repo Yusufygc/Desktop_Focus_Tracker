@@ -6,6 +6,7 @@ import QtQuick
 Canvas {
     id: root
     z: 1000
+    visible: _particles.length > 0
     property var _particles: []
 
     function burst() {

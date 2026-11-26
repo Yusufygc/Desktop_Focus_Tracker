@@ -6,6 +6,7 @@ Node {
     id: root
 
     property string biome: "default"
+    property bool active: true
 
     readonly property color biomeTint: {
         if (root.biome === "autumn") return "#f6d5a8"
@@ -59,6 +60,7 @@ Node {
     Node {
         id: cloudOrbitNode
         NumberAnimation on eulerRotation.y {
+            running: root.active && root.visible
             from: 0; to: 360; duration: 60000
             loops: Animation.Infinite
         }

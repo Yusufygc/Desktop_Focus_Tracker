@@ -219,14 +219,17 @@ Item {
                         Layout.preferredHeight: settlementCard.viewportHeight
                         Behavior on Layout.preferredHeight { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
-                        HybridIslandView {
-                            id: island3D
+                        Loader {
+                            id: island3DLoader
                             anchors.fill: parent
-                            visible: root.viewMode3D
-                            stageData: root.settlement
-                            unlockedAchievementKeys: root.unlockedAchievementKeys
-                            trees: root.islandTrees
-                            biome: Theme.settlementBiome
+                            active: root.visible && root.viewMode3D
+                            visible: active
+                            sourceComponent: HybridIslandView {
+                                stageData: root.settlement
+                                unlockedAchievementKeys: root.unlockedAchievementKeys
+                                trees: root.islandTrees
+                                biome: Theme.settlementBiome
+                            }
                         }
 
                         SettlementView {

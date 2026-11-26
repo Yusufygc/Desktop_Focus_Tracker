@@ -16,6 +16,7 @@ Item {
     property real yaw: 35.0
     property real pitch: -32.0
     property real zoomLevel: 13.5
+    readonly property bool sceneActive: root.visible && (Qt.application.state === Qt.ApplicationActive)
 
     implicitHeight: 440
     clip: true
@@ -45,7 +46,7 @@ Item {
             clearColor: "transparent"
             backgroundMode: SceneEnvironment.Color
             antialiasingMode: SceneEnvironment.MSAA
-            antialiasingQuality: SceneEnvironment.High
+            antialiasingQuality: SceneEnvironment.Medium
         }
 
         PerspectiveCamera {
@@ -60,7 +61,7 @@ Item {
         DirectionalLight {
             id: sunLight
             castsShadow: true
-            shadowMapQuality: Light.ShadowMapQualityHigh
+            shadowMapQuality: Light.ShadowMapQualityMedium
             eulerRotation: Qt.vector3d(-45, 30, 0)
             color: root.biome === "night" ? "#a5b4fc" : (root.biome === "autumn" ? "#fef3c7" : "#fffbeb")
             ambientColor: root.biome === "night" ? "#312e81" : "#64748b"
@@ -75,6 +76,7 @@ Item {
             // Yüzen Ada Kaidesi
             IslandBase {
                 biome: root.biome
+                active: root.sceneActive
             }
 
             // Merkez Gelişen Medeniyet Binaları
@@ -82,11 +84,13 @@ Item {
                 position: Qt.vector3d(0, 0.15, 0)
                 stageIndex: root.stageData.stageIndex !== undefined ? root.stageData.stageIndex : 0
                 biome: root.biome
+                active: root.sceneActive
             }
 
             // Başarı Binası 1: Deniz Feneri (Maraton Başarımı)
             Lighthouse3D {
                 isUnlocked: root.unlockedAchievementKeys.indexOf("marathon") !== -1
+                active: root.sceneActive
                 position: Qt.vector3d(3.8, 0.15, 0.4)
                 eulerRotation.y: -75
             }
@@ -130,11 +134,11 @@ Item {
     // ── YAVAŞ BOŞTA DÖNÜŞ (IDLE DRIFT) ─────────────────────────────────
     Timer {
         id: idleTimer
-        interval: 16
-        running: root.autoRotate && !orbitMouse.pressed
+        interval: 33
+        running: root.sceneActive && root.autoRotate && !orbitMouse.pressed
         repeat: true
         onTriggered: {
-            root.yaw = (root.yaw + 0.08) % 360.0
+            root.yaw = (root.yaw + 0.16) % 360.0
         }
     }
 

@@ -1,5 +1,19 @@
 # Wiki Log
 
+## [2026-11-26] PERF | Boşta GPU/CPU Yükü, Bellek, N+1 Sorgular ve EXE Boyutu Optimizasyonu
+- **Boşta Fan / GPU / CPU Sorunu Çözüldü (`FocusStatsPage.qml`, `island3d/*`, `TrackerPage.qml`):**
+  - Eager yüklenen `HybridIslandView` (`View3D` + MSAA High + ShadowMap High + 16 ms `idleTimer` + `Animation.Infinite` animasyonlar), kullanıcı `TrackerPage`'de boşta beklerken bile arka planda offscreen 3D FBO çizip kopyalayarak GPU'yu ~%43 ve CPU'yu tek çekirdekte ~%25–41 yükte tutuyordu.
+  - `HybridIslandView` `FocusStatsPage` içinde `Loader` (`active: root.visible && root.viewMode3D`) arkasına alındı; `sceneActive` (`root.visible && Qt.application.state === Qt.ApplicationActive`) ile tüm 3D zamanlayıcıları ve sonsuz animasyonlar pencere pasifken/gizliyken durduruldu; MSAA ve gölge kalitesi `Medium`, `idleTimer` aralığı 33 ms yapıldı. `TrackerPage` `statusDot` animasyonu da aynı görünürlük/odak koşuluna bağlandı.
+- **Bellek ve VRAM Azaltımı (`SettlementCenter3D.qml`, `PineTree3D.qml`, `OakTree3D.qml`, `Stump3D.qml`, `Lighthouse3D.qml`, `Monument3D.qml`, `ConfettiOverlay.qml`, `TimerCard.qml`):**
+  - 3D yerleşim aşamaları, kilitli başarı yapıları ve `Repeater3D` ağaç çeşitleri yalnızca aktif/görünür olduklarında `.mesh` ve doku kaynağı yükler. `ConfettiOverlay` ve `TimerCard` halka `Canvas` katmanları boşta/gizliyken `visible: false` tutularak gereksiz FBO tahsisi önlendi.
+- **Zaman Karmaşıklığı & SQLite Optimizasyonu (`database.py`, `session_repo.py`, `session_service.py`, `analytics_service.py`, `analytics_bridge.py`, `focus_stats_service.py`, `focus_stats_bridge.py`, `achievement_service.py`, `global_hotkey.py`):**
+  - `sessions(started_at DESC)`, `distractions(session_id)` ve `distractions(occurred_at DESC)` indeksleri eklendi.
+  - `AnalyticsBridge.getSessionHistory()` ve `getFocusQualityTrend()` içindeki gereksiz N+1 `get_for_session()` sorguları kaldırıldı ($O(N \cdot M) \to O(N)$); köprüye 3.0s TTL önbellek ve yalnızca bugünün seanslarını çeken `getTodaySummary()` (`TrackerPage._refreshTodaySummary` için) eklendi.
+  - `AnalyticsService.summary_stats()`, `AchievementService.evaluate()` tek geçişe ($O(N)$) indirildi; `FocusStatsBridge.getPeriodReport()` içinde `_daily_totals()` tek kez hesaplanıp `period_totals` ve `period_buckets` arasında paylaşıldı. `GlobalHotkey.nativeEventFilter()` kayıtlı değilken erken döner.
+- **EXE Paket Temizliği (`build_exe.py`):**
+  - `prune_unused_qt_files()` ile PyInstaller sonrası `_internal/PySide6` altındaki kullanılmayan Qt modülleri (235 dosya, 246.3 MB — `Qt6WebEngineCore.dll`, `opengl32sw.dll`, `Qt6Pdf*`, `Qt63D*`, `Qt6Multimedia*`, `Qt6Charts*` vb.) `FocusTracker.exe` SHA-256 özetini (`a67f3cbdcb9e07b7...`) değiştirmeden temizlendi; `dist/FocusTracker` 382.7 MB'den 139.8 MB'ye düştü.
+- **Canlı Ölçüm & Doğrulama:** `FocusTracker.exe` boşta ölçümünde GPU kullanımı %43.2 → **%0**, CPU kullanımı tek çekirdekte %25–41 → **%0–%0.04**, Working Set 249 MB → **159.6 MB**, Private Memory 345.6 MB → **162.6 MB** seviyesine indi. `build_verify.launch_check` ve 274/274 birim testi geçti.
+
 ## [2026-11-24] LINT | Wiki Sağlık Kontrolü & Tutarlılık Güncellemesi
 - **`qml-ui.md`:** `SettlementView` içindeki eskimiş *"Qt Quick 3D reddedildi"* ifadesi `HybridIslandView` eklenişine göre tarihsel not olarak güncellendi; `components/` + `island3d/` envanteri ve güncel `TimerCard.qml` (`659` satır) / `TrackerPage.qml` (`491` satır) boyutları düzeltildi.
 - **`architecture.md`, `bridges.md`, `services-repos.md`, `index.md`:** `app/core/container.py` (`AppContainer`) DI kurulumu, `BaseRepository`, `BaseBridge` ve `UpdateBridge` (`updateBridge`) eklendi; eski "`main.py` tek tek instantiate ediyor" ve "ortak base class yok" ifadeleri güncellendi.

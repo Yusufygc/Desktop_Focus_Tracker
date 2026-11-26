@@ -87,10 +87,11 @@ class FocusStatsService:
 
     # ── public API ──────────────────────────────────────────────
     def period_totals(self, sessions: List[Session], period: str,
-                       reference_date: Optional[date] = None) -> Dict:
+                       reference_date: Optional[date] = None,
+                       daily: Optional[Dict[date, int]] = None) -> Dict:
         """Mevcut dönem toplamı, bir önceki dönem toplamı ve % delta döner."""
         ref = reference_date or datetime.now().date()
-        daily = self._daily_totals(sessions)
+        daily = daily if daily is not None else self._daily_totals(sessions)
 
         cur_start, cur_end = self._bucket_bounds(period, ref, 0)
         prev_start, prev_end = self._bucket_bounds(period, ref, -1)
@@ -111,11 +112,12 @@ class FocusStatsService:
 
     def period_buckets(self, sessions: List[Session], period: str,
                         reference_date: Optional[date] = None,
-                        count: Optional[int] = None) -> List[Dict]:
+                        count: Optional[int] = None,
+                        daily: Optional[Dict[date, int]] = None) -> List[Dict]:
         """Son `count` alt-dönemin (en eskiden en yeniye) etiket+saniye listesini döner."""
         ref = reference_date or datetime.now().date()
         n = count or DEFAULT_BUCKET_COUNTS[period]
-        daily = self._daily_totals(sessions)
+        daily = daily if daily is not None else self._daily_totals(sessions)
 
         buckets = []
         for offset in range(-(n - 1), 1):

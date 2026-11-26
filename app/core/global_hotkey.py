@@ -53,6 +53,8 @@ class GlobalHotkey(QAbstractNativeEventFilter):
             self._registered = False
 
     def nativeEventFilter(self, eventType, message):
+        if not self._registered:
+            return False, 0
         if sys.platform == "win32" and wintypes is not None and eventType == b"windows_generic_MSG":
             try:
                 msg = wintypes.MSG.from_address(int(message))

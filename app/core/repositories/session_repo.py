@@ -49,6 +49,13 @@ class SessionRepository(BaseRepository):
         ).fetchall()
         return [_row_to_session(r) for r in rows]
 
+    def get_since(self, since: datetime) -> List[Session]:
+        rows = self.db.conn.execute(
+            "SELECT * FROM sessions WHERE started_at >= ? ORDER BY started_at DESC",
+            (since.isoformat(),),
+        ).fetchall()
+        return [_row_to_session(r) for r in rows]
+
     def get_by_id(self, session_id: int) -> Optional[Session]:
         row = self.db.conn.execute(
             "SELECT * FROM sessions WHERE id=?", (session_id,)

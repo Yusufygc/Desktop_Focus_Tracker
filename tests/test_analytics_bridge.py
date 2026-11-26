@@ -171,6 +171,45 @@ class TestAnalyticsBridge(unittest.TestCase):
 
         self.assertIn("odaklandın", result)
 
+    def test_get_today_summary_sums_today_sessions(self):
+        start = datetime.now()
+        s1 = Session(subject="Matematik", started_at=start, ended_at=start + timedelta(minutes=30))
+        s2 = Session(subject="Fizik", started_at=start, ended_at=start + timedelta(minutes=15))
+        self.session_svc.get_sessions_since.return_value = [s1, s2]
+
+        result = self.bridge.getTodaySummary()
+
+        self.assertEqual(result["count"], 2)
+        self.assertEqual(result["totalSec"], 45 * 60)
+        self.session_svc.get_sessions_since.assert_called_once()
+
+    def test_get_today_summary_db_error_emits_errorOccurred(self):
+        self.session_svc.get_sessions_since.side_effect = sqlite3.OperationalError("DB hatası")
+        received = []
+        self.bridge.errorOccurred.connect(lambda msg: received.append(msg))
+
+        result = self.bridge.getTodaySummary()
+
+        self.assertEqual(result, {"count": 0, "totalSec": 0})
+        self.assertEqual(len(received), 1)
+
+    def test_get_session_history_does_not_query_distractions_per_session(self):
+        s1 = Session(subject="Matematik", id=1, started_at=datetime.now())
+        s2 = Session(subject="Fizik", id=2, started_at=datetime.now())
+        self.session_svc.get_all_sessions.return_value = [s1, s2]
+
+        self.bridge.getSessionHistory()
+
+        self.distraction_svc.get_for_session.assert_not_called()
+
+    def test_get_focus_quality_trend_does_not_query_distractions_per_session(self):
+        s1 = Session(subject="Matematik", id=1, started_at=datetime.now())
+        self.session_svc.get_all_sessions.return_value = [s1]
+
+        self.bridge.getFocusQualityTrend("week")
+
+        self.distraction_svc.get_for_session.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

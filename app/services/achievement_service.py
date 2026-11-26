@@ -79,12 +79,50 @@ class AchievementService:
 
     def evaluate(self, sessions: List[Session], current_streak: int, unlocked_keys: Set[str]) -> List[str]:
         """Henüz `unlocked_keys` içinde olmayan ama koşulu artık sağlayan başarı anahtarlarını döner."""
+        total_sec = 0
+        has_night_owl = False
+        has_early_bird = False
+        has_perfect = False
+        has_marathon = False
+        for s in sessions:
+            dur = s.duration_seconds
+            total_sec += dur
+            h = s.started_at.hour
+            if h >= 22 or h < 4:
+                has_night_owl = True
+            if h < 7:
+                has_early_bird = True
+            if dur >= 25 * 60 and s.total_distractions == 0:
+                has_perfect = True
+            if dur >= 2 * 3600:
+                has_marathon = True
+
+        total_hours = total_sec / 3600
+        session_count = len(sessions)
+        results = {
+            "hours_5": total_hours >= 5,
+            "hours_20": total_hours >= 20,
+            "hours_50": total_hours >= 50,
+            "hours_120": total_hours >= 120,
+            "hours_300": total_hours >= 300,
+            "sessions_10": session_count >= 10,
+            "sessions_50": session_count >= 50,
+            "sessions_100": session_count >= 100,
+            "streak_3": current_streak >= 3,
+            "streak_7": current_streak >= 7,
+            "streak_30": current_streak >= 30,
+            "night_owl": has_night_owl,
+            "early_bird": has_early_bird,
+            "perfect_session": has_perfect,
+            "marathon": has_marathon,
+        }
+
         newly_unlocked = []
         for definition in ACHIEVEMENT_DEFINITIONS:
             key = definition["key"]
             if key in unlocked_keys:
                 continue
-            if definition["check"](sessions, current_streak):
+            if results.get(key, False):
                 newly_unlocked.append(key)
         return newly_unlocked
 

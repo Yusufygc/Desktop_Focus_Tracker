@@ -5,7 +5,7 @@ Ham veriyi alır, UI'ya hazır dict/liste döner.
 
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from app.core.models.models import Distraction, Session
 
@@ -32,7 +32,7 @@ class AnalyticsService:
             counts[d.occurred_at.strftime("%Y-%m-%d")] += 1
         return dict(counts)
 
-    def session_stats(self, session: Session, distractions: List[Distraction]) -> Dict:
+    def session_stats(self, session: Session, distractions: Optional[List[Distraction]] = None) -> Dict:
         """Tek bir seans için özet istatistik döner."""
         dur = session.duration_seconds
         if dur >= 60:
@@ -49,7 +49,7 @@ class AnalyticsService:
             "total_distractions": session.total_distractions,
             "distractions_per_hour": round(per_hour, 1),
             "focus_score": focus_score,
-            "category_breakdown": self.distractions_per_category(distractions),
+            "category_breakdown": self.distractions_per_category(distractions) if distractions else {},
         }
 
     def summary_stats(self, distractions: List[Distraction]) -> Dict:
@@ -62,14 +62,20 @@ class AnalyticsService:
                 "peakHour": "-",
                 "topCategory": "-",
             }
-        dates = [d.occurred_at.date() for d in distractions]
-        min_date = min(dates)
-        max_date = max(dates)
-        days = (max_date - min_date).days + 1
-        if days < 1:
-            days = 1
-        hourly = self.distractions_per_hour(distractions)
-        cats = self.distractions_per_category(distractions)
+        min_date = distractions[0].occurred_at.date()
+        max_date = min_date
+        hourly: Dict[int, int] = defaultdict(int)
+        cats: Dict[str, int] = defaultdict(int)
+        for d in distractions:
+            dt = d.occurred_at
+            d_date = dt.date()
+            if d_date < min_date:
+                min_date = d_date
+            elif d_date > max_date:
+                max_date = d_date
+            hourly[dt.hour] += 1
+            cats[d.category] += 1
+        days = max(1, (max_date - min_date).days + 1)
         return {
             "total": total,
             "dailyAvg": round(total / days, 1),
@@ -108,8 +114,12 @@ class AnalyticsService:
             return key.strftime("%m.%Y")
         return str(key.year)
 
-    def focus_score_trend(self, sessions_with_distractions: List[Tuple[Session, List[Distraction]]],
-                           period: str, count: int = 8) -> List[Dict]:
+    def focus_score_trend(
+        self,
+        sessions_with_distractions: Union[List[Tuple[Session, List[Distraction]]], List[Session]],
+        period: str,
+        count: int = 8,
+    ) -> List[Dict]:
         """Dönem bucket'ı başına ortalama focus_score (0-100) döner, en eskiden en yeniye.
         FocusStatsService'teki bucket-sınırı mantığının küçük bir tekrarı — cross-import yerine
         (RULES.md: no premature abstraction, ~15 satırlık tekrar kabul edilebilir)."""
@@ -117,8 +127,9 @@ class AnalyticsService:
             raise ValueError(f"Bilinmeyen periyot: {period}")
 
         bucket_scores: Dict[date, List[int]] = defaultdict(list)
-        for session, distractions in sessions_with_distractions:
-            stats = self.session_stats(session, distractions)
+        for item in sessions_with_distractions:
+            session = item[0] if isinstance(item, tuple) else item
+            stats = self.session_stats(session)
             key = self._bucket_key(session.started_at, period)
             bucket_scores[key].append(stats["focus_score"])
 

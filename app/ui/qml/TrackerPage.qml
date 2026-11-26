@@ -55,16 +55,9 @@ Item {
 
     function _refreshTodaySummary() {
         if (!analyticsBridge) return
-        var sessions = analyticsBridge.getSessionHistory()
-        var count = 0, totalSec = 0
-        for (var i = 0; i < sessions.length; i++) {
-            if (sessions[i].dateGroup === "Bugün") {
-                count++
-                totalSec += sessions[i].durationSec
-            }
-        }
-        root.todaySessionCount = count
-        root.todayFocusSec = totalSec
+        var summary = analyticsBridge.getTodaySummary()
+        root.todaySessionCount = summary.count || 0
+        root.todayFocusSec = summary.totalSec || 0
     }
 
 
@@ -209,7 +202,7 @@ Item {
                         opacity: active ? 1.0 : 0.3
                         Behavior on color { ColorAnimation { duration: 300 } }
                         SequentialAnimation on opacity {
-                            running: statusDot.active; loops: Animation.Infinite
+                            running: statusDot.active && root.visible && (Qt.application.state === Qt.ApplicationActive); loops: Animation.Infinite
                             NumberAnimation { to: 0.4; duration: 800 }
                             NumberAnimation { to: 1.0; duration: 800 }
                         }

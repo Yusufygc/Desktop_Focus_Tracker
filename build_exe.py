@@ -120,6 +120,110 @@ def pyinstaller_arguments(root_dir: Path, entry_point: Path):
     return arguments
 
 
+def prune_unused_qt_files(dist_dir: Path) -> None:
+    """Uygulamanın hiç kullanmadığı PySide6/WebEngine/3D/Multimedya modüllerini
+    `_internal/PySide6` altından temizler. `FocusTracker.exe` dosyasına dokunmaz,
+    böylece kararlı EXE SHA-256 özeti korunur."""
+    pyside_dir = dist_dir / "FocusTracker" / "_internal" / "PySide6"
+    if not pyside_dir.is_dir():
+        return
+
+    file_patterns = (
+        "Qt6WebEngine*",
+        "Qt6Pdf*",
+        "opengl32sw.dll",
+        "Qt6Designer*",
+        "Qt6Charts*",
+        "Qt6DataVisualization*",
+        "Qt6Graphs*",
+        "Qt6Multimedia*",
+        "Qt6SpatialAudio*",
+        "Qt6Sensors*",
+        "Qt6Positioning*",
+        "Qt6Location*",
+        "Qt6Bluetooth*",
+        "Qt6Nfc*",
+        "Qt6SerialPort*",
+        "Qt6SerialBus*",
+        "Qt6RemoteObjects*",
+        "Qt6Scxml*",
+        "Qt6StateMachine*",
+        "Qt63D*",
+        "Qt6HttpServer*",
+        "Qt6WebSockets*",
+        "Qt6WebChannel*",
+        "Qt6WebView*",
+        "Qt6Test*",
+        "Qt6QuickTest*",
+        "Qt6Quick3DAssetImport*",
+        "Qt6Quick3DAssetUtils*",
+        "Qt6Quick3DXr*",
+        "Qt6Quick3DSpatialAudio*",
+        "Qt6TextToSpeech*",
+        "Qt6VirtualKeyboard*",
+        "QtWebEngineProcess.exe",
+    )
+    unused_qml_dirs = (
+        "QtWebEngine",
+        "QtWebView",
+        "QtPdf",
+        "QtMultimedia",
+        "QtCharts",
+        "QtDataVisualization",
+        "QtGraphs",
+        "Qt3D",
+        "QtTest",
+        "QtSensors",
+        "QtPositioning",
+        "QtLocation",
+        "QtRemoteObjects",
+        "QtScxml",
+        "QtStateMachine",
+        "QtWebSockets",
+        "QtWebChannel",
+    )
+
+    pruned_bytes = 0
+    pruned_count = 0
+
+    def _remove_file(path: Path) -> None:
+        nonlocal pruned_bytes, pruned_count
+        if path.is_file():
+            pruned_bytes += path.stat().st_size
+            path.unlink()
+            pruned_count += 1
+
+    def _remove_dir(path: Path) -> None:
+        nonlocal pruned_bytes, pruned_count
+        if path.is_dir():
+            for f in path.rglob("*"):
+                if f.is_file():
+                    pruned_bytes += f.stat().st_size
+                    pruned_count += 1
+            shutil.rmtree(path, ignore_errors=True)
+
+    for pattern in file_patterns:
+        for match in pyside_dir.glob(pattern):
+            _remove_file(match)
+
+    qml_dir = pyside_dir / "qml"
+    for dir_name in unused_qml_dirs:
+        _remove_dir(qml_dir / dir_name)
+
+    res_dir = pyside_dir / "resources"
+    if res_dir.is_dir():
+        _remove_file(res_dir / "icudtl.dat")
+        for match in res_dir.glob("qtwebengine_*"):
+            _remove_file(match)
+
+    trans_dir = pyside_dir / "translations"
+    if trans_dir.is_dir():
+        _remove_dir(trans_dir / "qtwebengine_locales")
+
+    pruned_mb = pruned_bytes / (1024 * 1024)
+    print(f"[OK] Kullanılmayan Qt dosyaları temizlendi: {pruned_count} dosya ({pruned_mb:.1f} MB)")
+
+
 def run_pyinstaller(arguments, dist_dir: Path):
     print("\n[*] FocusTracker derleniyor, lütfen bekleyin...")
     print(f"    Komut: pyinstaller {' '.join(arguments[1:])}\n")
@@ -128,6 +232,7 @@ def run_pyinstaller(arguments, dist_dir: Path):
         os.environ["SOURCE_DATE_EPOCH"] = str(LAUNCHER_EPOCH)
         import PyInstaller.__main__
         PyInstaller.__main__.run(arguments)
+        prune_unused_qt_files(dist_dir)
         print("\n" + "=" * 60)
         print("[OK] DERLEME BAŞARIYLA TAMAMLANDI!")
         print(f"[*] Çıktı Klasörü: {dist_dir}")

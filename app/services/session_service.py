@@ -51,6 +51,9 @@ class SessionService:
     def get_all_sessions(self) -> List[Session]:
         return self._repo.get_all()
 
+    def get_sessions_since(self, since: datetime) -> List[Session]:
+        return self._repo.get_since(since)
+
     def update_info(self, session_id: int, subject: str, notes: str) -> None:
         self._repo.update_info(session_id, subject, notes)
 
