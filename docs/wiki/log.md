@@ -1,5 +1,11 @@
 # Wiki Log
 
+## [2026-11-27] FIX | `installer_check` Gerçek Kurulumun Kaydını ve Masaüstü Simgesini Korumuyordu
+- **Kök neden:** `build_verify.UNINSTALL_KEY` tek kapanış parantezliydi, gerçek anahtar `...}}_is1` (kayıt defterinden okunarak doğrulandı). Ayrıca deneme kurulumu, Inno'nun hatırladığı `desktopicon` görevini yeniden kullanıyordu.
+- **Çözüm:** Anahtar düzeltildi, deneme kurulumuna `/MERGETASKS=!desktopicon` eklendi; `AppId` değişmedi. İki test eklendi (anahtar `.iss`ten türetilir). Önceki kayıttaki "Açık hata" kapandı. Ayrıntı: [[exe-dagitim-rehberi]] §4.
+- **Doğrulama:** Ayrı `AppId`li deneme paketi: bayraksız deneme masaüstü simgesini ele geçirip sildi, bayrakla simge değişmedi. `save_registration()` gerçek kurulumun kaydını okudu (yalnızca okuma). `installer_check` gerçek kuruluma karşı **çalıştırılmadı**.
+- **Kullanıcı verisi:** `launch_check` gerçek `%APPDATA%\FocusTracker`ı kullanıyordu; artık geçici `APPDATA` + `USERPROFILE` ile açar (`USERPROFILE` olmadan eski `~/focustracker.db` geçici klasöre taşınıp silinebilirdi). `dist` exe'siyle denendi: veritabanı ve günlük geçici profilde oluştu, gerçek 3 dosyanın içeriği ve değişiklik zamanı aynı kaldı.
+
 ## [2026-11-27] FIX | Yükseltmede Eski Sürüm Dosyaları Kurulum Klasöründe Kalıyordu
 - **Belirti:** Kurulu 1.2.1 klasörü 410 MB / 3372 dosyaydı.
 - **Kök neden:** `packaging/FocusTracker.iss` hiçbir dosya silmiyordu. 1.2.1 `install.log`una göre `_internal` altındaki 250 dosyayı (~250 MB: 1.2.1'de budanan 235 Qt dosyası + 15 eski `cpython-313.pyc`) 1.2.1 kurulumu yazmamıştı.

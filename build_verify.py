@@ -7,6 +7,7 @@ Ayrıntı: docs/wiki/exe-dagitim-rehberi.md. Kod imzalama bu denetimin yerini tu
 
 DİKKAT: deneme kurulumu, makinedeki GERÇEK kurulumla aynı `AppId`'yi kullanır; Inno aynı "Uygulamalar ve özellikler" kaydını ve Başlat menüsü
 kısayolunu yazar / siler. Bu yüzden deneme boyunca gerçek kaydın ve kısayolun kopyası alınır ve (hata olsa bile) geri yüklenir.
+Masaüstü simgesi yedeklenmez; deneme kurulumunda `desktopicon` görevi kapatılır.
 """
 import os
 import shutil
@@ -18,7 +19,7 @@ from typing import List, Optional, Tuple
 
 BLOCKED_WINERRORS = (4551, 1260)          # 4551: Uygulama Denetimi ilkesi engelledi; 1260: grup ilkesi engelledi
 EXE_NAME = "FocusTracker.exe"
-UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{C8F6E025-41D7-49BA-B6A8-580F6E31C582}_is1"     # packaging/FocusTracker.iss içindeki AppId
+UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{C8F6E025-41D7-49BA-B6A8-580F6E31C582}}_is1"     # .iss AppId'si; `{{` -> `{`, `}}` olduğu gibi kalır
 SHORTCUT = Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "FocusTracker.lnk"
 
 Registration = Tuple[Optional[List[tuple]], Optional[bytes]]       # (kayıt değerleri ya da None, kısayol baytları ya da None)
@@ -70,11 +71,15 @@ def _kill_tree(pid: int) -> None:
 
 
 def launch_check(exe: Path, seconds: float = 8.0) -> bool:
-    """Exe başlatılır, `seconds` sonra hâlâ çalışıyorsa kapatılır. Engellenirse ya da hemen çıkarsa False."""
-    env = {**os.environ, "FOCUSTRACKER_NO_UPDATE_CHECK": "1"}          # denetim sırasında ağ isteği yapılmasın
+    """Exe geçici bir kullanıcı profiliyle başlatılır, `seconds` sonra hâlâ çalışıyorsa kapatılır. Engellenirse ya da hemen çıkarsa False."""
+    profile = Path(tempfile.mkdtemp(prefix="ftprofile_"))
+    env = {**os.environ, "FOCUSTRACKER_NO_UPDATE_CHECK": "1",          # denetim sırasında ağ isteği yapılmasın
+           # Gerçek veritabanı ve ayarlar yerine boş profil. USERPROFILE şart: config.py eski `~/focustracker.db`yi APPDATA'ya TAŞIR
+           "APPDATA": str(profile), "USERPROFILE": str(profile)}
     try:
         process = subprocess.Popen([str(exe)], cwd=exe.parent, env=env)
     except OSError as e:
+        shutil.rmtree(profile, ignore_errors=True)
         if is_blocked(e):
             print(f"[X] Windows engelledi (Akıllı Uygulama Denetimi): {exe}")
             return False
@@ -83,8 +88,11 @@ def launch_check(exe: Path, seconds: float = 8.0) -> bool:
     alive = process.poll() is None
     _kill_tree(process.pid)
     if not alive:
-        print(f"[X] Exe başladı ama hemen kapandı (çıkış kodu {process.returncode}): {exe}")
-    return alive
+        print(f"[X] Exe başladı ama hemen kapandı (çıkış kodu {process.returncode}): {exe}\n    Günlük için profil bırakıldı: {profile}")
+        return False
+    process.wait(timeout=30)                                           # dosya kilitleri bırakılmadan profil silinemez
+    shutil.rmtree(profile, ignore_errors=True)
+    return True
 
 
 def installer_check(installer: Path, seconds: float = 8.0) -> bool:
@@ -100,7 +108,8 @@ def installer_check(installer: Path, seconds: float = 8.0) -> bool:
 def _installer_check(installer: Path, seconds: float) -> bool:
     workdir = Path(tempfile.mkdtemp(prefix="ftverify_"))
     target = workdir / "app"
-    flags = ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", f"/DIR={target}", f"/LOG={workdir / 'setup.log'}"]
+    flags = ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", f"/DIR={target}", f"/LOG={workdir / 'setup.log'}",
+             "/MERGETASKS=!desktopicon"]       # Inno önceki görev seçimini hatırlar; gerçek masaüstü simgesi ezilip silinmesin
     try:
         result = subprocess.run([str(installer), *flags], timeout=600, check=False)
     except OSError as e:
