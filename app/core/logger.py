@@ -4,8 +4,10 @@ Uygulamanın nerede tıkandığını görmek için kullanılır.
 """
 import logging
 from logging.handlers import RotatingFileHandler
+import os
 import sys
 from config import DEBUG, LOG_PATH
+
 
 def setup_logger():
     logger = logging.getLogger("FocusTracker")
@@ -25,9 +27,15 @@ def setup_logger():
         logger.addHandler(console_handler)
 
     # 2. Dosya Çıktısı (focustracker.log) — 2MB'de rotate, 3 yedek dosya
-    file_handler = RotatingFileHandler(LOG_PATH, maxBytes=2_000_000, backupCount=3, encoding='utf-8')
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    # Birim testleri çalışırken gerçek kullanıcı günlüğüne mock hata izleri yazılmasını önle.
+    skip_file_log = (
+        os.environ.get("FOCUSTRACKER_NO_FILE_LOG") == "1"
+        or ("unittest" in sys.modules and os.environ.get("FOCUSTRACKER_FORCE_FILE_LOG") != "1")
+    )
+    if not skip_file_log:
+        file_handler = RotatingFileHandler(LOG_PATH, maxBytes=2_000_000, backupCount=3, encoding='utf-8')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     return logger
 

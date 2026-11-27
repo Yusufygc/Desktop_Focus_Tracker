@@ -11,6 +11,7 @@ Node {
     property int stageIndex: 0
     property string biome: "default"
     property bool active: true
+    property real bladeAngle: 0
 
     // ── Biome'a göre ortak malzeme paleti ─────────────────────────────
     readonly property color cStone:     biome === "winter" ? "#9aa3ae" : (biome === "night" ? "#4b5563" : "#8b8680")
@@ -114,11 +115,7 @@ Node {
         // Dönen yel değirmeni kanatları (kule önü)
         Node {
             position: Qt.vector3d(0.75, 1.35, 0.17)
-            NumberAnimation on eulerRotation.z {
-                running: root.active && root.stageIndex === 2 && root.visible
-                from: 0; to: 360; duration: 7000
-                loops: Animation.Infinite
-            }
+            eulerRotation.z: root.bladeAngle
             Model {
                 source: root.stageIndex === 2 ? "meshes/windmill_blades.mesh" : ""
                 castsShadows: true

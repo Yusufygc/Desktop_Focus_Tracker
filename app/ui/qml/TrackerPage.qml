@@ -201,11 +201,6 @@ Item {
                         color: active ? Theme.success : Theme.borderDim
                         opacity: active ? 1.0 : 0.3
                         Behavior on color { ColorAnimation { duration: 300 } }
-                        SequentialAnimation on opacity {
-                            running: statusDot.active && root.visible && (Qt.application.state === Qt.ApplicationActive); loops: Animation.Infinite
-                            NumberAnimation { to: 0.4; duration: 800 }
-                            NumberAnimation { to: 1.0; duration: 800 }
-                        }
                     }
                     Rectangle {
                         id: pomodoroBadge

@@ -40,9 +40,13 @@ Item {
     }
 
     onValueChanged: {
-        if (!_ready) {
+        if (!_ready || !visible || Qt.application.state !== Qt.ApplicationActive) {
+            flipAnim.stop()
             _prevValue = value
             _currValue = value
+            _animating = false
+            _topAngle = 0
+            _bottomAngle = -90
             return
         }
         if (value === _currValue) return

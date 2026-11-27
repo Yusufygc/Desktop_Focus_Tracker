@@ -63,11 +63,10 @@ GlassCard {
         return "Serbest Kronometre"
     }
 
-    // Ark ilerlemesi saniyede bir sıçramak yerine akıcı ilerlesin diye
-    // ham oran burada yumuşatılıyor (arc.onPaint bunu okuyor, ham oranı değil).
+    // Ark ilerlemesi saniyede bir güncellenir; gizli (flip) modda sürekli
+    // repaint tetiklememek için yumuşatma animasyonu kullanılmaz.
     property real animatedProgress: 0
-    Behavior on animatedProgress { NumberAnimation { duration: 900; easing.type: Easing.Linear } }
-    onAnimatedProgressChanged: arc.requestPaint()
+    onAnimatedProgressChanged: if (arc.visible) arc.requestPaint()
 
     function _formatClock(totalSec) {
         var s = Math.max(0, Math.floor(totalSec))
@@ -112,12 +111,12 @@ GlassCard {
         }
         elapsed++
         animatedProgress = _computeRawProgress()
-        arc.requestPaint()
+        if (arc.visible) arc.requestPaint()
     }
 
     function refreshProgress() {
         animatedProgress = _computeRawProgress()
-        arc.requestPaint()
+        if (arc.visible) arc.requestPaint()
     }
 
     function reset() {
@@ -127,14 +126,14 @@ GlassCard {
         elapsed          = 0
         addPresetMode    = false
         animatedProgress = 0
-        arc.requestPaint()
+        if (arc.visible) arc.requestPaint()
     }
 
     Component.onCompleted: loadPresets()
 
     Connections {
         target: Theme
-        function onThemeChanged() { arc.requestPaint() }
+        function onThemeChanged() { if (arc.visible) arc.requestPaint() }
     }
 
     Connections {
@@ -338,7 +337,7 @@ GlassCard {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     sessionBridge.setPlannedMinutes(modelData.minutes)
-                                    arc.requestPaint()
+                                    if (arc.visible) arc.requestPaint()
                                     durationCombo.popup.close()
                                 }
                             }
@@ -376,7 +375,7 @@ GlassCard {
                                                 sessionBridge.setPlannedMinutes(25)
                                             timerBridge.deleteTimerPreset(modelData.id)
                                             timerCard.loadPresets()
-                                            arc.requestPaint()
+                                            if (arc.visible) arc.requestPaint()
                                         }
                                     }
                                 }
@@ -503,7 +502,7 @@ GlassCard {
                 anchors.fill: parent
                 anchors.margins: 6
                 visible: !timerSettings || timerSettings.timerStyle === "flip"
-                timeText: timerCard.currentClockText
+                timeText: visible ? timerCard.currentClockText : "00:00"
                 phaseLabel: timerCard.currentPhaseLabel
                 subtitleText: timerCard.currentSubtitleText
                 isZenMode: false
@@ -523,6 +522,7 @@ GlassCard {
                     id: arc
                     anchors.fill: parent
                     visible: dialWrapper.visible
+                    onVisibleChanged: if (visible) requestPaint()
 
                     onPaint: {
                         var ctx = getContext("2d")

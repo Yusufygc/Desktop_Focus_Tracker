@@ -1,5 +1,17 @@
 # Wiki Log
 
+## [2026-11-27] PERF | Seans Sırasında Sürekli Çizim, 3D Ada Kare Hızı, Test Günlüğü Yalıtımı ve `build_verify` Dayanıklılığı
+- **Takip Sayfası Sürekli Çizim Düzeltmesi (`TimerCard.qml`, `TrackerPage.qml`, `FlipDigitCard.qml`, `ZenTimerOverlay.qml`):**
+  - `TimerCard.qml`: Gizli halka `Canvas` üzerinde her saniye 900 ms boyunca (odak dışındayken bile) 165–180 FPS çizime yol açan `Behavior on animatedProgress` kaldırıldı; `arc.requestPaint()` çağrıları `arc.visible` kontrolü altına alındı ve gizli `FlipClockView` zaman bağlaması durduruldu.
+  - `TrackerPage.qml`: `statusDot` üzerindeki sonsuz `SequentialAnimation on opacity` kaldırıldı (aktifken sabit görünür).
+  - `ZenTimerOverlay.qml` & `FlipDigitCard.qml`: Gizli Zen sahnesi ve odak dışı (`!visible || Qt.application.state !== Qt.ApplicationActive`) kartların arka planda her saniye 3D flip animasyonu başlatması engellendi.
+- **3D Ada Kare Hızı Sınırlandırması (`island3d/*`):**
+  - `IslandBase.qml`, `Lighthouse3D.qml` ve `SettlementCenter3D.qml` içindeki VSync'e bağlı sonsuz `NumberAnimation` blokları kaldırılarak `cloudAngle`, `beamAngle` ve `bladeAngle` üzerinden `HybridIslandView.qml` içindeki tek 33 ms `idleTimer`'a bağlandı.
+- **Günlük Yalıtımı & `build_verify` Dayanıklılığı (`app/core/logger.py`, `build_verify.py`, `tests/test_build_verify.py`):**
+  - `app/core/logger.py`: `unittest` çalışırken (`FOCUSTRACKER_FORCE_FILE_LOG != "1"`) veya `FOCUSTRACKER_NO_FILE_LOG=1` iken gerçek kullanıcı `%APPDATA%\FocusTracker\focustracker.log` dosyasına mock traceback'leri yazılması önlendi.
+  - `build_verify.py`: `launch_check` `process.wait(timeout=30)` zaman aşımı sarmalandı; `_installer_check` içinde `launch_check` hata fırlatsa bile `unins000.exe` ve geçici klasör temizliği `finally` ile garanti altına alındı (2 yeni birim test eklendi).
+- **Doğrulama:** Canlı QML ölçümünde açılış boşta `0.0 FPS`, hedefli seans Flip modunda `165–180 → 33.2 FPS`, Ring modunda `0.8 FPS`, İstatistik 3D Ada otomatik dönüş açık `132–176 → 39.6 FPS`, otomatik dönüş kapalı `0.0 FPS` ölçüldü; `280/280` birim testi geçti. Detay: [[qml-ui]], [[exe-dagitim-rehberi]].
+
 ## [2026-11-27] FIX | `installer_check` Gerçek Kurulumun Kaydını ve Masaüstü Simgesini Korumuyordu
 - **Kök neden:** `build_verify.UNINSTALL_KEY` tek kapanış parantezliydi, gerçek anahtar `...}}_is1` (kayıt defterinden okunarak doğrulandı). Ayrıca deneme kurulumu, Inno'nun hatırladığı `desktopicon` görevini yeniden kullanıyordu.
 - **Çözüm:** Anahtar düzeltildi, deneme kurulumuna `/MERGETASKS=!desktopicon` eklendi; `AppId` değişmedi. İki test eklendi (anahtar `.iss`ten türetilir). Önceki kayıttaki "Açık hata" kapandı. Ayrıntı: [[exe-dagitim-rehberi]] §4.

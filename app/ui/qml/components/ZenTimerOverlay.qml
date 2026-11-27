@@ -99,7 +99,8 @@ Rectangle {
             bottom: zenControls.top
             margins: 32
         }
-        timeText: root.timeText
+        visible: root.visible
+        timeText: root.visible ? root.timeText : "00:00"
         phaseLabel: root.phaseLabel
         subtitleText: root.subtitleText
         isZenMode: true

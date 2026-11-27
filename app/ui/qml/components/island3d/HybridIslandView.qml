@@ -16,6 +16,9 @@ Item {
     property real yaw: 35.0
     property real pitch: -32.0
     property real zoomLevel: 13.5
+    property real cloudAngle: 0
+    property real beamAngle: 0
+    property real bladeAngle: 0
     readonly property bool sceneActive: root.visible && (Qt.application.state === Qt.ApplicationActive)
 
     implicitHeight: 440
@@ -77,6 +80,7 @@ Item {
             IslandBase {
                 biome: root.biome
                 active: root.sceneActive
+                cloudAngle: root.cloudAngle
             }
 
             // Merkez Gelişen Medeniyet Binaları
@@ -85,12 +89,14 @@ Item {
                 stageIndex: root.stageData.stageIndex !== undefined ? root.stageData.stageIndex : 0
                 biome: root.biome
                 active: root.sceneActive
+                bladeAngle: root.bladeAngle
             }
 
             // Başarı Binası 1: Deniz Feneri (Maraton Başarımı)
             Lighthouse3D {
                 isUnlocked: root.unlockedAchievementKeys.indexOf("marathon") !== -1
                 active: root.sceneActive
+                beamAngle: root.beamAngle
                 position: Qt.vector3d(3.8, 0.15, 0.4)
                 eulerRotation.y: -75
             }
@@ -132,6 +138,8 @@ Item {
     }
 
     // ── YAVAŞ BOŞTA DÖNÜŞ (IDLE DRIFT) ─────────────────────────────────
+    // Tüm sürekli 3D hareketler (ada, bulut, fener, yel değirmeni) VSync yerine bu
+    // tek 33 ms zamanlayıcıya bağlıdır (~30 FPS); autoRotate kapatılınca sahne 0 FPS olur.
     Timer {
         id: idleTimer
         interval: 33
@@ -139,6 +147,11 @@ Item {
         repeat: true
         onTriggered: {
             root.yaw = (root.yaw + 0.16) % 360.0
+            root.cloudAngle = (root.cloudAngle + 0.198) % 360.0
+            if (root.stageData.stageIndex === 2)
+                root.bladeAngle = (root.bladeAngle + 1.697) % 360.0
+            if (root.unlockedAchievementKeys.indexOf("marathon") !== -1)
+                root.beamAngle = (root.beamAngle + 2.97) % 360.0
         }
     }
 

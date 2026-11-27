@@ -8,6 +8,7 @@ Node {
 
     property bool isUnlocked: false
     property bool active: true
+    property real beamAngle: 0
     visible: isUnlocked
 
     Texture {
@@ -43,11 +44,7 @@ Node {
     // Dönen fener ışığı demeti
     Node {
         position: Qt.vector3d(0, 1.68, 0)
-        NumberAnimation on eulerRotation.y {
-            running: root.active && root.isUnlocked && root.visible
-            from: 0; to: 360; duration: 4000
-            loops: Animation.Infinite
-        }
+        eulerRotation.y: root.beamAngle
         Model {
             source: "#Cone"
             position: Qt.vector3d(0, 0, 0.85)

@@ -7,6 +7,7 @@ Node {
 
     property string biome: "default"
     property bool active: true
+    property real cloudAngle: 0
 
     readonly property color biomeTint: {
         if (root.biome === "autumn") return "#f6d5a8"
@@ -59,11 +60,7 @@ Node {
 
     Node {
         id: cloudOrbitNode
-        NumberAnimation on eulerRotation.y {
-            running: root.active && root.visible
-            from: 0; to: 360; duration: 60000
-            loops: Animation.Infinite
-        }
+        eulerRotation.y: root.cloudAngle
         Cloud { position: Qt.vector3d(6.6, -0.4, 2.0); size: 1.0 }
         Cloud { position: Qt.vector3d(-6.4, -0.8, -3.0); size: 1.2 }
         Cloud { position: Qt.vector3d(1.5, -1.6, -6.6); size: 0.8 }

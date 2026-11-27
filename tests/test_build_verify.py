@@ -77,6 +77,41 @@ class TestBuildVerify(unittest.TestCase):
                     self.assertTrue(test_shortcut.exists())
                     self.assertEqual(test_shortcut.read_bytes(), b"LNK_CONTENT")
 
+    def test_installer_check_runs_uninstaller_even_when_launch_check_raises(self):
+        import subprocess
+        import tempfile
+        workdir = Path(tempfile.mkdtemp(prefix="ftverify_test_"))
+        target = workdir / "app"
+        target.mkdir(parents=True)
+        (target / build_verify.EXE_NAME).write_bytes(b"exe")
+        uninstaller = target / "unins000.exe"
+        uninstaller.write_bytes(b"unins")
+
+        with patch("build_verify.tempfile.mkdtemp", return_value=str(workdir)), \
+                patch("build_verify.subprocess.run", return_value=MagicMock(returncode=0)) as run, \
+                patch("build_verify.launch_check", side_effect=OSError("launch boom")):
+            with self.assertRaises(OSError):
+                build_verify._installer_check(Path("setup.exe"), 0)
+
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_args_list[1].args[0][0], str(uninstaller))
+        self.assertFalse(workdir.exists())
+
+    def test_launch_check_cleans_profile_when_wait_times_out(self):
+        import subprocess
+        seen = {}
+
+        def fake_popen(args, cwd, env):
+            seen["profile"] = Path(env["APPDATA"])
+            proc = MagicMock(pid=1, returncode=None)
+            proc.poll.return_value = None
+            proc.wait.side_effect = subprocess.TimeoutExpired(cmd="FocusTracker.exe", timeout=30)
+            return proc
+
+        with patch("build_verify.subprocess.Popen", side_effect=fake_popen), patch("build_verify._kill_tree"):
+            self.assertTrue(build_verify.launch_check(Path("FocusTracker.exe"), 0))
+        self.assertFalse(seen["profile"].exists())
+
 
 if __name__ == "__main__":
     unittest.main()

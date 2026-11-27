@@ -90,7 +90,10 @@ def launch_check(exe: Path, seconds: float = 8.0) -> bool:
     if not alive:
         print(f"[X] Exe başladı ama hemen kapandı (çıkış kodu {process.returncode}): {exe}\n    Günlük için profil bırakıldı: {profile}")
         return False
-    process.wait(timeout=30)                                           # dosya kilitleri bırakılmadan profil silinemez
+    try:
+        process.wait(timeout=30)                                       # dosya kilitleri bırakılmadan profil silinemez
+    except subprocess.TimeoutExpired:
+        pass
     shutil.rmtree(profile, ignore_errors=True)
     return True
 
@@ -123,16 +126,18 @@ def _installer_check(installer: Path, seconds: float) -> bool:
     if not ok:
         print(f"[X] Sessiz kurulum başarısız (çıkış kodu {result.returncode}); günlük: {workdir / 'setup.log'}")
         return False
-    ok = launch_check(installed, seconds)
-    uninstaller = target / "unins000.exe"
-    if uninstaller.is_file():
-        try:
-            subprocess.run([str(uninstaller), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"], timeout=300, check=False)
-        except OSError as e:
-            if not is_blocked(e):
-                raise
-            # Kaldırıcı da imzasız bir exe'dir ve engellenebilir: kullanıcı "Uygulamalar ve özellikler"den kaldıramazdı -> deneme başarısız
-            print(f"[X] Windows kaldırıcıyı engelledi (Akıllı Uygulama Denetimi): {uninstaller}")
-            ok = False
-    shutil.rmtree(workdir, ignore_errors=True)                 # başarısız kurulumda günlük için bırakılır (yukarıdaki return)
+    try:
+        ok = launch_check(installed, seconds)
+    finally:
+        uninstaller = target / "unins000.exe"
+        if uninstaller.is_file():
+            try:
+                subprocess.run([str(uninstaller), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"], timeout=300, check=False)
+            except OSError as e:
+                if not is_blocked(e):
+                    raise
+                # Kaldırıcı da imzasız bir exe'dir ve engellenebilir: kullanıcı "Uygulamalar ve özellikler"den kaldıramazdı -> deneme başarısız
+                print(f"[X] Windows kaldırıcıyı engelledi (Akıllı Uygulama Denetimi): {uninstaller}")
+                ok = False
+        shutil.rmtree(workdir, ignore_errors=True)             # başarısız kurulumda günlük için bırakılır (yukarıdaki return)
     return ok
