@@ -79,6 +79,22 @@ class TestReleasePackaging(unittest.TestCase):
         self.assertIn("Check: RelaunchAfterUpdate", script)
         self.assertIn("WizardSilent and not HasParam('/VERYSILENT')", script)
 
+    def test_installer_removes_stale_program_files_on_upgrade(self):
+        script = read("packaging/FocusTracker.iss")
+        # Eski _internal kenara alınır, başarıda silinir, başarısızlıkta geri konur
+        self.assertIn(r"ExpandConstant('{app}\_internal')", script)
+        self.assertIn("RenameFile(InternalDir, BackupDir)", script)
+        self.assertIn("RenameFile(BackupDir, InternalDir)", script)
+        for hook in ("CurStepChanged", "ssInstall", "ssPostInstall", "DeinitializeSetup"):
+            self.assertIn(hook, script)
+        # Başka bir klasördeki `_internal`e dokunulmaz: yalnızca mevcut FocusTracker kurulumunda
+        self.assertIn(r"FileExists(ExpandConstant('{app}\{#AppExe}'))", script)
+        # Geri alınamayan [InstallDelete] kullanılmaz; kullanıcı verisi hiçbir silme yolunda geçmez
+        self.assertNotIn("[InstallDelete]", script)
+        for line in script.splitlines():
+            if "DelTree" in line or "filesandordirs" in line:
+                self.assertNotRegex(line, r"\{(user|common)appdata\}|\{localappdata\}")
+
     # ---- Kararlı EXE: Giriş betiği ve PE sürüm kaynağı özetleri ----
 
     def test_launcher_script_and_version_resource_are_pinned(self):

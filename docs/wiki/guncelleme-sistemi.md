@@ -45,7 +45,7 @@ sequenceDiagram
 2. **Denetim:** `UpdateBridge.startupCheck()` arayüz yüklendikten 3 saniye sonra `main.py` içindeki `QTimer.singleShot(3000, ...)` ile tetiklenir (testlerde ağa çıkmaz). Ağ bağlantısı yoksa veya hata oluşursa sessizce geçer. Ayarlar penceresindeki **Şimdi Denetle** butonu sonucu kullanıcıya görsel olarak bildirir.
 3. **Karşılaştırma:** `update_service.is_newer()` en son sürüm etiketini `app/version.py` içindeki `__version__` ile sayısal olarak karşılaştırır (`1.10.0 > 1.9.0`). Taslak (draft) ve ön sürümler (`1.1.0-rc1`) yok sayılır.
 4. **İndirme:** `DownloadWorker` arka plan iş parçacığı (`QThread`) ile çalışır; QML tarafına `downloadProgressChanged` ile yüzde bildirilir. Boyut ve SHA-256 doğrulaması **zorunludur**: Özet GitHub'ın asset `digest` alanından veya `.sha256` dosyasından okunur; ikisi de yoksa veya özet uyuşmazsa indirme iptal edilir ve dosya silinir. İndirme dizini: `%TEMP%\FocusTrackerUpdate`.
-5. **Kurulum:** `/SILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /LOG=<klasör>\install.log` parametreleriyle bağımsız süreç oluşturulur (`DETACHED_PROCESS`). `quitRequested` sinyali ile uygulama kapanır. `packaging/FocusTracker.iss` içindeki `Check: RelaunchAfterUpdate` kurulum bitince yeni uygulamayı otomatik açar.
+5. **Kurulum:** `/SILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /LOG=<klasör>\install.log` parametreleriyle bağımsız süreç oluşturulur (`DETACHED_PROCESS`). `quitRequested` sinyali ile uygulama kapanır. `packaging/FocusTracker.iss` içindeki `Check: RelaunchAfterUpdate` kurulum bitince yeni uygulamayı otomatik açar. Kurulum eski `_internal`i kenara alıp yenisini kurar, başarısız olursa eskisini geri koyar; böylece eski sürümün dosyaları birikmez ([[exe-dagitim-rehberi]] §3).
 
 ---
 

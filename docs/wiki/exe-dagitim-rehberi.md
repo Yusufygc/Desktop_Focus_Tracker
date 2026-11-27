@@ -72,6 +72,15 @@ Referans: `packaging/FocusTracker.iss`. Temel kurallar:
 3. **Çalışan Uygulamayı Kapatma:** `CloseApplications=yes`, `RestartApplications=no`.
 4. **Sürümlü Çıktı:** `OutputBaseFilename=FocusTracker-Setup-{#AppVersion}` (güncelleme servisi `^FocusTracker-Setup-[0-9.]+\.exe$` desenini arar).
 5. **Yeniden Açma (`Check: RelaunchAfterUpdate`):** Uygulama içi güncelleme `/SILENT` ile çalışır ve kurulum sonrası uygulamayı açar; derleme denemesi `/VERYSILENT` ile çalışır ve uygulamayı açmaz.
+6. **Yükseltmede Eski Dosya Temizliği (`[Code]`):** Inno `[Files]` yalnızca ekler ve üzerine yazar; yeni pakette olmayan dosyalar kalır. 1.2.0 → 1.2.1 güncellemesinde 250 dosya (~250 MB) kalmıştı: budanan 235 Qt dosyası ve 15 eski `cpython-313.pyc`.
+   - `ssInstall`: mevcut kurulumda (`FocusTracker.exe` varsa) `{app}\_internal` → `_internal.old` olarak kenara alınır. Bu anda `CloseApplications` çalışan uygulamayı kapatmıştır.
+   - `ssPostInstall`: yedek silinir. Kurulum tamamlanmazsa (iptal, disk dolu, yazılamayan dosya) `DeinitializeSetup` eski `_internal`i geri koyar.
+   - Klasör taşınamazsa (içinde açık dosya) temizlik atlanır, kurulum üzerine yazarak sürer; sonraki güncelleme temizler. Neden `install.log` içindedir.
+   - **`[InstallDelete]` kullanılmaz:** silme geri alınamaz; yarıda kalan sessiz güncelleme uygulamayı `_internal`siz, yani açılamaz ve kendini güncelleyemez bırakır.
+   - Elektrik kesintisi gibi kurulum sürecinin öldüğü durumda geri alma çalışmaz; kurulum dosyası yeniden çalıştırılır.
+   - Yalnızca `_internal` temizlenir. `{app}` köküne eklenip sonradan paketten çıkarılan bir dosya kalır. `%APPDATA%\FocusTracker`a dokunulmaz.
+
+**Kurulumu denerken:** Dosya kümesini yerel `dist` ile değil, aynı paketin temiz kurulumuyla karşılaştırın; yerel `dist` ile CI paketi aynı değildir (DLL kümesi, geliştirme `__pycache__` dosyaları). Ayrı bir `AppId`, `AppName` ve klasör kullanın.
 
 ---
 
@@ -80,7 +89,8 @@ Referans: `packaging/FocusTracker.iss`. Temel kurallar:
 - **`build_exe.py`:** PyInstaller'ı sabit epoch ve bayraklarla çalıştırır, `_internal/PySide6` altındaki kullanılmayan Qt modüllerini (`QtWebEngine*`, `QtPdf*`, `opengl32sw.dll`, `Qt3D*`, `QtMultimedia*`, `QtCharts*` vb.) `prune_unused_qt_files()` ile EXE özetine dokunmadan temizler (~246 MB azaltım), ardından hash kapısını denetler.
 - **`build_verify.py`:** 
   - `launch_check`: Exe'yi başlatır (`FOCUSTRACKER_NO_UPDATE_CHECK=1` ile), 8 saniye boyunca çalışır durumda kaldığını ve SAC hatası (`WinError 4551/1260`) almadığını doğrular, sonra ağacı temiz kapatır.
-  - `installer_check`: Kurulum dosyasını geçici klasöre sessizce kurar, kurulan exe'yi açıp dener, kaldırıcıyı (`unins000.exe`) çalıştırır. Gerçek sistemdeki `HKCU` kayıt defteri ve Başlat kısayolu `save_registration` / `restore_registration` ile korunur.
+  - `installer_check`: Kurulum dosyasını geçici klasöre sessizce kurar, kurulan exe'yi açıp dener, kaldırıcıyı (`unins000.exe`) çalıştırır. Gerçek sistemdeki `HKCU` kayıt defteri ve Başlat kısayolu `save_registration` / `restore_registration` ile korunmak istenir.
+    - ⚠️ **Açık hata (2026-11-27):** Gerçek kayıt anahtarı `{C8F6E025-...}}_is1` (çift kapanış parantezi; `.iss`teki `AppId={{...}}` böyle çözülür, `install.log` ile doğrulandı). `UNINSTALL_KEY` tek parantezlidir, yani kayıt yedeklenmiyor. FocusTracker kurulu bir makinede `installer_check` gerçek "Uygulamalar ve özellikler" kaydını ezip siler. Düzeltme `UNINSTALL_KEY` tarafında yapılmalı; `AppId` **değiştirilmez**.
 - **`build_installer.py`:** Tek komutla derleme: ISCC bul $\rightarrow$ `build_exe` $\rightarrow$ `launch_check` $\rightarrow$ Inno derle $\rightarrow$ `installer_check` $\rightarrow$ `.sha256` dosyası üret.
 
 ---

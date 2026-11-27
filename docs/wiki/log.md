@@ -1,5 +1,12 @@
 # Wiki Log
 
+## [2026-11-27] FIX | Yükseltmede Eski Sürüm Dosyaları Kurulum Klasöründe Kalıyordu
+- **Belirti:** Kurulu 1.2.1 klasörü 410 MB / 3372 dosyaydı.
+- **Kök neden:** `packaging/FocusTracker.iss` hiçbir dosya silmiyordu. 1.2.1 `install.log`una göre `_internal` altındaki 250 dosyayı (~250 MB: 1.2.1'de budanan 235 Qt dosyası + 15 eski `cpython-313.pyc`) 1.2.1 kurulumu yazmamıştı.
+- **Çözüm:** `[Code]` ile eski `_internal` kenara alınır, başarıda silinir, başarısızlıkta geri konur; `[UninstallDelete]` kalmış yedeği temizler. Ayrıntı: [[exe-dagitim-rehberi]], [[guncelleme-sistemi]].
+- **Doğrulama:** Ayrı `AppId`li deneme kurulumları: düzeltmesiz betik hatayı üretti; çalışan uygulama üstüne `/VERYSILENT` yükseltme temiz kurulumla aynı dosya/klasör kümesini verdi; kasıtlı bozulan yükseltmede eski `_internal` aynen geri geldi ve uygulama açıldı; kilitli dosyada kurulum temizliksiz tamamlandı. 275/275 test geçti. `/SILENT` arayüzü, elle iptal ve yönetici (tüm kullanıcılar) kurulumu denenmedi. Yayın yapılmadı.
+- **Açık hata:** `build_verify.UNINSTALL_KEY` gerçek kayıt anahtarıyla eşleşmiyor (bkz. [[exe-dagitim-rehberi]] §4).
+
 ## [2026-11-26] PERF | Boşta GPU/CPU Yükü, Bellek, N+1 Sorgular ve EXE Boyutu Optimizasyonu
 - **Boşta Fan / GPU / CPU Sorunu Çözüldü (`FocusStatsPage.qml`, `island3d/*`, `TrackerPage.qml`):**
   - Eager yüklenen `HybridIslandView` (`View3D` + MSAA High + ShadowMap High + 16 ms `idleTimer` + `Animation.Infinite` animasyonlar), kullanıcı `TrackerPage`'de boşta beklerken bile arka planda offscreen 3D FBO çizip kopyalayarak GPU'yu ~%43 ve CPU'yu tek çekirdekte ~%25–41 yükte tutuyordu.

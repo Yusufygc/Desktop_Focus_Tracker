@@ -62,6 +62,10 @@ Source: "..\dist\FocusTracker\*"; DestDir: "{app}"; Flags: ignoreversion recurse
 ; Lisans uygulamayla birlikte dağıtılır.
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
+[UninstallDelete]
+; Yükseltme sırasında silinemeden kalan yedek (bkz. [Code]) kaldırmada temizlenir.
+Type: filesandordirs; Name: "{app}\_internal.old"
+
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; AppUserModelID: "focustracker.app.qml"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon; AppUserModelID: "focustracker.app.qml"
@@ -89,4 +93,50 @@ end;
 function RelaunchAfterUpdate: Boolean;
 begin
   Result := WizardSilent and not HasParam('/VERYSILENT');
+end;
+
+// Inno yalnızca ekler / üzerine yazar: yeni pakette olmayan dosyalar yükseltmede kalır. Eski `_internal` silinmez, kenara
+// alınır; kurulum yarıda kalırsa (iptal, disk dolu, yazılamayan dosya) geri konur. %APPDATA% altındaki veriye dokunulmaz.
+// ssInstall anında CloseApplications çalışan uygulamayı kapatmıştır.
+var
+  InternalDir, BackupDir: String;
+  BackupPending: Boolean;
+
+procedure SetAsideOldFiles;
+begin
+  // Seçilen klasörde başkasına ait bir `_internal` olabilir: yalnızca mevcut FocusTracker kurulumunda
+  if not FileExists(ExpandConstant('{app}\{#AppExe}')) then
+    Exit;
+  InternalDir := ExpandConstant('{app}\_internal');
+  BackupDir := InternalDir + '.old';
+  if not DirExists(InternalDir) then
+    Exit;
+  DelTree(BackupDir, True, True, True);
+  // İçinde açık dosya varsa klasör taşınamaz (ya hep ya hiç): temizlik atlanır, kurulum üzerine yazarak sürer
+  BackupPending := RenameFile(InternalDir, BackupDir);
+  if not BackupPending then
+    Log('Eski _internal kenara alınamadı; eski dosyalar bu kurulumda temizlenmeyecek.');
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+    SetAsideOldFiles
+  else if (CurStep = ssPostInstall) and BackupPending then
+  begin
+    BackupPending := False;
+    if not DelTree(BackupDir, True, True, True) then
+      Log('Eski dosyaların bir kısmı silinemedi: ' + BackupDir);
+  end;
+end;
+
+procedure DeinitializeSetup;
+begin
+  // Buraya BackupPending ile gelinmişse kurulum tamamlanmamıştır
+  if BackupPending then
+  begin
+    DelTree(InternalDir, True, True, True);
+    if not RenameFile(BackupDir, InternalDir) then
+      Log('Eski sürüm geri konamadı: ' + BackupDir);
+  end;
 end;
