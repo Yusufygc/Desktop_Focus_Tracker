@@ -1,6 +1,6 @@
 # FocusTracker
 
-![Version](https://img.shields.io/badge/Version-1.2.1-orange)
+![Version](https://img.shields.io/badge/Version-1.2.2-orange)
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
 ![Qt Quick 3D](https://img.shields.io/badge/UI-Qt_Quick_6_%2B_Quick3D-41CD52?logo=qt&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)
